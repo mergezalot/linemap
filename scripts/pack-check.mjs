@@ -26,6 +26,16 @@ try {
   const dep = cliPkg.dependencies?.['@linemap/core'];
   if (!dep || dep.startsWith('workspace:')) fail(`linemap depends on @linemap/core as "${dep}"`);
 
+  // each tarball carries its README (the npm page) and the license, and publishes as public
+  for (const file of tarballs) {
+    const entries = run('tar', ['-tzf', file]).split('\n');
+    for (const need of ['package/README.md', 'package/LICENSE']) {
+      if (!entries.includes(need)) fail(`${path.basename(file)} has no ${need.slice(8)}`);
+    }
+    const pkg = JSON.parse(run('tar', ['-xOzf', file, 'package/package.json']));
+    if (pkg.publishConfig?.access !== 'public') fail(`${pkg.name} has no publishConfig.access "public"`);
+  }
+
   const app = path.join(tmp, 'app');
   fs.mkdirSync(app);
   fs.writeFileSync(path.join(app, 'package.json'), '{ "private": true }\n');

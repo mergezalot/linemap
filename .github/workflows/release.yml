@@ -1,0 +1,57 @@
+name: Release
+
+# Publishes @linemap/core and linemap to npm when a version tag is pushed:
+#   (bump "version" in packages/core and packages/cli, commit)
+#   git tag v0.2.0 && git push origin v0.2.0
+# No npm token: each package lists this workflow as its trusted publisher on npmjs.com
+# (package settings -> Trusted publishing -> GitHub Actions, workflow file release.yml), and
+# npm adds provenance on its own. A version already on npm is skipped, so a tag can release
+# just one of the two packages.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest # trusted publishing needs npm 11.5.1 or later
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm pack-check
+
+      - name: Tag matches the package versions
+        run: |
+          for dir in core cli; do
+            v=$(node -p "require('./packages/$dir/package.json').version")
+            [ "v$v" = "$GITHUB_REF_NAME" ] || { echo "packages/$dir is $v, tag is $GITHUB_REF_NAME"; exit 1; }
+          done
+
+      # pnpm pack turns workspace:^ into a version; npm publishes the tarball. Core goes first,
+      # since the CLI depends on it.
+      - name: Publish
+        run: |
+          mkdir -p "$RUNNER_TEMP/dist"
+          for dir in core cli; do
+            name=$(node -p "require('./packages/$dir/package.json').name")
+            version=$(node -p "require('./packages/$dir/package.json').version")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version is already on npm, skipping"; continue
+            fi
+            (cd "packages/$dir" && pnpm pack --pack-destination "$RUNNER_TEMP/dist")
+            npm publish "$RUNNER_TEMP/dist/$(echo "$name" | sed 's/^@//; s/\//-/')-$version.tgz"
+          done

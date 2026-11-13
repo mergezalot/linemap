@@ -33,7 +33,7 @@
     "prepare": "node scripts/build-msagl.mjs",
     "build:msagl": "node scripts/build-msagl.mjs",
     "test": "node --test",
-    "prepack": "node scripts/build-msagl.mjs"
+    "prepack": "node scripts/build-msagl.mjs && node -e \"require('fs').copyFileSync('../../LICENSE', 'LICENSE')\""
   },
   "dependencies": {
     "@ts-graphviz/ast": "3.0.6"
@@ -41,5 +41,8 @@
   "devDependencies": {
     "@msagl/core": "1.1.24",
     "esbuild": "0.28.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

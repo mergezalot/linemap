@@ -30,9 +30,13 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "prepack": "node -e \"require('fs').copyFileSync('../../LICENSE', 'LICENSE')\""
   },
   "dependencies": {
     "@linemap/core": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

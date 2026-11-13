@@ -3,3 +3,4 @@ out/
 packages/studio/dist/
 packages/core/vendor/
 _site/
+packages/*/LICENSE

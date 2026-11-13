@@ -139,6 +139,10 @@ pnpm pack-check    # packs both npm packages, installs them in an empty folder, 
 If a test says an example no longer matches its SVG, run `pnpm example` and
 look at the result.
 
+To release, set the same `version` in `packages/core` and `packages/cli`, commit, and push a tag
+`v<version>`. The Release workflow tests, packs and publishes both packages to npm (a version
+already on npm is skipped).
+
 ## Studio
 
 One self-contained HTML file that runs the whole pipeline in the browser. A build with the
