@@ -10,7 +10,7 @@ drawn as transit-map bundles.
 
 ```sh
 npx @linemap/cli <flow.dot> <out.svg> [--positions]
-            [--theme light|dark|minimal|neon|neond] [--css extra.css]
+            [--theme minimal|light|dark|neon|neond[-fancy]] [--css extra.css]
 ```
 
 Or install it once with `npm install -g @linemap/cli` and run `linemap` with the same arguments.

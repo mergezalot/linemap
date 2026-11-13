@@ -51,7 +51,7 @@ const SOFT = (color, k = 1) => ({
   group: [{ dy: 2, blur: 8, color, opacity: 0.05 * k }],
   small: [{ dy: 1, blur: 2, color, opacity: 0.1 * k }],
 });
-export const THEMES = {
+const FANCY = {
   light: {
     label: 'Light',
     font: SANS,
@@ -161,9 +161,36 @@ export const THEMES = {
     },
   },
 };
-export const THEME_NAMES = Object.keys(THEMES);
 
-export function getTheme(name = 'light') {
+// The plain themes leave out what costs the most to draw: the shadows and glows done with SVG blur
+// filters (redrawn on every pan and zoom) and the travelling arrows (redrawn every frame, for as
+// long as the map is on screen). The `-fancy` themes keep them. `edits` replaces parts of the
+// fancy theme, for themes that lean on their shadows to set boxes apart.
+const plain = (t, edits = {}) => {
+  const { shadow, line, ...rest } = t;
+  const { flow, ...still } = line ?? {};
+  return { ...rest, ...(Object.keys(still).length ? { line: still } : {}), ...edits };
+};
+const M = FANCY.minimal;
+export const THEMES = {
+  // the default: minimal without its shadows, so its white cards get a faint outline instead
+  minimal: plain(M, {
+    node: { ...M.node, stroke: '#d5dbe3', width: 1.25 },
+    note: { ...M.note, stroke: '#e1e6ec' },
+    edgeLabel: { ...M.edgeLabel, stroke: '#d5dbe3' },
+    legend: { ...M.legend, stroke: '#d5dbe3' },
+  }),
+  light: plain(FANCY.light),
+  dark: plain(FANCY.dark),
+  neon: plain(FANCY.neon),
+  neond: plain(FANCY.neond),
+  ...Object.fromEntries(['minimal', 'light', 'dark', 'neon', 'neond'].map((n) =>
+    [`${n}-fancy`, { ...FANCY[n], label: `${FANCY[n].label} fancy` }])),
+};
+export const THEME_NAMES = Object.keys(THEMES);
+export const DEFAULT_THEME = 'minimal';
+
+export function getTheme(name = DEFAULT_THEME) {
   const t = THEMES[name];
   if (!t) throw new Error(`unknown theme "${name}" (known: ${THEME_NAMES.join(', ')})`);
   return t;

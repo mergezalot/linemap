@@ -1,7 +1,7 @@
 // The view settings that change the drawing (hidden lines, lines through nodes, the theme) and
 // the URL hash that carries them, plus the view rectangle, so a link shows the same map:
 //   #hide=A,B&through=all&theme=dark&view=x,y,w,h
-// theme null = the DOT file's own theme, else light.
+// theme null = the DOT file's own theme, else minimal.
 // `?src=` stays in the query; the hash is written with history.replaceState (no history spam).
 
 import { THEME_NAMES } from '@linemap/core';

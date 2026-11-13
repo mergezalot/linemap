@@ -15,7 +15,8 @@ const svg = render(layout(parseFlow(dotText)), { theme: 'dark' });
 - `parseFlow(text)` reads a linemap DOT file into a model; errors are thrown with one-line messages.
 - `layout(model, { hiddenLines, through, fixed })` places, routes and bundles it. Call it once
   per parsed model.
-- `render(model, { theme, css })` returns the SVG. Themes: `light`, `dark`, `minimal`, `neon`, `neond`.
+- `render(model, { theme, css })` returns the SVG. Themes: `minimal` (default),
+  `light`, `dark`, `neon`, `neond`, each also as `-fancy` (shadows, glows, moving arrows; costlier).
 - `positions(model)` gives the computed positions of unpinned nodes, ready to pin with `pos`.
 
 The command line is [`@linemap/cli`](https://www.npmjs.com/package/@linemap/cli): `npx @linemap/cli flow.dot out.svg`.

@@ -8,7 +8,7 @@ import { parseFlow, layout, crowding, render, positions, THEMES, THEME_NAMES } f
 
 const USAGE = `usage: linemap <flow.dot> <out.svg> [options]
 
-  --theme <name>   ${THEME_NAMES.join(', ')} (default: the DOT file's \`theme\`, else light)
+  --theme <name>   ${THEME_NAMES.join(', ')} (default: the DOT file's \`theme\`, else minimal)
   --css <file>     a CSS file added after the theme's, to restyle any lm-* class
   --positions      also print the computed position of every unpinned node and note,
                    ready to paste into the DOT file as \`pos\` to pin it

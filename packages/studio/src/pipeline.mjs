@@ -3,7 +3,7 @@
 // positions of unpinned items become `fixed` for every later run of the same text, so hiding a
 // line or switching `through` never moves a box. The theme only paints: a change of theme alone
 // renders the last model again. Errors come back as results, never thrown.
-import { parseFlow, layout, render, positions, paintLines, THEMES } from '@linemap/core';
+import { parseFlow, layout, render, positions, paintLines, THEMES, DEFAULT_THEME } from '@linemap/core';
 
 export function createPipeline({ onResult }) {
   let base = null; // { text, model, fixed } of the first run of the current text
@@ -27,7 +27,7 @@ export function createPipeline({ onResult }) {
       model = layout(parseFlow(text), { hiddenLines, through: { mode }, fixed: base.fixed });
     }
     last = { base, key, model };
-    const used = theme ?? model.theme ?? 'light';
+    const used = theme ?? model.theme ?? DEFAULT_THEME;
     paintLines(base.model.lines, THEMES[used]); // the legend and search show the base model's lines
     return { ok: true, model, base: base.model, theme: used, svg: render(model, { legend: false, theme: used }), ms: performance.now() - t0 };
   }

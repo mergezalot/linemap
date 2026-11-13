@@ -2,7 +2,7 @@
 import { STYLE, groupRects, textWidth, edgeLabelSize } from './model.mjs';
 import { markColor } from './bundle.mjs';
 import { f } from './geom.mjs';
-import { getTheme, themeCss, accentStyle, shadowFilters, paintLines, tabText } from './theme.mjs';
+import { getTheme, DEFAULT_THEME, themeCss, accentStyle, shadowFilters, paintLines, tabText } from './theme.mjs';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 // For attribute values: also keep newlines and tabs, which a parser would turn into spaces.
@@ -165,13 +165,13 @@ function legend(model, box, ctx = FLAT) {
 
 // Options:
 //   legend  false leaves out the legend and the room for it
-//   theme   a theme name (theme.mjs); default: the DOT file's `theme`, else light
+//   theme   a theme name (theme.mjs); default: the DOT file's `theme`, else minimal
 //   css     more CSS, after the theme's: restyle any lm-* class
 // Elements carry data-* attributes (line ids, labels, shapes) for scripts; they change nothing drawn.
 export function render(model, { legend: withLegend = true, theme, css = '' } = {}) {
   // the CSS goes inside <style>, so it must not be able to end that element
   if (/<\/style/i.test(css)) throw new Error('css: must not contain "</style"');
-  const themeName = theme ?? model.theme ?? 'light';
+  const themeName = theme ?? model.theme ?? DEFAULT_THEME;
   const T = getTheme(themeName);
   paintLines(model.lines, T);
   const fx = shadowFilters(T, themeName);

@@ -8,7 +8,7 @@
 // into email and SMS. The main database gathers the writes at the bottom. Webhooks take their own
 // way, over the top and past auth.
 digraph platform {
-  theme = neond
+  theme = "neond-fancy"
   subgraph lines {                       // lane order = fan-out order, top to bottom; no colours: the palette
     SI [label="Sign-in"]
     CO [label="Checkout"]

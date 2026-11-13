@@ -100,8 +100,11 @@ digraph example {
 
 ## Themes
 
-Five themes: `light` (default), `dark`, `minimal`, `neon` and `neond` (neon on dark). Set `theme="dark"` on
-the graph, pass `--theme dark`, or switch in the studio. `--css extra.css` restyles any `lm-*`
+Five themes: `minimal` (default), `light`, `dark`, `neon` and `neond` (neon on dark). They are
+kept cheap to draw; each has a `-fancy` variant (`minimal-fancy`, `light-fancy`, …) that adds soft
+shadows, glows and arrows travelling along the lines, at a real cost in CPU when panning, zooming
+or just keeping the map on screen. Set `theme="dark"` on the graph, pass `--theme dark`, or switch
+in the studio. `--css extra.css` restyles any `lm-*`
 class on top.
 
 ## Running
@@ -110,7 +113,7 @@ Needs Node 22 or later.
 
 ```sh
 npx @linemap/cli <flow.dot> <out.svg> [--positions]
-            [--theme light|dark|minimal|neon|neond] [--css extra.css]
+            [--theme minimal|light|dark|neon|neond[-fancy]] [--css extra.css]
 ```
 
 `--positions` prints the computed positions as `name [pos="x,y"]`, ready to paste into the file.

@@ -1,35 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -105 2220 812" width="2220" height="812" class="linemap lm-root lm-theme-light" data-theme="light" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" fill="#1f2933">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -105 2220 812" width="2220" height="812" class="linemap lm-root lm-theme-minimal" data-theme="minimal" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" fill="#1d2530">
 <style>
-.lm-root{font-family:Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif;fill:#1f2933}
-.lm-bg{fill:#ffffff}
-.lm-group-box{fill:#f3f5f7;stroke:#dbe0e6;stroke-width:1.25}
-.lm-group-title{fill:#4b5663;font-weight:700}
-.lm-shape{fill:#ffffff;stroke:#2b343f;stroke-width:2;stroke-linejoin:round}
-.lm-shape-line{fill:none;stroke:#2b343f;stroke-width:2}
+.lm-root{font-family:Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif;fill:#1d2530}
+.lm-bg{fill:#f1f3f6}
+.lm-group-box{fill:#e4e8ee;stroke:#d3d9e1;stroke-width:1}
+.lm-group-title{fill:#3d4855;font-weight:700}
+.lm-shape{fill:#ffffff;stroke:#d5dbe3;stroke-width:1.25;stroke-linejoin:round}
+.lm-shape-line{fill:none;stroke:#d5dbe3;stroke-width:1.25}
 .lm-sheen{stroke:none;pointer-events:none}
-.lm-group-tab{fill:#4b5663;stroke:none}
-.lm-group-title-tab{fill:#ffffff;font-weight:600}
-.lm-person{fill:#596573;stroke:none}
-.lm-label{fill:#1f2933;font-weight:500}
-.lm-halo{stroke:#ffffff}
+.lm-group-tab{fill:#3d4855;stroke:none}
+.lm-group-title-tab{fill:#f1f3f6;font-weight:600}
+.lm-person{fill:#4f5b69;stroke:none}
+.lm-label{fill:#1d2530;font-weight:500}
+.lm-halo{stroke:#f1f3f6}
 .lm-halo-in{stroke:#ffffff}
-.lm-note-box{fill:#f7f8fa;stroke:#dfe3e8;stroke-width:1}
+.lm-note-box{fill:#fafbfc;stroke:#e1e6ec;stroke-width:1}
 .lm-note-text{fill:#6b7683;font-style:italic}
-.lm-note-link{fill:none;stroke:#b9c0c8;stroke-width:1.2;stroke-dasharray:5 4}
-.lm-casing{fill:none;stroke:#ffffff;stroke-linejoin:round}
+.lm-note-link{fill:none;stroke:#b4bcc6;stroke-width:1.2;stroke-dasharray:5 4}
+.lm-casing{fill:none;stroke:#f1f3f6;stroke-linejoin:round}
 .lm-casing-in{stroke:#ffffff}
 .lm-strand{fill:none;stroke-linejoin:round}
-.lm-edge-label-box{fill:#ffffff;stroke:#cfd5dc;stroke-width:1}
-.lm-edge-label{fill:#1f2933;font-weight:600}
-.lm-legend-box{fill:#ffffff;stroke:#dbe0e6;stroke-width:1}
+.lm-edge-label-box{fill:#ffffff;stroke:#d5dbe3;stroke-width:1}
+.lm-edge-label{fill:#1d2530;font-weight:600}
+.lm-legend-box{fill:#ffffff;stroke:#d5dbe3;stroke-width:1}
 .lm-legend-title{fill:#6b7683;font-weight:700;letter-spacing:0.12em}
-.lm-legend-text{fill:#1f2933}
+.lm-legend-text{fill:#1d2530}
 </style>
-<defs><filter id="lm-shadow-light-node" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="b0"/><feOffset in="b0" dx="0" dy="1" result="o0"/><feFlood flood-color="#0f1a2a" flood-opacity="0.1"/><feComposite in2="o0" operator="in" result="s0"/><feGaussianBlur in="SourceAlpha" stdDeviation="10" result="b1"/><feOffset in="b1" dx="0" dy="6" result="o1"/><feFlood flood-color="#0f1a2a" flood-opacity="0.12"/><feComposite in2="o1" operator="in" result="s1"/><feMerge><feMergeNode in="s0"/><feMergeNode in="s1"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lm-shadow-light-group" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="8" result="b0"/><feOffset in="b0" dx="0" dy="2" result="o0"/><feFlood flood-color="#0f1a2a" flood-opacity="0.05"/><feComposite in2="o0" operator="in" result="s0"/><feMerge><feMergeNode in="s0"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lm-shadow-light-small" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="2" result="b0"/><feOffset in="b0" dx="0" dy="1" result="o0"/><feFlood flood-color="#0f1a2a" flood-opacity="0.1"/><feComposite in2="o0" operator="in" result="s0"/><feMerge><feMergeNode in="s0"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-<rect x="-10" y="-105" width="2220" height="812" class="lm-bg" fill="#ffffff"/>
+<defs><linearGradient id="lm-sheen-minimal-50" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f4f8" stop-opacity="1"/><stop offset="0.5" stop-color="#f1f4f8" stop-opacity="0"/></linearGradient></defs>
+<rect x="-10" y="-105" width="2220" height="812" class="lm-bg" fill="#f1f3f6"/>
 <g class="group" id="cluster_cli" data-label="packages/core">
-<rect x="250" y="95" width="1700" height="210" rx="22" class="lm-group-box" style="fill:#f2f2f2;stroke:#aaaaaa" filter="url(#lm-shadow-light-group)"/>
-<text x="270" y="123" font-size="18" class="lm-group-title" style="fill:#383b3e">packages/core</text>
+<rect x="250" y="95" width="1700" height="210" rx="24" class="lm-group-box" style="fill:#d9dadd;stroke:#bdbec0"/>
 </g>
 <path d="M960,369.5 L960,245" class="lm-note-link"/>
 <g class="edge" data-from="dot" data-to="model" data-lines="V S P">
@@ -147,16 +146,17 @@
 <polygon points="2080,369 2082.7,358.7 2077.3,358.7" fill="#ffffff"/>
 </g>
 </g>
-<g class="node" id="dot" data-label="flows/*.dot" data-shape="cylinder"><path d="M30,169 A90,14 0 0 1 210,169 V231 A90,14 0 0 1 30,231 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M30,169 A90,14 0 0 0 210,169" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="120" y="207">flows/*.dot</tspan></text></g>
-<g class="node" id="svg" data-label="out/*.svg" data-shape="cylinder"><path d="M1990,169 A90,14 0 0 1 2170,169 V231 A90,14 0 0 1 1990,231 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M1990,169 A90,14 0 0 0 2170,169" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2080" y="207">out/*.svg</tspan></text></g>
-<g class="node" id="png" data-label="out/*.png" data-shape="cylinder"><path d="M1990,389 A90,14 0 0 1 2170,389 V451 A90,14 0 0 1 1990,451 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M1990,389 A90,14 0 0 0 2170,389" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2080" y="427">out/*.png</tspan></text></g>
-<g class="node" id="view" data-label="packages/studio&#10;zoom, highlight, hide" data-shape="box"><rect x="1990" y="-65" width="180" height="90" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2080" y="-29.5">packages/studio</tspan><tspan x="2080" y="-10.5">zoom, highlight, hide</tspan></text></g>
-<g class="node" id="model" data-label="model.mjs + dot.mjs&#10;load, validate" data-shape="box"><rect x="310" y="155" width="180" height="90" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="400" y="190.5">model.mjs + dot.mjs</tspan><tspan x="400" y="209.5">load, validate</tspan></text></g>
-<g class="node" id="place" data-label="place.mjs&#10;place unpinned items" data-shape="box"><rect x="590" y="155" width="180" height="90" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="680" y="190.5">place.mjs</tspan><tspan x="680" y="209.5">place unpinned items</tspan></text></g>
-<g class="node" id="route" data-label="route.mjs&#10;orthogonal routing" data-shape="box"><rect x="870" y="155" width="180" height="90" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="960" y="190.5">route.mjs</tspan><tspan x="960" y="209.5">orthogonal routing</tspan></text></g>
-<g class="node" id="bundle" data-label="bundle.mjs&#10;lanes, triangles" data-shape="box"><rect x="1150" y="155" width="180" height="90" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1240" y="190.5">bundle.mjs</tspan><tspan x="1240" y="209.5">lanes, triangles</tspan></text></g>
-<g class="node" id="inside" data-label="inside.mjs&#10;lines through nodes" data-shape="box"><rect x="1430" y="155" width="180" height="90" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1520" y="190.5">inside.mjs</tspan><tspan x="1520" y="209.5">lines through nodes</tspan></text></g>
-<g class="node" id="render" data-label="render.mjs&#10;SVG" data-shape="box"><rect x="1710" y="155" width="180" height="90" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1800" y="190.5">render.mjs</tspan><tspan x="1800" y="209.5">SVG</tspan></text></g>
-<g class="note" id="msagl" data-label="route.mjs routes with MSAGL's rectilinear router (plain JS)"><rect x="733" y="369.5" width="454" height="41" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="745" y="390">route.mjs routes with MSAGL's rectilinear router (plain JS)</tspan></text></g>
-<g class="legend"><rect x="30" y="525" width="200.2" height="142" rx="12" class="lm-legend-box" filter="url(#lm-shadow-light-small)"/><text x="48" y="547" font-size="12" class="lm-legend-title" dominant-baseline="central">LINES</text><g class="legend-row" data-line="V"><line x1="52" y1="575" x2="104" y2="575" stroke="#2e7d32" stroke-width="9" stroke-linecap="round"/><polygon points="83,575 73,572.3 73,577.7" fill="#ffffff"/><text x="122" y="575" font-size="14" class="lm-legend-text" dominant-baseline="central">Studio</text></g><g class="legend-row" data-line="S"><line x1="52" y1="603" x2="104" y2="603" stroke="#1565c0" stroke-width="9" stroke-linecap="round"/><polygon points="83,603 73,600.3 73,605.7" fill="#ffffff"/><text x="122" y="603" font-size="14" class="lm-legend-text" dominant-baseline="central">SVG</text></g><g class="legend-row" data-line="P"><line x1="52" y1="631" x2="104" y2="631" stroke="#9e9e9e" stroke-width="9" stroke-linecap="round"/><polygon points="83,631 73,628.3 73,633.7" fill="#ffffff"/><text x="122" y="631" font-size="14" class="lm-legend-text" dominant-baseline="central">PNG (--png)</text></g></g>
+<g class="group-tab" data-group="cluster_cli"><rect x="274" y="82" width="134.1" height="26" rx="13" class="lm-group-tab" style="fill:#393b3e"/><text x="285" y="95" font-size="14" dominant-baseline="central" class="lm-group-title lm-group-title-tab" style="fill:#f1f3f6">packages/core</text></g>
+<g class="node" id="dot" data-label="flows/*.dot" data-shape="cylinder"><path d="M30,169 A90,14 0 0 1 210,169 V231 A90,14 0 0 1 30,231 Z" class="lm-shape"/><path d="M30,169 A90,14 0 0 1 210,169 V231 A90,14 0 0 1 30,231 Z" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><path d="M30,169 A90,14 0 0 0 210,169" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="120" y="207">flows/*.dot</tspan></text></g>
+<g class="node" id="svg" data-label="out/*.svg" data-shape="cylinder"><path d="M1990,169 A90,14 0 0 1 2170,169 V231 A90,14 0 0 1 1990,231 Z" class="lm-shape"/><path d="M1990,169 A90,14 0 0 1 2170,169 V231 A90,14 0 0 1 1990,231 Z" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><path d="M1990,169 A90,14 0 0 0 2170,169" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2080" y="207">out/*.svg</tspan></text></g>
+<g class="node" id="png" data-label="out/*.png" data-shape="cylinder"><path d="M1990,389 A90,14 0 0 1 2170,389 V451 A90,14 0 0 1 1990,451 Z" class="lm-shape"/><path d="M1990,389 A90,14 0 0 1 2170,389 V451 A90,14 0 0 1 1990,451 Z" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><path d="M1990,389 A90,14 0 0 0 2170,389" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2080" y="427">out/*.png</tspan></text></g>
+<g class="node" id="view" data-label="packages/studio&#10;zoom, highlight, hide" data-shape="box"><rect x="1990" y="-65" width="180" height="90" rx="16" class="lm-shape"/><rect x="1990" y="-65" width="180" height="90" rx="16" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2080" y="-29.5">packages/studio</tspan><tspan x="2080" y="-10.5">zoom, highlight, hide</tspan></text></g>
+<g class="node" id="model" data-label="model.mjs + dot.mjs&#10;load, validate" data-shape="box"><rect x="310" y="155" width="180" height="90" rx="16" class="lm-shape"/><rect x="310" y="155" width="180" height="90" rx="16" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="400" y="190.5">model.mjs + dot.mjs</tspan><tspan x="400" y="209.5">load, validate</tspan></text></g>
+<g class="node" id="place" data-label="place.mjs&#10;place unpinned items" data-shape="box"><rect x="590" y="155" width="180" height="90" rx="16" class="lm-shape"/><rect x="590" y="155" width="180" height="90" rx="16" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="680" y="190.5">place.mjs</tspan><tspan x="680" y="209.5">place unpinned items</tspan></text></g>
+<g class="node" id="route" data-label="route.mjs&#10;orthogonal routing" data-shape="box"><rect x="870" y="155" width="180" height="90" rx="16" class="lm-shape"/><rect x="870" y="155" width="180" height="90" rx="16" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="960" y="190.5">route.mjs</tspan><tspan x="960" y="209.5">orthogonal routing</tspan></text></g>
+<g class="node" id="bundle" data-label="bundle.mjs&#10;lanes, triangles" data-shape="box"><rect x="1150" y="155" width="180" height="90" rx="16" class="lm-shape"/><rect x="1150" y="155" width="180" height="90" rx="16" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1240" y="190.5">bundle.mjs</tspan><tspan x="1240" y="209.5">lanes, triangles</tspan></text></g>
+<g class="node" id="inside" data-label="inside.mjs&#10;lines through nodes" data-shape="box"><rect x="1430" y="155" width="180" height="90" rx="16" class="lm-shape"/><rect x="1430" y="155" width="180" height="90" rx="16" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1520" y="190.5">inside.mjs</tspan><tspan x="1520" y="209.5">lines through nodes</tspan></text></g>
+<g class="node" id="render" data-label="render.mjs&#10;SVG" data-shape="box"><rect x="1710" y="155" width="180" height="90" rx="16" class="lm-shape"/><rect x="1710" y="155" width="180" height="90" rx="16" class="lm-sheen" fill="url(#lm-sheen-minimal-50)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1800" y="190.5">render.mjs</tspan><tspan x="1800" y="209.5">SVG</tspan></text></g>
+<g class="note" id="msagl" data-label="route.mjs routes with MSAGL's rectilinear router (plain JS)"><rect x="733" y="369.5" width="454" height="41" rx="10" class="lm-note-box"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="745" y="390">route.mjs routes with MSAGL's rectilinear router (plain JS)</tspan></text></g>
+<g class="legend"><rect x="30" y="525" width="200.2" height="142" rx="12" class="lm-legend-box"/><text x="48" y="547" font-size="12" class="lm-legend-title" dominant-baseline="central">LINES</text><g class="legend-row" data-line="V"><line x1="52" y1="575" x2="104" y2="575" stroke="#2e7d32" stroke-width="9" stroke-linecap="round"/><polygon points="83,575 73,572.3 73,577.7" fill="#ffffff"/><text x="122" y="575" font-size="14" class="lm-legend-text" dominant-baseline="central">Studio</text></g><g class="legend-row" data-line="S"><line x1="52" y1="603" x2="104" y2="603" stroke="#1565c0" stroke-width="9" stroke-linecap="round"/><polygon points="83,603 73,600.3 73,605.7" fill="#ffffff"/><text x="122" y="603" font-size="14" class="lm-legend-text" dominant-baseline="central">SVG</text></g><g class="legend-row" data-line="P"><line x1="52" y1="631" x2="104" y2="631" stroke="#9e9e9e" stroke-width="9" stroke-linecap="round"/><polygon points="83,631 73,628.3 73,633.7" fill="#ffffff"/><text x="122" y="631" font-size="14" class="lm-legend-text" dominant-baseline="central">PNG (--png)</text></g></g>
 </svg>

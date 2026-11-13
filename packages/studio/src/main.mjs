@@ -1,6 +1,6 @@
 // Boot and wiring: every module gets the elements and callbacks it needs; none reaches into
 // another's DOM. Flow: source -> pipeline (with the state's settings) -> map, legend, search.
-import { markColor, THEMES, THEME_NAMES, PALETTE } from '@linemap/core';
+import { markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE } from '@linemap/core';
 import { createState, readHash, hashWriter } from './state.mjs';
 import { createPipeline } from './pipeline.mjs';
 import { createSource, isHttp } from './source.mjs';
@@ -17,7 +17,7 @@ const $ = (id) => document.getElementById(id);
 const el = {
   toolbar: document.querySelector('.toolbar'),
   fileName: $('file-name'), recent: $('recent'), open: $('open'), paste: $('paste'), reload: $('reload'), watch: $('watch'),
-  through: $('through'), theme: $('theme'), themeBtn: $('theme-btn'),
+  through: $('through'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
   search: $('search'), results: $('results'), export: $('export'), positions: $('positions'), helpBtn: $('help-btn'),
   menuBtn: $('menu-btn'), more: $('tb-more'),
   banner: $('banner'), stage: $('stage'), map: $('map'), empty: $('empty'), busy: $('busy'), legend: $('legend'),
@@ -145,9 +145,18 @@ const swatch = (n) => {
   const t = THEMES[n], pal = t.palette ?? PALETTE;
   return `<span class="tsw" style="background:${t.bg};border-color:${t.node.stroke === 'none' ? t.muted : t.node.stroke}"><i style="background:${pal[0]}"></i><i style="background:${pal[1]}"></i></span>`;
 };
-el.theme.innerHTML = THEME_NAMES.map((n) =>
-  `<button class="item" role="menuitemradio" data-theme="${n}">${swatch(n)}<span class="nm">${esc(THEMES[n].label)}</span></button>`).join('');
-const effectiveTheme = () => shown?.theme ?? state.get().theme ?? 'light';
+// One row per theme: the plain theme, and its `-fancy` variant (shadows, glows, moving arrows) as a
+// sparkles button on the same row. Themes are paired by the name's suffix.
+const FANCY = '-fancy';
+const baseOf = (n) => (n.endsWith(FANCY) ? n.slice(0, -FANCY.length) : n);
+const isFancy = (n) => n !== baseOf(n);
+const BASES = THEME_NAMES.filter((n) => !isFancy(n));
+const sparkles = '<svg class="icon sparkles"><use href="#i-sparkles"/></svg>';
+el.theme.innerHTML = BASES.map((n) => {
+  const fancy = THEMES[n + FANCY] ? `<button class="item fancy" role="menuitemradio" data-theme="${n + FANCY}" title="${esc(THEMES[n].label)}, fancy: shadows, glows and moving arrows (uses more CPU)" aria-label="${esc(THEMES[n].label)} fancy">${sparkles}</button>` : '';
+  return `<div class="row" data-base="${n}"><button class="item" role="menuitemradio" data-theme="${n}">${swatch(n)}<span class="nm">${esc(THEMES[n].label)}</span></button>${fancy}</div>`;
+}).join('');
+const effectiveTheme = () => shown?.theme ?? state.get().theme ?? DEFAULT_THEME;
 function setTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch { /* no storage */ }
   if (theme !== state.get().theme) state.set({ theme });
@@ -169,25 +178,36 @@ el.theme.addEventListener('click', (e) => {
   setTheme(b.dataset.theme);
 });
 document.addEventListener('click', (e) => { if (!el.theme.hidden && !e.target.closest('.theme-pick')) showThemes(false); });
+el.fancy.addEventListener('click', (e) => {
+  e.stopPropagation(); // stays in the narrow-screen menu, like a pick from the list
+  const cur = effectiveTheme(), base = baseOf(cur);
+  setTheme(isFancy(cur) ? base : base + FANCY);
+});
 // The page around the map follows the theme: dark chrome for dark maps.
 const luminance = (hex) => {
   const v = parseInt(String(hex).replace('#', ''), 16);
   return Number.isNaN(v) ? 1 : (0.2126 * ((v >> 16) & 255) + 0.7152 * ((v >> 8) & 255) + 0.0722 * (v & 255)) / 255;
 };
 function applyTheme(name) {
-  const t = THEMES[name] ?? THEMES.light;
+  const t = THEMES[name] ?? THEMES[DEFAULT_THEME];
   document.body.dataset.mapTheme = name;
   document.body.classList.toggle('ui-dark', luminance(t.bg) < 0.4);
   document.documentElement.style.setProperty('--map-bg', t.bg);
 }
-applyTheme(state.get().theme ?? 'light');
+applyTheme(state.get().theme ?? DEFAULT_THEME);
 
 function updateToolbar() {
   const { mode } = state.get();
   for (const b of el.through.querySelectorAll('button')) b.setAttribute('aria-checked', String(b.dataset.mode === mode));
   const theme = state.get().theme ?? effectiveTheme();
   for (const b of el.theme.querySelectorAll('button')) b.setAttribute('aria-checked', String(b.dataset.theme === theme));
-  el.themeBtn.querySelector('.cur').innerHTML = `${swatch(theme)}<span class="tl">${esc(THEMES[theme]?.label ?? theme)}</span>`;
+  for (const r of el.theme.querySelectorAll('.row')) r.classList.toggle('on', r.dataset.base === baseOf(theme));
+  const base = THEMES[baseOf(theme)] ? baseOf(theme) : theme;
+  el.themeBtn.querySelector('.cur').innerHTML = `${swatch(base)}<span class="tl">${esc(THEMES[base]?.label ?? theme)}</span>`;
+  // the sparkles beside it switch the fancy variant on and off, for themes that have one
+  el.fancy.hidden = !THEMES[base + FANCY];
+  el.fancy.setAttribute('aria-pressed', String(isFancy(theme)));
+  el.fancy.title = isFancy(theme) ? 'Fancy: on (shadows, glows, moving arrows; uses more CPU). Click for plain' : 'Fancy: off. Click for shadows, glows and moving arrows (uses more CPU)';
   const cur = source.current();
   el.fileName.querySelector('.name').textContent = cur?.name ?? 'No file';
   el.fileName.title = cur?.src ? `${cur.src} · recent files` : 'Recent files';
@@ -414,7 +434,11 @@ window.addEventListener('keydown', (e) => {
     ArrowLeft: () => viewport.panBy(-pan, 0), ArrowRight: () => viewport.panBy(pan, 0),
     ArrowUp: () => viewport.panBy(0, -pan), ArrowDown: () => viewport.panBy(0, pan),
     r: () => source.reload(),
-    t: () => setTheme(THEME_NAMES[(THEME_NAMES.indexOf(effectiveTheme()) + 1) % THEME_NAMES.length]),
+    // the next theme, fancy or not as now
+    t: () => {
+      const cur = effectiveTheme(), next = BASES[(BASES.indexOf(baseOf(cur)) + 1) % BASES.length];
+      setTheme(isFancy(cur) && THEMES[next + FANCY] ? next + FANCY : next);
+    },
     Escape: () => { el.recent.hidden = true; showThemes(false); setMenu(false); highlight.clearPins(); hideBanner(); },
   };
   const fn = keys[e.key];

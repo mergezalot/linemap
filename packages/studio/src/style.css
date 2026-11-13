@@ -151,8 +151,19 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .theme-pick { position: relative; }
 .theme-btn .cur { display: inline-flex; align-items: center; gap: 7px; }
 .theme-menu { min-width: 180px; }
-.theme-menu .item[aria-checked="true"] { background: var(--press); }
-.theme-menu .item[aria-checked="true"] .nm { font-weight: 600; }
+/* a row per theme: the plain one, then a sparkles button for its fancy variant */
+.theme-menu .row { display: flex; align-items: center; gap: 2px; }
+.theme-menu .row > .item:first-child { flex: 1; min-width: 0; }
+.theme-menu .item.fancy { width: auto; flex: none; padding: 6px; color: var(--faint); }
+.theme-menu .item.fancy:hover { color: inherit; }
+.theme-menu .row.on > .item:first-child { background: var(--press); }
+.theme-menu .row.on .nm { font-weight: 600; }
+.theme-menu .item.fancy[aria-checked="true"] { background: var(--press); color: #d99a00; }
+.theme-bar { display: flex; align-items: center; gap: 2px; }
+.fancy-btn { padding: 0 7px; color: var(--faint); }
+.fancy-btn:hover { color: inherit; }
+.fancy-btn[aria-pressed="true"] { color: #d99a00; }
+.icon.sparkles { fill: currentColor; stroke: none; }
 .tsw {
   position: relative; display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid;
   overflow: hidden; flex: none;
@@ -328,7 +339,8 @@ body.nomap .through-group, body.nomap .theme-group, body.nomap .search, body.nom
   .tb-more .tb-label { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); }
   .tb-more .seg { display: flex; }
   /* the theme list opens in place, inside the menu */
-  .tb-more .theme-btn { width: 100%; border: 1px solid var(--line); background: var(--field); }
+  .tb-more .theme-btn { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--field); }
+  .tb-more .fancy-btn { border: 1px solid var(--line); }
   .tb-more .theme-btn .icon.small { margin-left: auto; }
   .tb-more .theme-menu { position: static; margin-top: 4px; min-width: 0; max-width: none; box-shadow: none; }
   .tb-more .seg button { flex: 1; height: 30px; justify-content: center; }
