@@ -15,7 +15,7 @@ linemap is young: 0.x releases may still change the DOT dialect.
 
 [![Web shop](examples/webshop.svg)](https://mergezalot.github.io/linemap/)
 
-### Themeing, darkmode, micro animations, and all of that in SVG!
+### Themeing, darkmode, micro animations (the `-fancy` themes), and all of that in SVG!
 
 [![Platform](examples/platform.svg)](https://mergezalot.github.io/linemap/)
 
