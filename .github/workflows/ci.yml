@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: ['**'] # not tags: release.yml tests those itself
   pull_request:
 
 permissions:
