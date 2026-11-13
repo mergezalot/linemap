@@ -1,0 +1,177 @@
+// Request flows through a SaaS platform: where the load is.
+// Each line is a use-case. They start sparse at the clients, merge in pairs at the entry
+// points, squeeze into one thick trunk through the gateway, and fan out at auth to four
+// teams: Commerce, Search, Media and Back office. Inside each team flows
+// pass from service to service (checkout: orders, inventory, payments; exports: export worker,
+// zip & encrypt), and some cross into another team's row (stock levels feed ranking, takedowns
+// ride the upload chain). Four producers feed the message bus, whose 4-lane bundle splits again
+// into email and SMS. The main database gathers the writes at the bottom. Webhooks take their own
+// way, over the top and past auth.
+digraph platform {
+  theme = neond
+  subgraph lines {                       // lane order = fan-out order, top to bottom; no colours: the palette
+    SI [label="Sign-in"]
+    CO [label="Checkout"]
+    WH [label="Webhook"]
+    SR [label="Search"]
+    BR [label="Browse"]
+    UP [label="Upload"]
+    EX [label="Export"]
+    AD [label="Admin"]
+    RP [label="Reports"]
+  }
+
+  { node [height=1.4]
+
+  // ---- The fringe: clients, one or a few use-cases each ------------------------------------
+  subgraph cluster_clients {
+    label = "Clients"; color = "#616161"
+    browser  [label="Browser",          pos="100,250"]
+    mobile   [label="Mobile app",       pos="100,420"]
+    partner  [label="Partner API",      pos="100,590"]
+    cli      [label="CLI",              pos="100,760"]
+    admin_ui [label="Admin console",    pos="100,930"]
+    cron     [label="Scheduler (cron)", shape=queue, pos="100,1100"]
+  }
+
+  // ---- Entry points: pairs of clients merge ------------------------------------------------
+  subgraph cluster_entry {
+    label = "Entry points"; color = "#2e7d32"
+    { node [through=true, height=3.7]
+      cdn  [label="CDN",           pos="520,335"]
+      keys [label="API keys",      pos="520,675"]
+      vpn  [label="Office VPN",    pos="520,1015"]
+    }
+  }
+
+  // ---- The trunk: almost every request passes here -----------------------------------------
+  subgraph cluster_edge {
+    label = "Edge"; color = "#1565c0"
+    lb      [label="Load balancer", width=4.2, height=3.2, pos="1000,675"]
+    gateway [label="API gateway",   through=true, height=2.4, pos="1420,675"]
+  }
+
+  // ---- Auth fans the trunk out to four teams --------------------------------------------
+  subgraph cluster_core {
+    label = "Core"; color = "#4527a0"
+    auth [label="Auth", height=13.9, pos="1880,875"]
+    subgraph cluster_services {
+      label = "Services"; color = "#6a1b9a"
+      subgraph cluster_commerce {
+        label = "Commerce"; color = "#e65100"
+        orders_svc [label="Order service",   pos="2330,420"]
+        inventory  [label="Inventory",       pos="2780,420"]
+        payments   [label="Payment service", height=2, pos="3230,420"]
+      }
+      search_svc [label="Search service",  pos="2330,650"]
+      ranking    [label="Ranking",         pos="2780,650"]
+      subgraph cluster_media {
+        label = "Media"; color = "#00838f"
+        files_svc  [label="File service",    height=2, pos="2330,880"]
+        scanner    [label="Virus scanner",   height=2, pos="2780,880"]
+        thumbs     [label="Thumbnailer",     pos="3230,880"]
+        exporter   [label="Export worker", shape=queue, pos="2780,1060"]
+        archiver   [label="Zip & encrypt",   pos="3230,1060"]
+      }
+      subgraph cluster_backoffice {
+        label = "Back office"; color = "#4e342e"
+        admin_svc  [label="Admin service",   pos="2330,1330"]
+        reporting  [label="Reporting",       pos="2780,1330"]
+      }
+    }
+  }
+
+  // ---- Messaging: everything that tells a person something ---------------------------------
+  subgraph cluster_messaging {
+    label = "Messaging"; color = "#ad1457"
+    bus    [label="Message bus", shape=queue, height=2, pos="3230,1680"]
+    notify [label="Notifications", pos="3680,1680"]
+    email  [label="Email sender",  pos="4200,1680"]
+    sms    [label="SMS gateway",   pos="4200,1840"]
+  }
+
+  // ---- Thinning out: stores ----------------------------------------------------------------
+  subgraph cluster_data {
+    label = "Data"; color = "#f57f17"
+    { node [shape=cylinder]
+      index     [label="Search index",   pos="4200,650"]
+      blob      [label="Object storage", pos="4200,880"]
+      warehouse [label="Data warehouse", pos="4200,1330"]
+    }
+  }
+  db [label="Main database", shape=cylinder, width=9, pos="2560,1900"]   // load gathers again
+
+  // ---- The other fringe: outside parties ---------------------------------------------------
+  psp     [label="Payment provider", pos="4660,420"]
+  finance [label="Finance team", shape=person, height=1.94, pos="4660,1330"]
+  inbox   [label="Customer inbox",   pos="4660,1680"]
+  phone   [label="Customer phone",   pos="4660,1840"]
+  }
+
+  // ---- Fan-in ------------------------------------------------------------------------------
+  browser  -> cdn  [lines="SI CO SR BR UP"]
+  mobile   -> cdn  [lines="SI CO SR BR"]
+  partner  -> keys [lines="CO SR EX"]
+  cli      -> keys [lines="UP EX"]
+  admin_ui -> vpn  [lines="SI AD RP"]
+  cron     -> vpn  [lines="EX RP"]
+  cdn  -> lb [lines="SI CO SR BR UP", via="1000,335"]   // into the top
+  keys -> lb [lines="CO SR UP EX"]
+  vpn  -> lb [lines="SI EX AD RP", via="1000,1015"]     // into the bottom
+
+  // ---- The trunk ---------------------------------------------------------------------------
+  lb -> gateway -> auth [lines="SI CO SR BR UP EX AD RP"]
+
+  // ---- Fan-out inside auth; sign-ins end there ---------------------------------------------
+  auth -> orders_svc [lines=CO]
+  auth -> search_svc [lines="SR BR"]
+  auth -> files_svc  [lines="UP EX"]
+  auth -> admin_svc  [lines="AD RP"]
+
+  // ---- Within each team --------------------------------------------------------------------
+  orders_svc -> inventory -> payments [lines=CO]
+  payments -> psp       [lines=CO, label="Charge"]
+  search_svc -> ranking [lines="SR BR"]
+  ranking -> index      [lines="SR BR CO"]
+  files_svc -> scanner -> thumbs -> blob [lines="UP AD"]
+  files_svc -> exporter [lines=EX, via="2555,905 2555,1060"]
+  exporter -> archiver  [lines=EX]
+  archiver -> blob      [lines=EX, label="Archive", via="4200,1060"]
+  admin_svc -> reporting [lines=RP]
+  reporting -> warehouse [lines=RP]
+  warehouse -> finance  [lines=RP, label="Monthly"]
+
+  // ---- Across the rows: one team's flow passes through another's ---------------------------
+  inventory -> ranking     [lines=CO, label="Stock levels"]     // sold out ranks lower
+  search_svc -> orders_svc [lines=BR, label="Add to cart"]      // browsing ends in the cart
+  admin_svc -> files_svc   [lines=AD, label="Takedowns"]        // removed through the upload chain
+
+  // ---- Into the message bus, out to the channels ------------------------------------------
+  payments -> bus  [lines=CO, label="Receipt", via="3420,450 3420,1560 3270,1560"]
+  archiver -> bus  [lines=EX, label="Export ready"]
+  scanner -> bus   [lines=UP, label="Infected", via="3010,905 3010,1660"]
+  reporting -> bus [lines=RP, label="Report ready", via="2780,1700"]
+  bus -> notify    [lines="CO EX UP RP"]
+  notify -> email  [lines="CO EX RP"]
+  notify -> sms    [lines="CO UP"]
+  email -> inbox   [lines="CO EX"]
+  email -> finance [lines=RP, label="Report link"]
+  sms -> phone     [lines="CO UP"]
+
+  // ---- Into the database -------------------------------------------------------------------
+  payments  -> db [lines="CO WH", via="2960,560 2960,1820 2800,1820"]
+  files_svc -> db [lines=UP, label="Metadata", via="2510,850 2510,1800"]
+  admin_svc -> db [lines=AD]
+
+  // ---- Webhooks: over the top into the gateway, and past auth ------------------------------
+  psp -> gateway      [lines=WH, label="Payment events", via="4660,120 1370,120"]
+  gateway -> payments [lines=WH, label="Signed, no session", via="1470,230 3230,230"]
+
+  // ---- Notes -------------------------------------------------------------------------------
+  { node [shape=note]
+    note_trunk [pos="1420,930", label=<Every request but webhooks<br/>passes here: scale this first.>]
+    lb -> note_trunk
+    note_si [pos="1880,1620", label=<A sign-in ends here:<br/>it only returns a session.>]
+    auth -> note_si
+  }
+}

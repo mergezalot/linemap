@@ -1,0 +1,119 @@
+// How an order moves through a small web shop's systems. A compact tour of every feature:
+//   lines and lane order          subgraph lines
+//   all shapes                    box, diamond, person, cylinder, queue, note
+//   containers, nested            cluster_backend > cluster_orders, cluster_payments
+//   edges to containers           cluster_backend -> bus, support -> cluster_payments
+//   container to container        cluster_fulfilment -> cluster_data, cluster_data -> cluster_storefront
+//   lines through nodes           gateway (merge)
+//   manual routes                 via
+//   pinned and automatic layout   every note but one has no pos and is placed automatically
+//   DOT conveniences              {a b} groups, chains, scoped node [...] / edge [...] defaults
+//   styling                       color, fontcolor, fontsize, width, height, class; container accents
+//   links                         URL on gateway, href on note_gateway
+digraph webshop {
+  rankdir = LR                                   // Graphviz-only: used by previews, ignored here
+
+  subgraph lines {                               // declaration order = lane order
+    O [label="Order",          color="#2563eb"]
+    P [label="Payment",        color="#16a34a"]
+    S [label="Shipment",       color="#f97316"]
+    R [label="Refund",         color="#dc2626"]
+    E [label="Event",          color="#0ea5b7"]
+    M [label="Email",          color="#8b5cf6"]
+  }
+
+  { node [height=1.4]                            // flatter boxes; persons and notes override
+
+  { node [shape=person, height=1.94]
+    customer [label="Customer", pos="80,460"]
+    support  [label="Support agent", class="human", pos="2480,620"]
+  }
+
+  subgraph cluster_storefront {
+    label = "Storefront"; style = filled; color = "#1565c0"
+    web [label="Web shop", pos="420,300"]
+    app [label="Mobile app", pos="420,620"]
+  }
+
+  subgraph cluster_backend {
+    label = "Backend"
+    gateway [label="API gateway", through=true, class="critical", height=5.2, pos="880,460",
+             URL="https://en.wikipedia.org/wiki/API_management"]
+
+    subgraph cluster_orders {
+      label = "Order service"; color = "#283593"
+      orders_q [label="Order queue", shape=queue, pos="1300,300"]
+      check    [label="In stock?", shape=diamond, width=3.2, pos="1640,300"]
+    }
+    subgraph cluster_payments {
+      label = "Payments"; color = "#33691e"
+      psp  [label="Payment provider\n(external)", class="external", pos="1300,620"]
+      paid [label="Paid?", shape=diamond, width=3.2, pos="1640,620"]
+    }
+  }
+
+  subgraph cluster_fulfilment {
+    label = "Fulfilment"; color = "#e65100"
+    picking [label="Picking", pos="2160,300"]
+    courier [label="Courier", color="#ef6c00", pos="2480,300"]
+  }
+
+  subgraph cluster_data {
+    label = "Data platform"; color = "#f57f17"
+    bus  [label="Event bus", shape=queue, pos="1470,1150"]
+    lake [label="Data lake", shape=cylinder, pos="1820,1150"]
+    dash [label="Dashboard", fontcolor="#e65100", fontsize=17, pos="2160,1150"]
+  }
+
+  mailer [label="Mailer", pos="1350,40"]         // above the order service: a short way to the customer
+  }
+
+  // ---- Orders and payments ----------------------------------------------------------------
+  customer -> {web app} [lines="O P"]            // a group: one edge to each
+  {web app} -> gateway  [lines="O P"]            // merge inside the gateway
+  gateway -> orders_q   [lines=O]
+  gateway -> psp        [lines=P]
+  orders_q -> check     [lines=O]
+  check -> picking      [lines=O, label="Yes"]
+  psp -> paid           [lines=P]
+  paid -> orders_q      [lines=P, label="Yes"]   // ends inside the order queue: a terminus
+
+  // ---- Shipping: back to the customer over the top ----------------------------------------
+  picking -> courier [lines=S]
+  courier -> customer [lines=S, label="Delivered", via="2480,-150 80,-150"]
+
+  // ---- Refunds: they cross the payment flow inside the payment provider --------------------
+  { edge [lines=R]
+    check -> psp [label="No"]
+    support -> cluster_payments [label="Manual refund"]
+    psp -> customer [label="Money back", via="1300,960 -60,960 -60,460"]
+  }
+
+  // ---- Email -------------------------------------------------------------------------------
+  { edge [lines=M]
+    cluster_orders -> mailer [label="Confirmation"]
+    mailer -> customer
+  }
+
+  // ---- Events: whole systems report to the data platform -----------------------------------
+  { edge [lines=E]
+    cluster_backend -> bus
+    cluster_storefront -> bus [label="Clicks", via="520,1150"]
+    bus -> lake -> dash                           // a chain: two edges
+    cluster_fulfilment -> cluster_data [label="Scans"]
+    cluster_data -> cluster_storefront [label="Recommendations", via="330,1120"]
+  }
+
+  // ---- Notes -------------------------------------------------------------------------------
+  { node [shape=note]
+    note_gateway [label=<One entry point for web and app.<br/>Rate limits apply per client.>,
+                  href="https://en.wikipedia.org/wiki/Rate_limiting"]
+    gateway -> note_gateway
+    note_check [label=<Out of stock means<br/>an instant refund.>]
+    check -> note_check
+    note_lake [label=<Kept for 2 years.>, pos="1820,1340"]   // pinned
+    lake -> note_lake
+    note_support [label=<For the cases<br/>no rule covers.>]
+    support -> note_support
+  }
+}

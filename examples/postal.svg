@@ -1,0 +1,1013 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -600.5 4581.4 3633" width="4581.4" height="3633" class="linemap lm-root lm-theme-light" data-theme="light" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" fill="#1f2933">
+<style>
+.lm-root{font-family:Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif;fill:#1f2933}
+.lm-bg{fill:#ffffff}
+.lm-group-box{fill:#f3f5f7;stroke:#dbe0e6;stroke-width:1.25}
+.lm-group-title{fill:#4b5663;font-weight:700}
+.lm-shape{fill:#ffffff;stroke:#2b343f;stroke-width:2;stroke-linejoin:round}
+.lm-shape-line{fill:none;stroke:#2b343f;stroke-width:2}
+.lm-sheen{stroke:none;pointer-events:none}
+.lm-group-tab{fill:#4b5663;stroke:none}
+.lm-group-title-tab{fill:#ffffff;font-weight:600}
+.lm-person{fill:#596573;stroke:none}
+.lm-label{fill:#1f2933;font-weight:500}
+.lm-halo{stroke:#ffffff}
+.lm-halo-in{stroke:#ffffff}
+.lm-note-box{fill:#f7f8fa;stroke:#dfe3e8;stroke-width:1}
+.lm-note-text{fill:#6b7683;font-style:italic}
+.lm-note-link{fill:none;stroke:#b9c0c8;stroke-width:1.2;stroke-dasharray:5 4}
+.lm-casing{fill:none;stroke:#ffffff;stroke-linejoin:round}
+.lm-casing-in{stroke:#ffffff}
+.lm-strand{fill:none;stroke-linejoin:round}
+.lm-edge-label-box{fill:#ffffff;stroke:#cfd5dc;stroke-width:1}
+.lm-edge-label{fill:#1f2933;font-weight:600}
+.lm-legend-box{fill:#ffffff;stroke:#dbe0e6;stroke-width:1}
+.lm-legend-title{fill:#6b7683;font-weight:700;letter-spacing:0.12em}
+.lm-legend-text{fill:#1f2933}
+</style>
+<defs><filter id="lm-shadow-light-node" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="b0"/><feOffset in="b0" dx="0" dy="1" result="o0"/><feFlood flood-color="#0f1a2a" flood-opacity="0.1"/><feComposite in2="o0" operator="in" result="s0"/><feGaussianBlur in="SourceAlpha" stdDeviation="10" result="b1"/><feOffset in="b1" dx="0" dy="6" result="o1"/><feFlood flood-color="#0f1a2a" flood-opacity="0.12"/><feComposite in2="o1" operator="in" result="s1"/><feMerge><feMergeNode in="s0"/><feMergeNode in="s1"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lm-shadow-light-group" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="8" result="b0"/><feOffset in="b0" dx="0" dy="2" result="o0"/><feFlood flood-color="#0f1a2a" flood-opacity="0.05"/><feComposite in2="o0" operator="in" result="s0"/><feMerge><feMergeNode in="s0"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lm-shadow-light-small" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="2" result="b0"/><feOffset in="b0" dx="0" dy="1" result="o0"/><feFlood flood-color="#0f1a2a" flood-opacity="0.1"/><feComposite in2="o0" operator="in" result="s0"/><feMerge><feMergeNode in="s0"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect x="-200" y="-600.5" width="4581.4" height="3633" class="lm-bg" fill="#ffffff"/>
+<g class="group" id="cluster_office" data-label="Post office">
+<rect x="275" y="49.5" width="680" height="661" rx="22" class="lm-group-box" style="fill:#f7f5ed;stroke:#ccbe8c" filter="url(#lm-shadow-light-group)"/>
+<text x="295" y="77.5" font-size="18" class="lm-group-title" style="fill:#6c590f">Post office</text>
+</g>
+<g class="group" id="cluster_customs" data-label="Customs">
+<rect x="275" y="799.5" width="684.5" height="441" rx="22" class="lm-group-box" style="fill:#f5eff8;stroke:#bc98d2" filter="url(#lm-shadow-light-group)"/>
+<text x="295" y="827.5" font-size="18" class="lm-group-title" style="fill:#541f7b">Customs</text>
+</g>
+<g class="group" id="cluster_sorting" data-label="Sorting centre">
+<rect x="1035" y="239.5" width="1440" height="1031" rx="22" class="lm-group-box" style="fill:#f1f2f3;stroke:#a5acb0" filter="url(#lm-shadow-light-group)"/>
+<text x="1055" y="267.5" font-size="18" class="lm-group-title" style="fill:#303e47">Sorting centre</text>
+</g>
+<g class="group" id="cluster_letters" data-label="Letter hall">
+<rect x="1455" y="269.5" width="990" height="441" rx="22" class="lm-group-box" style="fill:#eff4fb;stroke:#96bae3" filter="url(#lm-shadow-light-group)"/>
+<text x="1475" y="297.5" font-size="18" class="lm-group-title" style="fill:#185396">Letter hall</text>
+</g>
+<g class="group" id="cluster_parcels" data-label="Parcel hall">
+<rect x="1065" y="799.5" width="1380" height="441" rx="22" class="lm-group-box" style="fill:#fbf1ee;stroke:#e2a592" filter="url(#lm-shadow-light-group)"/>
+<text x="1085" y="827.5" font-size="18" class="lm-group-title" style="fill:#8f3218">Parcel hall</text>
+</g>
+<g class="group" id="cluster_depot" data-label="Delivery depot">
+<rect x="2555" y="269.5" width="680" height="1361" rx="22" class="lm-group-box" style="fill:#eff4ef;stroke:#98b79b" filter="url(#lm-shadow-light-group)"/>
+<text x="2575" y="297.5" font-size="18" class="lm-group-title" style="fill:#1c4e26">Delivery depot</text>
+</g>
+<g class="group" id="cluster_town" data-label="Neighbourhood">
+<rect x="3300.5" y="269.5" width="774.5" height="1191" rx="22" class="lm-group-box" style="fill:#f6f5ef;stroke:#c7c297" filter="url(#lm-shadow-light-group)"/>
+<text x="3320.5" y="297.5" font-size="18" class="lm-group-title" style="fill:#64601f">Neighbourhood</text>
+</g>
+<g class="group" id="cluster_warehouse" data-label="Supplies warehouse">
+<rect x="275" y="-530.5" width="680" height="221" rx="22" class="lm-group-box" style="fill:#f3f1f0;stroke:#afa4a1" filter="url(#lm-shadow-light-group)"/>
+<text x="295" y="-502.5" font-size="18" class="lm-group-title" style="fill:#403130">Supplies warehouse</text>
+</g>
+<g class="group" id="cluster_hq" data-label="Head office">
+<rect x="1735" y="-560.5" width="2330" height="281" rx="22" class="lm-group-box" style="fill:#f2f2f2;stroke:#aaaaaa" filter="url(#lm-shadow-light-group)"/>
+<text x="1755" y="-532.5" font-size="18" class="lm-group-title" style="fill:#383b3e">Head office</text>
+</g>
+<g class="group" id="cluster_it" data-label="IT department">
+<rect x="1765" y="-530.5" width="680" height="221" rx="22" class="lm-group-box" style="fill:#fef6ef;stroke:#fbc597" filter="url(#lm-shadow-light-group)"/>
+<text x="1785" y="-502.5" font-size="18" class="lm-group-title" style="fill:#b5651f">IT department</text>
+</g>
+<g class="group" id="cluster_complaints" data-label="Complaints">
+<rect x="3355" y="-530.5" width="680" height="221" rx="22" class="lm-group-box" style="fill:#f9eff3;stroke:#da95b3" filter="url(#lm-shadow-light-group)"/>
+<text x="3375" y="-502.5" font-size="18" class="lm-group-title" style="fill:#821a4c">Complaints</text>
+</g>
+<g class="group" id="cluster_rail" data-label="Mail rail yard">
+<rect x="1065" y="1919.5" width="370" height="561" rx="22" class="lm-group-box" style="fill:#edf5fa;stroke:#8dc2e1" filter="url(#lm-shadow-light-group)"/>
+<text x="1085" y="1947.5" font-size="18" class="lm-group-title" style="fill:#0b6094">Mail rail yard</text>
+</g>
+<g class="group" id="cluster_regions" data-label="Other regions">
+<rect x="245" y="1889.5" width="430" height="621" rx="22" class="lm-group-box" style="fill:#f3f7f0;stroke:#b3cba1" filter="url(#lm-shadow-light-group)"/>
+<text x="265" y="1917.5" font-size="18" class="lm-group-title" style="fill:#456e30">Other regions</text>
+</g>
+<g class="group" id="cluster_north" data-label="North">
+<rect x="275" y="1919.5" width="370" height="221" rx="22" class="lm-group-box" filter="url(#lm-shadow-light-group)"/>
+<text x="295" y="1947.5" font-size="18" class="lm-group-title">North</text>
+</g>
+<g class="group" id="cluster_south" data-label="South">
+<rect x="275" y="2259.5" width="370" height="221" rx="22" class="lm-group-box" filter="url(#lm-shadow-light-group)"/>
+<text x="295" y="2287.5" font-size="18" class="lm-group-title">South</text>
+</g>
+<path d="M460,-14 L460,109.5" class="lm-note-link"/>
+<path d="M1950,146 L1950,329.5" class="lm-note-link"/>
+<path d="M1591,1345 L1627.5,1345 L1627.5,1180.5" class="lm-note-link"/>
+<path d="M770,1305 L770,1180.5" class="lm-note-link"/>
+<path d="M2740,1016 L2740,1079.5" class="lm-note-link"/>
+<path d="M2740,1390.5 L2740,1469.5" class="lm-note-link"/>
+<path d="M1250,-74 L1250,-10.5" class="lm-note-link"/>
+<path d="M1973.5,1420 L2055,1420" class="lm-note-link"/>
+<g class="edge" data-from="pen_pal" data-to="postbox" data-lines="A">
+<path d="M130,160 L335,160" class="lm-casing" stroke-width="14"/>
+<path d="M130,160 L335,160" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="329,160 318.7,157.3 318.7,162.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="lawyer" data-to="counter" data-lines="B E">
+<path d="M130,363.1 L335,363.1" class="lm-casing" stroke-width="23"/>
+<path d="M130,358.6 L335,358.6" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M130,367.6 L335,367.6" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="329,358.6 318.7,355.9 318.7,361.3" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="E">
+<polygon points="329,367.6 318.7,364.9 318.7,370.3" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="shop" data-to="counter" data-lines="C">
+<path d="M185,583.1 L213.5,583.1 Q242,583.1 242,554.6 L242,428.9 Q242,396.9 274,396.9 L335,396.9" class="lm-casing" stroke-width="14"/>
+<path d="M185,583.1 L213.5,583.1 Q242,583.1 242,554.6 L242,428.9 Q242,396.9 274,396.9 L335,396.9" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<g class="lm-marks" data-line="C">
+<polygon points="329,396.9 318.6,394.2 318.6,399.6" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="shop" data-to="pickup" data-lines="E">
+<path d="M185,600 L335,600" class="lm-casing" stroke-width="14"/>
+<path d="M185,600 L335,600" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="329,600 318.7,597.3 318.7,602.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="postbox" data-to="truck" data-lines="A">
+<path d="M585,160 L738,160 Q770,160 770,192 L770,329.5" class="lm-casing" stroke-width="14"/>
+<path d="M585,160 L738,160 Q770,160 770,192 L770,329.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="770,323.5 772.7,313.2 767.3,313.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="counter" data-to="truck" data-lines="B C E">
+<path d="M585,380 L645,380" class="lm-casing" stroke-width="32"/>
+<path d="M585,371 L645,371" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M585,380 L645,380" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M585,389 L645,389" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="639,371 628.7,368.3 628.7,373.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="639,380 628.7,377.3 628.7,382.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="E">
+<polygon points="639,389 628.7,386.3 628.7,391.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="pickup" data-to="truck" data-lines="E">
+<path d="M585,600 L738,600 Q770,600 770,568 L770,430.5" class="lm-casing" stroke-width="14"/>
+<path d="M585,600 L738,600 Q770,600 770,568 L770,430.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="770,436.5 767.3,446.9 772.7,446.9" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="truck" data-to="intake" data-lines="A B C E">
+<path d="M895,380 L1125,380" class="lm-casing" stroke-width="41"/>
+<path d="M895,366.5 L1125,366.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M895,375.5 L1125,375.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M895,384.5 L1125,384.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M895,393.5 L1125,393.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="1119,366.5 1108.7,363.8 1108.7,369.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="B">
+<polygon points="1119,375.5 1108.7,372.8 1108.7,378.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="1119,384.5 1108.7,381.8 1108.7,387.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="E">
+<polygon points="1119,393.5 1108.7,390.8 1108.7,396.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="bank" data-to="intake" data-lines="G">
+<path d="M1250,90.5 L1250,329.5" class="lm-casing" stroke-width="14"/>
+<path d="M1250,90.5 L1250,329.5" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<g class="lm-marks" data-line="G">
+<polygon points="1250,323.5 1252.7,313.2 1247.3,313.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="intake" data-to="split" data-lines="A B G C E">
+<path d="M1250,430.5 L1250,560.3" class="lm-casing" stroke-width="50"/>
+<path d="M1268,430.5 L1268,560.3" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M1259,430.5 L1259,560.3" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M1250,430.5 L1250,560.3" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<path d="M1241,430.5 L1241,560.3" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M1232,430.5 L1232,560.3" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="1268,534.7 1270.7,524.4 1265.3,524.4" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="B">
+<polygon points="1259,534.7 1261.7,524.4 1256.3,524.4" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="G">
+<polygon points="1250,534.7 1252.7,524.4 1247.3,524.4" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="1241,534.7 1243.7,524.4 1238.3,524.4" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="E">
+<polygon points="1232,534.7 1234.7,524.4 1229.3,524.4" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="split" data-to="ocr" data-lines="A B G" data-label="Letter">
+<path d="M1342.9,600 L1515,600" class="lm-casing" stroke-width="32"/>
+<path d="M1342.9,591 L1515,591" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M1342.9,600 L1515,600" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M1342.9,609 L1515,609" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="1509,591 1498.7,588.3 1498.7,593.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="B">
+<polygon points="1509,600 1498.7,597.3 1498.7,602.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="G">
+<polygon points="1509,609 1498.7,606.3 1498.7,611.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="ocr" data-to="readable" data-lines="A B G">
+<path d="M1765,600 L1857.1,600" class="lm-casing" stroke-width="32"/>
+<path d="M1765,591 L1857.1,591" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M1765,600 L1857.1,600" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M1765,609 L1857.1,609" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="1779.9,591 1769.5,588.3 1769.5,593.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="B">
+<polygon points="1779.9,600 1769.5,597.3 1769.5,602.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="G">
+<polygon points="1779.9,609 1769.5,606.3 1769.5,611.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="readable" data-to="letter_sorter" data-lines="A B G" data-label="Yes">
+<path d="M2042.9,600 L2135,600" class="lm-casing" stroke-width="32"/>
+<path d="M2042.9,591 L2135,591" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M2042.9,600 L2135,600" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M2042.9,609 L2135,609" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="2129,591 2118.6,588.3 2118.6,593.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="B">
+<polygon points="2129,600 2118.6,597.3 2118.6,602.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="G">
+<polygon points="2129,609 2118.6,606.3 2118.6,611.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="readable" data-to="human" data-lines="A B" data-label="No">
+<path d="M1950,555 L1950,430.5" class="lm-casing" stroke-width="23"/>
+<path d="M1945.5,555 L1945.5,430.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M1954.5,555 L1954.5,430.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="1945.5,436.5 1942.8,446.9 1948.2,446.9" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="B">
+<polygon points="1954.5,436.5 1951.8,446.9 1957.2,446.9" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="human" data-to="letter_sorter" data-lines="A B">
+<path d="M2075,380 L2228,380 Q2260,380 2260,412 L2260,549.5" class="lm-casing" stroke-width="23"/>
+<path d="M2075,375.5 L2228,375.5 Q2264.5,375.5 2264.5,412 L2264.5,549.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M2075,384.5 L2228,384.5 Q2255.5,384.5 2255.5,412 L2255.5,549.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="2264.5,543.5 2267.2,533.2 2261.8,533.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="B">
+<polygon points="2255.5,543.5 2258.2,533.2 2252.8,533.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="abroad" data-to="airport" data-lines="D">
+<path d="M185,910 L335,910" class="lm-casing" stroke-width="14"/>
+<path d="M185,910 L335,910" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="D">
+<polygon points="329,910 318.7,907.3 318.7,912.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="airport" data-to="duties" data-lines="D">
+<path d="M585,910 L654,910" class="lm-casing" stroke-width="14"/>
+<path d="M585,910 L654,910" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="D">
+<polygon points="623,910 612.6,907.3 612.6,912.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="duties" data-to="held" data-lines="D" data-label="No">
+<path d="M770,956.7 L770,1079.5" class="lm-casing" stroke-width="14"/>
+<path d="M770,956.7 L770,1079.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="D">
+<polygon points="770,1073.5 772.7,1063.2 767.3,1063.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="held" data-to="airport" data-lines="D" data-label="Paid up">
+<path d="M645,1130 L492,1130 Q460,1130 460,1098 L460,960.5" class="lm-casing" stroke-width="14"/>
+<path d="M645,1130 L492,1130 Q460,1130 460,1098 L460,960.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="D">
+<polygon points="460,966.5 457.3,976.9 462.7,976.9" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="duties" data-to="scan" data-lines="D" data-label="Yes">
+<path d="M886,910 L1125,910" class="lm-casing" stroke-width="14"/>
+<path d="M886,910 L1125,910" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="D">
+<polygon points="1119,910 1108.7,907.3 1108.7,912.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="split" data-to="scan" data-lines="C E" data-label="Parcel">
+<path d="M1250,645 L1250,859.5" class="lm-casing" stroke-width="23"/>
+<path d="M1254.5,645 L1254.5,859.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M1245.5,645 L1245.5,859.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="C">
+<polygon points="1254.5,853.5 1257.2,843.2 1251.8,843.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="E">
+<polygon points="1245.5,853.5 1248.2,843.2 1242.8,843.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="scan" data-to="fits" data-lines="C H D E">
+<path d="M1375,910 L1558.7,910" class="lm-casing" stroke-width="41"/>
+<path d="M1375,896.5 L1558.7,896.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M1375,905.5 L1558.7,905.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M1375,914.5 L1558.7,914.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<path d="M1375,923.5 L1558.7,923.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="C">
+<polygon points="1458.3,896.5 1448,893.8 1448,899.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="1458.3,905.5 1448,902.8 1448,908.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="1458.3,914.5 1448,911.8 1448,917.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="E">
+<polygon points="1458.3,923.5 1448,920.8 1448,926.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="fits" data-to="parcel_sorter" data-lines="C H D E" data-label="Yes">
+<path d="M1721.3,910 L2135,910" class="lm-casing" stroke-width="41"/>
+<path d="M1721.3,896.5 L2135,896.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M1721.3,905.5 L2135,905.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M1721.3,914.5 L2135,914.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<path d="M1721.3,923.5 L2135,923.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="C">
+<polygon points="2129,896.5 2118.6,893.8 2118.6,899.2" fill="#ffffff"/>
+<polygon points="1889,896.5 1878.7,893.8 1878.7,899.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="2129,905.5 2118.6,902.8 2118.6,908.2" fill="#ffffff"/>
+<polygon points="1889,905.5 1878.7,902.8 1878.7,908.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="2129,914.5 2118.6,911.8 2118.6,917.2" fill="#ffffff"/>
+<polygon points="1889,914.5 1878.7,911.8 1878.7,917.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="E">
+<polygon points="2129,923.5 2118.6,920.8 2118.6,926.2" fill="#ffffff"/>
+<polygon points="1889,923.5 1878.7,920.8 1878.7,926.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="fits" data-to="forklift" data-lines="C H D E" data-label="No">
+<path d="M1640,951.5 L1640,1079.5" class="lm-casing" stroke-width="41"/>
+<path d="M1653.5,951.5 L1653.5,1079.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M1644.5,951.5 L1644.5,1079.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M1635.5,951.5 L1635.5,1079.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<path d="M1626.5,951.5 L1626.5,1079.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="C">
+<polygon points="1653.5,1073.5 1656.2,1063.2 1650.8,1063.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="1644.5,1073.5 1647.2,1063.2 1641.8,1063.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="1635.5,1073.5 1638.2,1063.2 1632.8,1063.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="E">
+<polygon points="1626.5,1073.5 1629.2,1063.2 1623.8,1063.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="forklift" data-to="parcel_sorter" data-lines="C H D E">
+<path d="M1765,1130 L2202,1130 Q2234,1130 2234,1098 L2234,960.5" class="lm-casing" stroke-width="41"/>
+<path d="M1765,1116.5 L2202,1116.5 Q2220.5,1116.5 2220.5,1098 L2220.5,960.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M1765,1125.5 L2202,1125.5 Q2229.5,1125.5 2229.5,1098 L2229.5,960.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M1765,1134.5 L2202,1134.5 Q2238.5,1134.5 2238.5,1098 L2238.5,960.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<path d="M1765,1143.5 L2202,1143.5 Q2247.5,1143.5 2247.5,1098 L2247.5,960.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="C">
+<polygon points="1979.4,1116.5 1969.1,1113.8 1969.1,1119.2" fill="#ffffff"/>
+<polygon points="2220.5,966.5 2217.8,976.9 2223.2,976.9" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="1979.4,1125.5 1969.1,1122.8 1969.1,1128.2" fill="#ffffff"/>
+<polygon points="2229.5,966.5 2226.8,976.9 2232.2,976.9" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="1979.4,1134.5 1969.1,1131.8 1969.1,1137.2" fill="#ffffff"/>
+<polygon points="2238.5,966.5 2235.8,976.9 2241.2,976.9" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="E">
+<polygon points="1979.4,1143.5 1969.1,1140.8 1969.1,1146.2" fill="#ffffff"/>
+<polygon points="2247.5,966.5 2244.8,976.9 2250.2,976.9" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="letter_sorter" data-to="planner" data-lines="A B G">
+<path d="M2385,600 L2615,600" class="lm-casing" stroke-width="32"/>
+<path d="M2385,591 L2615,591" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M2385,600 L2615,600" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M2385,609 L2615,609" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="2609,591 2598.6,588.3 2598.6,593.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="B">
+<polygon points="2609,600 2598.6,597.3 2598.6,602.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="G">
+<polygon points="2609,609 2598.6,606.3 2598.6,611.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="parcel_sorter" data-to="planner" data-lines="C H D">
+<path d="M2385,907.8 L2708,907.8 Q2740,907.8 2740,875.8 L2740,650.5" class="lm-casing" stroke-width="32"/>
+<path d="M2385,898.8 L2708,898.8 Q2731,898.8 2731,875.8 L2731,650.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M2385,907.8 L2708,907.8 Q2740,907.8 2740,875.8 L2740,650.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M2385,916.8 L2708,916.8 Q2749,916.8 2749,875.8 L2749,650.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="C">
+<polygon points="2544.7,898.8 2534.3,896.1 2534.3,901.5" fill="#ffffff"/>
+<polygon points="2731,656.5 2728.3,666.8 2733.7,666.8" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="2544.7,907.8 2534.3,905.1 2534.3,910.5" fill="#ffffff"/>
+<polygon points="2740,656.5 2737.3,666.8 2742.7,666.8" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="2544.7,916.8 2534.3,914.1 2534.3,919.5" fill="#ffffff"/>
+<polygon points="2749,656.5 2746.3,666.8 2751.7,666.8" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="parcel_sorter" data-to="express" data-lines="E">
+<path d="M2286,960.5 L2286,1098 Q2286,1130 2318,1130 L2615,1130" class="lm-casing" stroke-width="14"/>
+<path d="M2286,960.5 L2286,1098 Q2286,1130 2318,1130 L2615,1130" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="2609,1130 2598.6,1127.3 2598.6,1132.7" fill="#ffffff"/>
+<polygon points="2369,1130 2358.6,1127.3 2358.6,1132.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="planner" data-to="postie" data-lines="A B G">
+<path d="M2740,549.5 L2740,412 Q2740,380 2772,380 L2925,380" class="lm-casing" stroke-width="32"/>
+<path d="M2731,549.5 L2731,412 Q2731,371 2772,371 L2925,371" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M2740,549.5 L2740,412 Q2740,380 2772,380 L2925,380" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M2749,549.5 L2749,412 Q2749,389 2772,389 L2925,389" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="2919,371 2908.6,368.3 2908.6,373.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="B">
+<polygon points="2919,380 2908.6,377.3 2908.6,382.7" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="G">
+<polygon points="2919,389 2908.6,386.3 2908.6,391.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="planner" data-to="van" data-lines="B C H D">
+<path d="M2865,600 L2925,600" class="lm-casing" stroke-width="41"/>
+<path d="M2865,586.5 L2925,586.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M2865,595.5 L2925,595.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M2865,604.5 L2925,604.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M2865,613.5 L2925,613.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="2919,586.5 2908.6,583.8 2908.6,589.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="2919,595.5 2908.6,592.8 2908.6,598.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="2919,604.5 2908.6,601.8 2908.6,607.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="2919,613.5 2908.6,610.8 2908.6,616.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="postie" data-to="letterbox" data-lines="A G">
+<path d="M3175,380 L3365,380" class="lm-casing" stroke-width="23"/>
+<path d="M3175,375.5 L3365,375.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M3175,384.5 L3365,384.5" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="3359,375.5 3348.7,372.8 3348.7,378.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="G">
+<polygon points="3359,384.5 3348.7,381.8 3348.7,387.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="letterbox" data-to="recipient" data-lines="A G">
+<path d="M3615,380 L3858,380 Q3890,380 3890,412 L3890,549.5" class="lm-casing" stroke-width="23"/>
+<path d="M3615,375.5 L3858,375.5 Q3894.5,375.5 3894.5,412 L3894.5,549.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M3615,384.5 L3858,384.5 Q3885.5,384.5 3885.5,412 L3885.5,549.5" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<g class="lm-marks" data-line="A">
+<polygon points="3894.5,543.5 3897.2,533.2 3891.8,533.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="G">
+<polygon points="3885.5,543.5 3888.2,533.2 3882.8,533.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="postie" data-to="home" data-lines="B">
+<path d="M3050,430.5 L3050,459.8 Q3050,489.1 3079.3,489.1 L3458,489.1 Q3490,489.1 3490,521.1 L3490,553.3" class="lm-casing" stroke-width="14"/>
+<path d="M3050,430.5 L3050,459.8 Q3050,489.1 3079.3,489.1 L3458,489.1 Q3490,489.1 3490,521.1 L3490,553.3" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="3275.2,489.1 3264.8,486.4 3264.8,491.8" fill="#ffffff"/>
+<polygon points="3490,541.7 3492.7,531.4 3487.3,531.4" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="van" data-to="home" data-lines="B C H D">
+<path d="M3175,600 L3408.7,600" class="lm-casing" stroke-width="41"/>
+<path d="M3175,586.5 L3408.7,586.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3175,595.5 L3408.7,595.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3175,604.5 L3408.7,604.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3175,613.5 L3408.7,613.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="3308.3,586.5 3298,583.8 3298,589.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="3308.3,595.5 3298,592.8 3298,598.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="3308.3,604.5 3298,601.8 3298,607.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="3308.3,613.5 3298,610.8 3298,616.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="express" data-to="recipient" data-lines="E">
+<path d="M2865,1113.1 L3253.8,1113.1 Q3285.8,1113.1 3285.8,1081.1 L3285.8,814.2 Q3285.8,782.2 3317.8,782.2 L3832,782.2 Q3864,782.2 3864,750.2 L3864,650.5" class="lm-casing" stroke-width="14"/>
+<path d="M2865,1113.1 L3253.8,1113.1 Q3285.8,1113.1 3285.8,1081.1 L3285.8,814.2 Q3285.8,782.2 3317.8,782.2 L3832,782.2 Q3864,782.2 3864,750.2 L3864,650.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="3062.1,1113.1 3051.7,1110.4 3051.7,1115.8" fill="#ffffff"/>
+<polygon points="3285.8,942.5 3283.1,952.8 3288.5,952.8" fill="#ffffff"/>
+<polygon points="3497.3,782.2 3487,779.5 3487,784.9" fill="#ffffff"/>
+<polygon points="3662.8,782.2 3652.4,779.5 3652.4,784.9" fill="#ffffff"/>
+<polygon points="3864,656.5 3861.3,666.8 3866.7,666.8" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="home" data-to="recipient" data-lines="B C H D" data-label="Yes">
+<path d="M3571.3,600 L3765,600" class="lm-casing" stroke-width="41"/>
+<path d="M3571.3,586.5 L3765,586.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3571.3,595.5 L3765,595.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3571.3,604.5 L3765,604.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3571.3,613.5 L3765,613.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="3759,586.5 3748.7,583.8 3748.7,589.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="3759,595.5 3748.7,592.8 3748.7,598.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="3759,604.5 3748.7,601.8 3748.7,607.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="3759,613.5 3748.7,610.8 3748.7,616.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="home" data-to="next_door" data-lines="B C H D" data-label="No">
+<path d="M3490,641.5 L3490,868.5" class="lm-casing" stroke-width="41"/>
+<path d="M3503.5,641.5 L3503.5,868.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3494.5,641.5 L3494.5,868.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3485.5,641.5 L3485.5,868.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3476.5,641.5 L3476.5,868.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="3503.5,846.5 3506.2,836.1 3500.8,836.1" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="3494.5,846.5 3497.2,836.1 3491.8,836.1" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="3485.5,846.5 3488.2,836.1 3482.8,836.1" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="3476.5,846.5 3479.2,836.1 3473.8,836.1" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="next_door" data-to="neighbour" data-lines="B C H D" data-label="Yes">
+<path d="M3571.3,910 L3765,910" class="lm-casing" stroke-width="41"/>
+<path d="M3571.3,896.5 L3765,896.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3571.3,905.5 L3765,905.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3571.3,914.5 L3765,914.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3571.3,923.5 L3765,923.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="3759,896.5 3748.7,893.8 3748.7,899.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="3759,905.5 3748.7,902.8 3748.7,908.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="3759,914.5 3748.7,911.8 3748.7,917.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="3759,923.5 3748.7,920.8 3748.7,926.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="neighbour" data-to="recipient" data-lines="B C H D">
+<path d="M3890,859.5 L3890,650.5" class="lm-casing" stroke-width="41"/>
+<path d="M3876.5,859.5 L3876.5,650.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3885.5,859.5 L3885.5,650.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3894.5,859.5 L3894.5,650.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3903.5,859.5 L3903.5,650.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="3876.5,656.5 3873.8,666.8 3879.2,666.8" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="3885.5,656.5 3882.8,666.8 3888.2,666.8" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="3894.5,656.5 3891.8,666.8 3897.2,666.8" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="3903.5,656.5 3900.8,666.8 3906.2,666.8" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="next_door" data-to="locker" data-lines="B C H D" data-label="No">
+<path d="M3490,951.5 L3490,1079.5" class="lm-casing" stroke-width="41"/>
+<path d="M3503.5,951.5 L3503.5,1079.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3494.5,951.5 L3494.5,1079.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3485.5,951.5 L3485.5,1079.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3476.5,951.5 L3476.5,1079.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="3503.5,1073.5 3506.2,1063.2 3500.8,1063.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="3494.5,1073.5 3497.2,1063.2 3491.8,1063.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="3485.5,1073.5 3488.2,1063.2 3482.8,1063.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="3476.5,1073.5 3479.2,1063.2 3473.8,1063.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="locker" data-to="collected" data-lines="B C H D">
+<path d="M3490,1180.5 L3490,1308.5" class="lm-casing" stroke-width="41"/>
+<path d="M3503.5,1180.5 L3503.5,1308.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3494.5,1180.5 L3494.5,1308.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3485.5,1180.5 L3485.5,1308.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3476.5,1180.5 L3476.5,1308.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="3503.5,1286.5 3506.2,1276.1 3500.8,1276.1" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="3494.5,1286.5 3497.2,1276.1 3491.8,1276.1" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="3485.5,1286.5 3488.2,1276.1 3482.8,1276.1" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="3476.5,1286.5 3479.2,1276.1 3473.8,1276.1" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="collected" data-to="recipient" data-lines="B C H D" data-label="Yes">
+<path d="M3571.3,1350 L3660.3,1350 Q3692.3,1350 3692.3,1318 L3692.3,654 Q3692.3,622 3724.3,622 L3765,622" class="lm-casing" stroke-width="41"/>
+<path d="M3571.3,1336.5 L3660.3,1336.5 Q3678.8,1336.5 3678.8,1318 L3678.8,651.7 Q3678.8,608.5 3721.9,608.5 L3765,608.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3571.3,1345.5 L3660.3,1345.5 Q3687.8,1345.5 3687.8,1318 L3687.8,654 Q3687.8,617.5 3724.3,617.5 L3765,617.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3571.3,1354.5 L3660.3,1354.5 Q3696.8,1354.5 3696.8,1318 L3696.8,654 Q3696.8,626.5 3724.3,626.5 L3765,626.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3571.3,1363.5 L3660.3,1363.5 Q3705.8,1363.5 3705.8,1318 L3705.8,654 Q3705.8,635.5 3724.3,635.5 L3765,635.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<g class="lm-marks" data-line="B">
+<polygon points="3678.8,1084 3676.1,1094.4 3681.5,1094.4" fill="#ffffff"/>
+<polygon points="3678.8,877.7 3676.1,888 3681.5,888" fill="#ffffff"/>
+<polygon points="3759,608.5 3748.7,605.8 3748.7,611.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="C">
+<polygon points="3687.8,1084 3685.1,1094.4 3690.5,1094.4" fill="#ffffff"/>
+<polygon points="3687.8,877.7 3685.1,888 3690.5,888" fill="#ffffff"/>
+<polygon points="3759,617.5 3748.7,614.8 3748.7,620.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="H">
+<polygon points="3696.8,1084 3694.1,1094.4 3699.5,1094.4" fill="#ffffff"/>
+<polygon points="3696.8,877.7 3694.1,888 3699.5,888" fill="#ffffff"/>
+<polygon points="3759,626.5 3748.7,623.8 3748.7,629.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="D">
+<polygon points="3705.8,1084 3703.1,1094.4 3708.5,1094.4" fill="#ffffff"/>
+<polygon points="3705.8,877.7 3703.1,888 3708.5,888" fill="#ffffff"/>
+<polygon points="3759,635.5 3748.7,632.8 3748.7,638.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="student" data-to="locker" data-lines="H">
+<path d="M4200,1130 L3615,1130" class="lm-casing" stroke-width="14"/>
+<path d="M4200,1130 L3615,1130" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<g class="lm-marks" data-line="H">
+<polygon points="3621,1130 3631.4,1132.7 3631.4,1127.3" fill="#ffffff"/>
+<polygon points="3861,1130 3871.4,1132.7 3871.4,1127.3" fill="#ffffff"/>
+<polygon points="4101,1130 4111.4,1132.7 4111.4,1127.3" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="locker" data-to="scan" data-lines="H" data-label="Nightly run">
+<path d="M3365,1146.9 L3299.3,1146.9 Q3267.3,1146.9 3267.3,1178.9 L3267.3,1633.3 Q3267.3,1665.3 3235.3,1665.3 L2412.5,1665.3 Q2380.5,1665.3 2380.5,1633.3 L2380.5,1298.3 Q2380.5,1266.3 2348.5,1266.3 L1474.8,1266.3 Q1442.8,1266.3 1442.8,1234.3 L1442.8,955.3 Q1442.8,923.3 1410.8,923.3 L1375,923.3" class="lm-casing" stroke-width="14"/>
+<path d="M3365,1146.9 L3299.3,1146.9 Q3267.3,1146.9 3267.3,1178.9 L3267.3,1633.3 Q3267.3,1665.3 3235.3,1665.3 L2412.5,1665.3 Q2380.5,1665.3 2380.5,1633.3 L2380.5,1298.3 Q2380.5,1266.3 2348.5,1266.3 L1474.8,1266.3 Q1442.8,1266.3 1442.8,1234.3 L1442.8,955.3 Q1442.8,923.3 1410.8,923.3 L1375,923.3" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<g class="lm-marks" data-line="H">
+<polygon points="3267.3,1411.3 3270,1400.9 3264.6,1400.9" fill="#ffffff"/>
+<polygon points="3019.9,1665.3 3030.3,1668 3030.3,1662.6" fill="#ffffff"/>
+<polygon points="2818.7,1665.3 2829.1,1668 2829.1,1662.6" fill="#ffffff"/>
+<polygon points="2617.5,1665.3 2627.9,1668 2627.9,1662.6" fill="#ffffff"/>
+<polygon points="2380.5,1460.6 2377.8,1470.9 2383.2,1470.9" fill="#ffffff"/>
+<polygon points="2120.4,1266.3 2130.7,1269 2130.7,1263.6" fill="#ffffff"/>
+<polygon points="1906.5,1266.3 1916.8,1269 1916.8,1263.6" fill="#ffffff"/>
+<polygon points="1692.5,1266.3 1702.9,1269 1702.9,1263.6" fill="#ffffff"/>
+<polygon points="1442.8,1089.6 1440.1,1099.9 1445.5,1099.9" fill="#ffffff"/>
+<polygon points="1381,923.3 1391.4,926 1391.4,920.6" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="collected" data-to="returns" data-lines="F" data-label="No">
+<path d="M3374,1350 L3144.8,1350 Q3112.8,1350 3112.8,1382 L3112.8,1488 Q3112.8,1520 3080.8,1520 L2865,1520" class="lm-casing" stroke-width="14"/>
+<path d="M3374,1350 L3144.8,1350 Q3112.8,1350 3112.8,1382 L3112.8,1488 Q3112.8,1520 3080.8,1520 L2865,1520" class="lm-strand" stroke="#5d4037" stroke-width="9" data-line="F"><title>Return to sender</title></path>
+<g class="lm-marks" data-line="F">
+<polygon points="2871,1520 2881.4,1522.7 2881.4,1517.3" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="forklift" data-to="returns" data-lines="F" data-label="Crushed">
+<path d="M1640,1180.5 L1640,1488 Q1640,1520 1672,1520 L2615,1520" class="lm-casing" stroke-width="14"/>
+<path d="M1640,1180.5 L1640,1488 Q1640,1520 1672,1520 L2615,1520" class="lm-strand" stroke="#5d4037" stroke-width="9" data-line="F"><title>Return to sender</title></path>
+<g class="lm-marks" data-line="F">
+<polygon points="1640,1336.9 1642.7,1326.6 1637.3,1326.6" fill="#ffffff"/>
+<polygon points="2609,1520 2598.6,1517.3 2598.6,1522.7" fill="#ffffff"/>
+<polygon points="2369,1520 2358.6,1517.3 2358.6,1522.7" fill="#ffffff"/>
+<polygon points="2129,1520 2118.6,1517.3 2118.6,1522.7" fill="#ffffff"/>
+<polygon points="1889,1520 1878.7,1517.3 1878.7,1522.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="returns" data-to="shop" data-lines="F">
+<path d="M2740,1570.5 L2740,1668 Q2740,1700 2708,1700 L-128,1700 Q-160,1700 -160,1668 L-160,632 Q-160,600 -128,600 L-65,600" class="lm-casing" stroke-width="14"/>
+<path d="M2740,1570.5 L2740,1668 Q2740,1700 2708,1700 L-128,1700 Q-160,1700 -160,1668 L-160,632 Q-160,600 -128,600 L-65,600" class="lm-strand" stroke="#5d4037" stroke-width="9" data-line="F"><title>Return to sender</title></path>
+<g class="lm-marks" data-line="F">
+<polygon points="2459,1700 2469.3,1702.7 2469.3,1697.3" fill="#ffffff"/>
+<polygon points="2224.2,1700 2234.5,1702.7 2234.5,1697.3" fill="#ffffff"/>
+<polygon points="1989.3,1700 1999.7,1702.7 1999.7,1697.3" fill="#ffffff"/>
+<polygon points="1754.5,1700 1764.8,1702.7 1764.8,1697.3" fill="#ffffff"/>
+<polygon points="1519.7,1700 1530,1702.7 1530,1697.3" fill="#ffffff"/>
+<polygon points="1284.8,1700 1295.2,1702.7 1295.2,1697.3" fill="#ffffff"/>
+<polygon points="1050,1700 1060.3,1702.7 1060.3,1697.3" fill="#ffffff"/>
+<polygon points="815.2,1700 825.5,1702.7 825.5,1697.3" fill="#ffffff"/>
+<polygon points="580.3,1700 590.7,1702.7 590.7,1697.3" fill="#ffffff"/>
+<polygon points="345.5,1700 355.8,1702.7 355.8,1697.3" fill="#ffffff"/>
+<polygon points="110.7,1700 121,1702.7 121,1697.3" fill="#ffffff"/>
+<polygon points="-160,1450.2 -162.7,1460.6 -157.3,1460.6" fill="#ffffff"/>
+<polygon points="-160,1246.6 -162.7,1257 -157.3,1257" fill="#ffffff"/>
+<polygon points="-160,1043 -162.7,1053.4 -157.3,1053.4" fill="#ffffff"/>
+<polygon points="-160,839.4 -162.7,849.8 -157.3,849.8" fill="#ffffff"/>
+<polygon points="-71,600 -81.3,597.3 -81.3,602.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_sorting" data-to="dead_letters" data-lines="L" data-label="Lost">
+<path d="M2180,1270.5 L2180,1369.5" class="lm-casing" stroke-width="14"/>
+<path d="M2180,1270.5 L2180,1369.5" class="lm-strand" stroke="#78909c" stroke-width="9" data-line="L"><title>Lost item</title></path>
+<g class="lm-marks" data-line="L">
+<polygon points="2180,1363.5 2182.7,1353.2 2177.3,1353.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="dead_letters" data-to="cluster_depot" data-lines="L" data-label="Address found">
+<path d="M2305,1420 L2555,1420" class="lm-casing" stroke-width="14"/>
+<path d="M2305,1420 L2555,1420" class="lm-strand" stroke="#78909c" stroke-width="9" data-line="L"><title>Lost item</title></path>
+<g class="lm-marks" data-line="L">
+<polygon points="2549,1420 2538.6,1417.3 2538.6,1422.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_office" data-to="cluster_it" data-lines="T" data-label="Counter scans">
+<path d="M880,49.5 L880,-118 Q880,-150 912,-150 L1778,-150 Q1810,-150 1810,-182 L1810,-309.5" class="lm-casing" stroke-width="14"/>
+<path d="M880,49.5 L880,-118 Q880,-150 912,-150 L1778,-150 Q1810,-150 1810,-182 L1810,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
+<g class="lm-marks" data-line="T">
+<polygon points="1138.2,-150 1127.8,-152.7 1127.8,-147.3" fill="rgba(0,0,0,0.6)"/>
+<polygon points="1350.2,-150 1339.8,-152.7 1339.8,-147.3" fill="rgba(0,0,0,0.6)"/>
+<polygon points="1562.2,-150 1551.8,-152.7 1551.8,-147.3" fill="rgba(0,0,0,0.6)"/>
+<polygon points="1810,-303.5 1807.3,-293.1 1812.7,-293.1" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_sorting" data-to="cluster_it" data-lines="T" data-label="Sorter scans">
+<path d="M2105,239.5 L2105,222.1 Q2105,204.8 2122.4,204.8 L2140.5,204.8 Q2172.5,204.8 2172.5,172.8 L2172.5,7.1 Q2172.5,-24.9 2140.5,-24.9 L2137,-24.9 Q2105,-24.9 2105,-56.9 L2105,-309.5" class="lm-casing" stroke-width="14"/>
+<path d="M2105,239.5 L2105,222.1 Q2105,204.8 2122.4,204.8 L2140.5,204.8 Q2172.5,204.8 2172.5,172.8 L2172.5,7.1 Q2172.5,-24.9 2140.5,-24.9 L2137,-24.9 Q2105,-24.9 2105,-56.9 L2105,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
+<g class="lm-marks" data-line="T">
+<polygon points="2105,-303.5 2102.3,-293.1 2107.7,-293.1" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_depot" data-to="cluster_it" data-lines="T" data-label="Van scans">
+<path d="M2869,269.5 L2869,-44.9 Q2869,-76.9 2837,-76.9 L2163,-76.9 Q2131,-76.9 2131,-108.9 L2131,-309.5" class="lm-casing" stroke-width="14"/>
+<path d="M2869,269.5 L2869,-44.9 Q2869,-76.9 2837,-76.9 L2163,-76.9 Q2131,-76.9 2131,-108.9 L2131,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
+<g class="lm-marks" data-line="T">
+<polygon points="2869,109.6 2866.3,120 2871.7,120" fill="rgba(0,0,0,0.6)"/>
+<polygon points="2604.2,-76.9 2614.5,-74.2 2614.5,-79.6" fill="rgba(0,0,0,0.6)"/>
+<polygon points="2385.5,-76.9 2395.8,-74.2 2395.8,-79.6" fill="rgba(0,0,0,0.6)"/>
+<polygon points="2131,-303.5 2128.3,-293.1 2133.7,-293.1" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="tracking_db" data-to="app" data-lines="T">
+<path d="M2075,-420 L2135,-420" class="lm-casing" stroke-width="14"/>
+<path d="M2075,-420 L2135,-420" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
+<g class="lm-marks" data-line="T">
+<polygon points="2129,-420 2118.6,-422.7 2118.6,-417.3" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_warehouse" data-to="cluster_office" data-lines="S" data-label="Stamps">
+<path d="M668.4,-309.5 L668.4,49.5" class="lm-casing" stroke-width="14"/>
+<path d="M668.4,-309.5 L668.4,49.5" class="lm-strand" stroke="#212121" stroke-width="9" data-line="S"><title>Supplies</title></path>
+<g class="lm-marks" data-line="S">
+<polygon points="668.4,43.5 671.1,33.1 665.7,33.1" fill="#ffffff"/>
+<polygon points="668.4,-196.5 671.1,-206.8 665.7,-206.8" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_warehouse" data-to="cluster_sorting" data-lines="S" data-label="Mailbags">
+<path d="M955,-420 L982.5,-420 Q1010,-420 1010,-392.5 L1010,742.5 Q1010,755 1022.5,755 L1035,755" class="lm-casing" stroke-width="14"/>
+<path d="M955,-420 L982.5,-420 Q1010,-420 1010,-392.5 L1010,742.5 Q1010,755 1022.5,755 L1035,755" class="lm-strand" stroke="#212121" stroke-width="9" data-line="S"><title>Supplies</title></path>
+<g class="lm-marks" data-line="S">
+<polygon points="1010,-155.2 1012.7,-165.6 1007.3,-165.6" fill="#ffffff"/>
+<polygon points="1010,63.4 1012.7,53 1007.3,53" fill="#ffffff"/>
+<polygon points="1010,282 1012.7,271.6 1007.3,271.6" fill="#ffffff"/>
+<polygon points="1010,500.6 1012.7,490.2 1007.3,490.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_town" data-to="complaints" data-lines="Q" data-label="Where is it?">
+<path d="M3540,269.5 L3540,-369.5" class="lm-casing" stroke-width="14"/>
+<path d="M3540,269.5 L3540,-369.5" class="lm-strand" stroke="#f06292" stroke-width="9" data-line="Q"><title>Complaints</title></path>
+<g class="lm-marks" data-line="Q">
+<polygon points="3540,-363.5 3537.3,-353.2 3542.7,-353.2" fill="#ffffff"/>
+<polygon points="3540,-123.5 3537.3,-113.2 3542.7,-113.2" fill="#ffffff"/>
+<polygon points="3540,116.5 3537.3,126.8 3542.7,126.8" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="complaints" data-to="apology" data-lines="Q">
+<path d="M3665,-420 L3725,-420" class="lm-casing" stroke-width="14"/>
+<path d="M3665,-420 L3725,-420" class="lm-strand" stroke="#f06292" stroke-width="9" data-line="Q"><title>Complaints</title></path>
+<g class="lm-marks" data-line="Q">
+<polygon points="3719,-420 3708.7,-422.7 3708.7,-417.3" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="apology" data-to="cluster_town" data-lines="Q" data-label="Sorry note">
+<path d="M3850,-369.5 L3850,269.5" class="lm-casing" stroke-width="14"/>
+<path d="M3850,-369.5 L3850,269.5" class="lm-strand" stroke="#f06292" stroke-width="9" data-line="Q"><title>Complaints</title></path>
+<g class="lm-marks" data-line="Q">
+<polygon points="3850,263.5 3852.7,253.2 3847.3,253.2" fill="#ffffff"/>
+<polygon points="3850,23.5 3852.7,13.2 3847.3,13.2" fill="#ffffff"/>
+<polygon points="3850,-216.5 3852.7,-226.8 3847.3,-226.8" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_complaints" data-to="cluster_depot" data-lines="Q" data-label="A stern word">
+<path d="M3695,-309.5 L3695,-35 Q3695,-3 3663,-3 L2953,-3 Q2921,-3 2921,29 L2921,269.5" class="lm-casing" stroke-width="14"/>
+<path d="M3695,-309.5 L3695,-35 Q3695,-3 3663,-3 L2953,-3 Q2921,-3 2921,29 L2921,269.5" class="lm-strand" stroke="#f06292" stroke-width="9" data-line="Q"><title>Complaints</title></path>
+<g class="lm-marks" data-line="Q">
+<polygon points="3695,-169.6 3697.7,-179.9 3692.3,-179.9" fill="#ffffff"/>
+<polygon points="3418.2,-3 3428.5,-0.3 3428.5,-5.7" fill="#ffffff"/>
+<polygon points="3187.5,-3 3197.8,-0.3 3197.8,-5.7" fill="#ffffff"/>
+<polygon points="2921,263.5 2923.7,253.2 2918.3,253.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_north" data-to="cluster_rail" data-lines="N">
+<path d="M645,2044 L1065,2044" class="lm-casing" stroke-width="14"/>
+<path d="M645,2044 L1065,2044" class="lm-strand" stroke="#29b6f6" stroke-width="9" data-line="N"><title>Mail train</title></path>
+<g class="lm-marks" data-line="N">
+<polygon points="1059,2044 1048.7,2041.3 1048.7,2046.7" fill="rgba(0,0,0,0.6)"/>
+<polygon points="819,2044 808.7,2041.3 808.7,2046.7" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_south" data-to="cluster_rail" data-lines="N">
+<path d="M645,2384 L1065,2384" class="lm-casing" stroke-width="14"/>
+<path d="M645,2384 L1065,2384" class="lm-strand" stroke="#29b6f6" stroke-width="9" data-line="N"><title>Mail train</title></path>
+<g class="lm-marks" data-line="N">
+<polygon points="1059,2384 1048.7,2381.3 1048.7,2386.7" fill="rgba(0,0,0,0.6)"/>
+<polygon points="819,2384 808.7,2381.3 808.7,2386.7" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_rail" data-to="cluster_sorting" data-lines="N">
+<path d="M1318.6,1919.5 L1318.6,1270.5" class="lm-casing" stroke-width="14"/>
+<path d="M1318.6,1919.5 L1318.6,1270.5" class="lm-strand" stroke="#29b6f6" stroke-width="9" data-line="N"><title>Mail train</title></path>
+<g class="lm-marks" data-line="N">
+<polygon points="1318.6,1276.5 1315.9,1286.9 1321.3,1286.9" fill="rgba(0,0,0,0.6)"/>
+<polygon points="1318.6,1516.5 1315.9,1526.9 1321.3,1526.9" fill="rgba(0,0,0,0.6)"/>
+<polygon points="1318.6,1756.5 1315.9,1766.9 1321.3,1766.9" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_sorting" data-to="cluster_rail" data-lines="N">
+<path d="M1343.6,1270.5 L1343.6,1919.5" class="lm-casing" stroke-width="14"/>
+<path d="M1343.6,1270.5 L1343.6,1919.5" class="lm-strand" stroke="#29b6f6" stroke-width="9" data-line="N"><title>Mail train</title></path>
+<g class="lm-marks" data-line="N">
+<polygon points="1343.6,1913.5 1346.3,1903.2 1340.9,1903.2" fill="rgba(0,0,0,0.6)"/>
+<polygon points="1343.6,1673.5 1346.3,1663.2 1340.9,1663.2" fill="rgba(0,0,0,0.6)"/>
+<polygon points="1343.6,1433.5 1346.3,1423.2 1340.9,1423.2" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_rail" data-to="cluster_north" data-lines="N">
+<path d="M1065,2069 L645,2069" class="lm-casing" stroke-width="14"/>
+<path d="M1065,2069 L645,2069" class="lm-strand" stroke="#29b6f6" stroke-width="9" data-line="N"><title>Mail train</title></path>
+<g class="lm-marks" data-line="N">
+<polygon points="651,2069 661.3,2071.7 661.3,2066.3" fill="rgba(0,0,0,0.6)"/>
+<polygon points="891,2069 901.4,2071.7 901.4,2066.3" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_rail" data-to="cluster_south" data-lines="N">
+<path d="M1065,2409 L645,2409" class="lm-casing" stroke-width="14"/>
+<path d="M1065,2409 L645,2409" class="lm-strand" stroke="#29b6f6" stroke-width="9" data-line="N"><title>Mail train</title></path>
+<g class="lm-marks" data-line="N">
+<polygon points="651,2409 661.3,2411.7 661.3,2406.3" fill="rgba(0,0,0,0.6)"/>
+<polygon points="891,2409 901.4,2411.7 901.4,2406.3" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="edge" data-from="platform" data-to="train" data-lines="N">
+<path d="M1250,2080.5 L1250,2319.5" class="lm-casing" stroke-width="14"/>
+<path d="M1250,2080.5 L1250,2319.5" class="lm-strand" stroke="#29b6f6" stroke-width="9" data-line="N"><title>Mail train</title></path>
+<g class="lm-marks" data-line="N">
+<polygon points="1250,2313.5 1252.7,2303.1 1247.3,2303.1" fill="rgba(0,0,0,0.6)"/>
+</g>
+</g>
+<g class="node" id="pen_pal" data-label="Pen pal" data-shape="person"><circle cx="60" cy="132" r="23.8" class="lm-person"/><path d="M9.6,230 V199.2 Q9.6,162.8 60,162.8 Q110.4,162.8 110.4,199.2 V230 Z" class="lm-person"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label lm-halo" stroke-width="5" stroke-linejoin="round" paint-order="stroke" style="font-weight:600"><tspan x="60" y="247.5">Pen pal</tspan></text></g>
+<g class="node" id="lawyer" data-label="Lawyer" data-shape="person"><circle cx="60" cy="352" r="23.8" class="lm-person"/><path d="M9.6,450 V419.2 Q9.6,382.8 60,382.8 Q110.4,382.8 110.4,419.2 V450 Z" class="lm-person"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label lm-halo" stroke-width="5" stroke-linejoin="round" paint-order="stroke" style="font-weight:600"><tspan x="60" y="467.5">Lawyer</tspan></text></g>
+<g class="node" id="shop" data-label="Online shop&#10;(sells only socks)" data-shape="box"><rect x="-65" y="549.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="60" y="590.5">Online shop</tspan><tspan x="60" y="609.5">(sells only socks)</tspan></text></g>
+<g class="node" id="abroad" data-label="Foreign postal&#10;service" data-shape="box"><rect x="-65" y="859.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="60" y="900.5">Foreign postal</tspan><tspan x="60" y="919.5">service</tspan></text></g>
+<g class="node" id="bank" data-label="Bank&#10;(statements by&#10;the million)" data-shape="box"><rect x="1125" y="-10.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1250" y="21">Bank</tspan><tspan x="1250" y="40">(statements by</tspan><tspan x="1250" y="59">the million)</tspan></text></g>
+<g class="node" id="student" data-label="Student&#10;(laundry for mum)" data-shape="person"><circle cx="4270" cy="1102" r="23.8" class="lm-person"/><path d="M4219.6,1200 V1169.2 Q4219.6,1132.8 4270,1132.8 Q4320.4,1132.8 4320.4,1169.2 V1200 Z" class="lm-person"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label lm-halo" stroke-width="5" stroke-linejoin="round" paint-order="stroke" style="font-weight:600"><tspan x="4270" y="1217.5">Student</tspan><tspan x="4270" y="1236.5">(laundry for mum)</tspan></text></g>
+<g class="node" id="postbox" data-label="Yellow postbox" data-shape="queue"><path d="M351,109.5 H569 A16,50.5 0 0 1 569,210.5 H351 A16,50.5 0 0 1 351,109.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M569,109.5 A16,50.5 0 0 0 569,210.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="452" y="160">Yellow postbox</tspan></text></g>
+<g class="node" id="counter" data-label="Counter&#10;(queue of 12)" data-shape="box"><rect x="335" y="329.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="460" y="370.5">Counter</tspan><tspan x="460" y="389.5">(queue of 12)</tspan></text></g>
+<g class="node" id="pickup" data-label="Business pickup" data-shape="box"><rect x="335" y="549.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="460" y="600">Business pickup</tspan></text></g>
+<g class="node" id="truck" data-label="Collection truck" data-shape="box"><rect x="645" y="329.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="770" y="380">Collection truck</tspan></text></g>
+<g class="node" id="airport" data-label="Airport mail unit" data-shape="cylinder"><path d="M335,873.5 A125,14 0 0 1 585,873.5 V946.5 A125,14 0 0 1 335,946.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M335,873.5 A125,14 0 0 0 585,873.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="460" y="917">Airport mail unit</tspan></text></g>
+<g class="node" id="duties" data-label="Duties&#10;paid?" data-shape="diamond"><polygon points="770,859.5 899.5,910 770,960.5 640.5,910" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="770" y="900.5">Duties</tspan><tspan x="770" y="919.5">paid?</tspan></text></g>
+<g class="node" id="held" data-label="Held at customs&#10;(a stern letter is sent)" data-url="https://en.wikipedia.org/wiki/Customs" data-shape="box"><a href="https://en.wikipedia.org/wiki/Customs"><rect x="645" y="1079.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="770" y="1120.5">Held at customs</tspan><tspan x="770" y="1139.5">(a stern letter is sent)</tspan></text></a></g>
+<g class="node" id="intake" data-label="Intake dock" data-shape="queue"><path d="M1141,329.5 H1359 A16,50.5 0 0 1 1359,430.5 H1141 A16,50.5 0 0 1 1141,329.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M1359,329.5 A16,50.5 0 0 0 1359,430.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1242" y="380">Intake dock</tspan></text></g>
+<g class="node" id="split" data-label="Letter or&#10;parcel?" data-shape="diamond"><polygon points="1250,549.5 1379.5,600 1250,650.5 1120.5,600" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1250" y="590.5">Letter or</tspan><tspan x="1250" y="609.5">parcel?</tspan></text></g>
+<g class="node" id="ocr" data-label="Address reader&#10;(OCR)" data-shape="box"><rect x="1515" y="549.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1640" y="590.5">Address reader</tspan><tspan x="1640" y="609.5">(OCR)</tspan></text></g>
+<g class="node" id="readable" data-label="Readable?" data-shape="diamond"><polygon points="1950,549.5 2079.5,600 1950,650.5 1820.5,600" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1950" y="600">Readable?</tspan></text></g>
+<g class="node" id="human" data-label="Human decoder&#10;(reads doctors'&#10;handwriting)" data-shape="box"><rect x="1825" y="329.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1950" y="361">Human decoder</tspan><tspan x="1950" y="380">(reads doctors'</tspan><tspan x="1950" y="399">handwriting)</tspan></text></g>
+<g class="node" id="letter_sorter" data-label="Letter sorter&#10;(30,000 an hour)" data-shape="queue"><path d="M2151,549.5 H2369 A16,50.5 0 0 1 2369,650.5 H2151 A16,50.5 0 0 1 2151,549.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M2369,549.5 A16,50.5 0 0 0 2369,650.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2252" y="590.5">Letter sorter</tspan><tspan x="2252" y="609.5">(30,000 an hour)</tspan></text></g>
+<g class="node" id="scan" data-label="Parcel scanner" data-shape="box"><rect x="1125" y="859.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1250" y="910">Parcel scanner</tspan></text></g>
+<g class="node" id="fits" data-label="Fits the&#10;conveyor?" data-shape="diamond"><polygon points="1640,859.5 1769.5,910 1640,960.5 1510.5,910" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1640" y="900.5">Fits the</tspan><tspan x="1640" y="919.5">conveyor?</tspan></text></g>
+<g class="node" id="forklift" data-label="Forklift&#10;(driven by Gerald)" data-shape="box"><rect x="1515" y="1079.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1640" y="1120.5">Forklift</tspan><tspan x="1640" y="1139.5">(driven by Gerald)</tspan></text></g>
+<g class="node" id="parcel_sorter" data-label="Parcel sorter" data-shape="queue"><path d="M2151,859.5 H2369 A16,50.5 0 0 1 2369,960.5 H2151 A16,50.5 0 0 1 2151,859.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M2369,859.5 A16,50.5 0 0 0 2369,960.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2252" y="910">Parcel sorter</tspan></text></g>
+<g class="node" id="planner" data-label="Route planner" data-shape="box"><rect x="2615" y="549.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2740" y="600">Route planner</tspan></text></g>
+<g class="node" id="postie" data-label="Postie on a bike" data-shape="box"><rect x="2925" y="329.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3050" y="380">Postie on a bike</tspan></text></g>
+<g class="node" id="van" data-label="Delivery van" data-shape="box"><rect x="2925" y="549.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3050" y="600">Delivery van</tspan></text></g>
+<g class="node" id="express" data-label="Express hub&#10;(the fast van)" data-shape="box"><rect x="2615" y="1079.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2740" y="1120.5">Express hub</tspan><tspan x="2740" y="1139.5">(the fast van)</tspan></text></g>
+<g class="node" id="returns" data-label="Returns desk" data-shape="box"><rect x="2615" y="1469.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2740" y="1520">Returns desk</tspan></text></g>
+<g class="node" id="home" data-label="Anyone&#10;home?" data-shape="diamond"><polygon points="3490,549.5 3619.5,600 3490,650.5 3360.5,600" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3490" y="590.5">Anyone</tspan><tspan x="3490" y="609.5">home?</tspan></text></g>
+<g class="node" id="next_door" data-label="Neighbour&#10;home?" data-shape="diamond"><polygon points="3490,859.5 3619.5,910 3490,960.5 3360.5,910" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3490" y="900.5">Neighbour</tspan><tspan x="3490" y="919.5">home?</tspan></text></g>
+<g class="node" id="locker" data-label="Pickup point&#10;(open 7 days)" data-shape="box"><rect x="3365" y="1079.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3490" y="1120.5">Pickup point</tspan><tspan x="3490" y="1139.5">(open 7 days)</tspan></text></g>
+<g class="node" id="collected" data-label="Collected&#10;in 7 days?" data-shape="diamond"><polygon points="3490,1299.5 3619.5,1350 3490,1400.5 3360.5,1350" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3490" y="1340.5">Collected</tspan><tspan x="3490" y="1359.5">in 7 days?</tspan></text></g>
+<g class="node" id="recipient" data-label="Recipient's&#10;front door" data-shape="box"><rect x="3765" y="549.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3890" y="590.5">Recipient's</tspan><tspan x="3890" y="609.5">front door</tspan></text></g>
+<g class="node" id="letterbox" data-label="Letterbox" data-shape="box"><rect x="3365" y="329.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3490" y="380">Letterbox</tspan></text></g>
+<g class="node" id="neighbour" data-label="Nosy neighbour&#10;(signs for everything)" data-shape="box"><rect x="3765" y="859.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3890" y="900.5">Nosy neighbour</tspan><tspan x="3890" y="919.5">(signs for everything)</tspan></text></g>
+<g class="node" id="dead_letters" data-label="Dead letter office&#10;(opens everything)" data-shape="box"><rect x="2055" y="1369.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2180" y="1410.5">Dead letter office</tspan><tspan x="2180" y="1429.5">(opens everything)</tspan></text></g>
+<g class="node" id="stamps" data-label="Stamp printer" data-shape="box"><rect x="335" y="-470.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="460" y="-420">Stamp printer</tspan></text></g>
+<g class="node" id="bags" data-label="Mailbag store&#10;(mostly holes)" data-shape="queue"><path d="M661,-470.5 H879 A16,50.5 0 0 1 879,-369.5 H661 A16,50.5 0 0 1 661,-470.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M879,-470.5 A16,50.5 0 0 0 879,-369.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="762" y="-429.5">Mailbag store</tspan><tspan x="762" y="-410.5">(mostly holes)</tspan></text></g>
+<g class="node" id="tracking_db" data-label="Tracking database" data-shape="cylinder"><path d="M1825,-456.5 A125,14 0 0 1 2075,-456.5 V-383.5 A125,14 0 0 1 1825,-383.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M1825,-456.5 A125,14 0 0 0 2075,-456.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1950" y="-413">Tracking database</tspan></text></g>
+<g class="node" id="app" data-label="Tracking app&#10;(&quot;out for delivery&quot;)" data-shape="box"><rect x="2135" y="-470.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2260" y="-429.5">Tracking app</tspan><tspan x="2260" y="-410.5">(&quot;out for delivery&quot;)</tspan></text></g>
+<g class="node" id="complaints" data-label="Complaints desk" data-shape="queue"><path d="M3431,-470.5 H3649 A16,50.5 0 0 1 3649,-369.5 H3431 A16,50.5 0 0 1 3431,-470.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M3649,-470.5 A16,50.5 0 0 0 3649,-369.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3532" y="-420">Complaints desk</tspan></text></g>
+<g class="node" id="apology" data-label="Apology writer&#10;(fountain pen)" data-shape="box"><rect x="3725" y="-470.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="3850" y="-429.5">Apology writer</tspan><tspan x="3850" y="-410.5">(fountain pen)</tspan></text></g>
+<g class="node" id="platform" data-label="Platform 9" data-shape="queue"><path d="M1141,1979.5 H1359 A16,50.5 0 0 1 1359,2080.5 H1141 A16,50.5 0 0 1 1141,1979.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M1359,1979.5 A16,50.5 0 0 0 1359,2080.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1242" y="2030">Platform 9</tspan></text></g>
+<g class="node" id="train" data-label="Night train&#10;(leaves 23:40)" data-shape="box"><rect x="1125" y="2319.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1250" y="2360.5">Night train</tspan><tspan x="1250" y="2379.5">(leaves 23:40)</tspan></text></g>
+<g class="node" id="north" data-label="Northern sorting centre" data-shape="box"><rect x="335" y="1979.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="460" y="2030">Northern sorting centre</tspan></text></g>
+<g class="node" id="south" data-label="Southern sorting centre" data-shape="box"><rect x="335" y="2319.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="460" y="2370">Southern sorting centre</tspan></text></g>
+<g class="note" id="note_postbox" data-label="Emptied twice a day,&#10;or once if it is raining."><rect x="356.5" y="-72" width="207" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="368.5" y="-51.5">Emptied twice a day,</tspan><tspan x="368.5" y="-34.5">or once if it is raining.</tspan></text></g>
+<g class="note" id="note_human" data-label="About 1 in 200 letters needs a human.&#10;Most of them are birthday cards."><rect x="1803" y="88" width="294" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="1815" y="108.5">About 1 in 200 letters needs a human.</tspan><tspan x="1815" y="125.5">Most of them are birthday cards.</tspan></text></g>
+<g class="note" id="note_forklift" data-label="Anything over 31.5 kg.&#10;Gerald has seen things."><rect x="1399" y="1316" width="192" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="1411" y="1336.5">Anything over 31.5 kg.</tspan><tspan x="1411" y="1353.5">Gerald has seen things.</tspan></text></g>
+<g class="note" id="note_held" data-label="Unpaid parcels wait 20 days,&#10;then they are sent back."><rect x="656" y="1305" width="228" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="668" y="1325.5">Unpaid parcels wait 20 days,</tspan><tspan x="668" y="1342.5">then they are sent back.</tspan></text></g>
+<g class="note" id="note_express" data-label="Express skips the route planner&#10;and the neighbour, and never waits."><rect x="2600.5" y="958" width="279" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="2612.5" y="978.5">Express skips the route planner</tspan><tspan x="2612.5" y="995.5">and the neighbour, and never waits.</tspan></text></g>
+<g class="note" id="note_returns" data-label="The socks travel home the long way."><rect x="2600.5" y="1349.5" width="279" height="41" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="2612.5" y="1370">The socks travel home the long way.</tspan></text></g>
+<g class="note" id="note_bank" data-label="Printed addresses:&#10;the OCR never says no."><rect x="1157.5" y="-132" width="185" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="1169.5" y="-111.5">Printed addresses:</tspan><tspan x="1169.5" y="-94.5">the OCR never says no.</tspan></text></g>
+<g class="note" id="note_dead" data-label="Anything without a readable address,&#10;from any hall of the sorting centre."><rect x="1686.5" y="1391" width="287" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="1698.5" y="1411.5">Anything without a readable address,</tspan><tspan x="1698.5" y="1428.5">from any hall of the sorting centre.</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1418.1" y="557.5" width="58.3" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1447.3" y="569">Letter</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="2060.4" y="557.5" width="38.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="2079.5" y="569">Yes</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1903.6" y="493.4" width="31.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1919.3" y="504.9">No</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="780.5" y="993.6" width="31.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="796.2" y="1005.1">No</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="543.1" y="1140.5" width="65" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="575.6" y="1152">Paid up</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="936.8" y="876.5" width="38.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="955.9" y="888">Yes</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1265" y="691.3" width="58.3" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1294.2" y="702.8">Parcel</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1841.8" y="863" width="38.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1860.9" y="874.5">Yes</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1664" y="993.6" width="31.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1679.7" y="1005.1">No</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3655" y="553" width="38.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3674.1" y="564.5">Yes</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3514" y="691.3" width="31.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3529.7" y="702.8">No</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3655" y="863" width="38.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3674.1" y="874.5">Yes</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3514" y="993.6" width="31.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3529.7" y="1005.1">No</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3655" y="1374" width="38.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3674.1" y="1385.5">Yes</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3164.9" y="1297.4" width="91.9" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3210.8" y="1308.9">Nightly run</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3298.3" y="1360.5" width="31.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3314" y="1372">No</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1650.5" y="1338.8" width="65" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1683" y="1350.3">Crushed</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="2190.5" y="1296.1" width="44.9" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="2212.9" y="1307.6">Lost</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="2439.8" y="1386.5" width="105.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="2492.5" y="1398">Address found</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="764.1" y="38" width="105.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="816.8" y="49.5">Counter scans</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1995.9" y="228" width="98.6" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="2045.2" y="239.5">Sorter scans</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="2780" y="258" width="78.5" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="2819.3" y="269.5">Van scans</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="678.9" y="-321" width="58.3" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="708.1" y="-309.5">Stamps</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="960.4" y="-453.5" width="71.8" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="996.3" y="-442">Mailbags</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3550.5" y="258" width="98.6" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3599.8" y="269.5">Where is it?</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3860.5" y="-301.1" width="85.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3903.1" y="-289.6">Sorry note</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3403.8" y="7.5" width="98.6" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3453.1" y="19">A stern word</tspan></text></g>
+<g class="legend"><rect x="-160" y="2570.5" width="270.8" height="422" rx="12" class="lm-legend-box" filter="url(#lm-shadow-light-small)"/><text x="-142" y="2592.5" font-size="12" class="lm-legend-title" dominant-baseline="central">LINES</text><g class="legend-row" data-line="A"><line x1="-138" y1="2620.5" x2="-86" y2="2620.5" stroke="#1565c0" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2620.5 -117,2617.8 -117,2623.2" fill="#ffffff"/><text x="-68" y="2620.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Letter</text></g><g class="legend-row" data-line="B"><line x1="-138" y1="2648.5" x2="-86" y2="2648.5" stroke="#00838f" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2648.5 -117,2645.8 -117,2651.2" fill="#ffffff"/><text x="-68" y="2648.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Registered letter</text></g><g class="legend-row" data-line="G"><line x1="-138" y1="2676.5" x2="-86" y2="2676.5" stroke="#2e7d32" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2676.5 -117,2673.8 -117,2679.2" fill="#ffffff"/><text x="-68" y="2676.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Bulk mail</text></g><g class="legend-row" data-line="C"><line x1="-138" y1="2704.5" x2="-86" y2="2704.5" stroke="#ef6c00" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2704.5 -117,2701.8 -117,2707.2" fill="#ffffff"/><text x="-68" y="2704.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Parcel</text></g><g class="legend-row" data-line="H"><line x1="-138" y1="2732.5" x2="-86" y2="2732.5" stroke="#ad1457" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2732.5 -117,2729.8 -117,2735.2" fill="#ffffff"/><text x="-68" y="2732.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Locker drop-off</text></g><g class="legend-row" data-line="D"><line x1="-138" y1="2760.5" x2="-86" y2="2760.5" stroke="#6a1b9a" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2760.5 -117,2757.8 -117,2763.2" fill="#ffffff"/><text x="-68" y="2760.5" font-size="14" class="lm-legend-text" dominant-baseline="central">International parcel</text></g><g class="legend-row" data-line="E"><line x1="-138" y1="2788.5" x2="-86" y2="2788.5" stroke="#c62828" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2788.5 -117,2785.8 -117,2791.2" fill="#ffffff"/><text x="-68" y="2788.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Express</text></g><g class="legend-row" data-line="F"><line x1="-138" y1="2816.5" x2="-86" y2="2816.5" stroke="#5d4037" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2816.5 -117,2813.8 -117,2819.2" fill="#ffffff"/><text x="-68" y="2816.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Return to sender</text></g><g class="legend-row" data-line="L"><line x1="-138" y1="2844.5" x2="-86" y2="2844.5" stroke="#78909c" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2844.5 -117,2841.8 -117,2847.2" fill="#ffffff"/><text x="-68" y="2844.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Lost item</text></g><g class="legend-row" data-line="N"><line x1="-138" y1="2872.5" x2="-86" y2="2872.5" stroke="#29b6f6" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2872.5 -117,2869.8 -117,2875.2" fill="rgba(0,0,0,0.6)"/><text x="-68" y="2872.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Mail train</text></g><g class="legend-row" data-line="T"><line x1="-138" y1="2900.5" x2="-86" y2="2900.5" stroke="#fdd835" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2900.5 -117,2897.8 -117,2903.2" fill="rgba(0,0,0,0.6)"/><text x="-68" y="2900.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Tracking data</text></g><g class="legend-row" data-line="S"><line x1="-138" y1="2928.5" x2="-86" y2="2928.5" stroke="#212121" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2928.5 -117,2925.8 -117,2931.2" fill="#ffffff"/><text x="-68" y="2928.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Supplies</text></g><g class="legend-row" data-line="Q"><line x1="-138" y1="2956.5" x2="-86" y2="2956.5" stroke="#f06292" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2956.5 -117,2953.8 -117,2959.2" fill="#ffffff"/><text x="-68" y="2956.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Complaints</text></g></g>
+</svg>

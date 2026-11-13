@@ -1,0 +1,36 @@
+// The linemap pipeline, drawn by linemap itself (see README.md).
+// Build: pnpm linemap docs/pipeline.dot docs/pipeline.svg
+digraph pipeline {
+  subgraph lines {
+    V [label="Studio",      color="#2e7d32"]
+    S [label="SVG",         color="#1565c0"]
+    P [label="PNG (--png)", color="#9e9e9e"]
+  }
+
+  { node [shape=cylinder, width=2.5, height=1.25]
+    dot [label="flows/*.dot", pos="120,200"]
+    svg [label="out/*.svg",   pos="2080,200"]
+    png [label="out/*.png",   pos="2080,420"]
+  }
+  view [label="packages/studio\nzoom, highlight, hide", width=2.5, height=1.25, pos="2080,-20"]
+
+  subgraph cluster_cli {
+    label = "packages/core"
+    style = filled; color = "#424242"
+    node [shape=box, width=2.5, height=1.25]
+    model  [label="model.mjs + dot.mjs\nload, validate",  pos="400,200"]
+    place  [label="place.mjs\nplace unpinned items", pos="680,200"]
+    route  [label="route.mjs\northogonal routing",   pos="960,200"]
+    bundle [label="bundle.mjs\nlanes, triangles",    pos="1240,200"]
+    inside [label="inside.mjs\nlines through nodes", pos="1520,200"]
+    render [label="render.mjs\nSVG",                 pos="1800,200"]
+  }
+
+  dot -> model -> place -> route -> bundle -> inside -> render [lines="V S P"]
+  render -> svg [lines="S P"]
+  render -> view [lines=V]
+  svg -> png [lines=P]
+
+  msagl [shape=note, label="route.mjs routes with MSAGL's rectilinear router (plain JS)"]
+  route -> msagl
+}

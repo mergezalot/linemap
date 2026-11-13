@@ -1,0 +1,6 @@
+packages:
+  - 'packages/*'
+allowBuilds:
+  esbuild: true
+patchedDependencies:
+  '@msagl/core@1.1.24': patches/@msagl__core@1.1.24.patch

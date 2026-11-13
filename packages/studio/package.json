@@ -1,0 +1,27 @@
+{
+  "name": "@linemap/studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Interactive linemap studio: one self-contained HTML file that runs the pipeline in the browser.",
+  "license": "MPL-2.0",
+  "homepage": "https://github.com/mergezalot/linemap#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mergezalot/linemap.git",
+    "directory": "packages/studio"
+  },
+  "bugs": "https://github.com/mergezalot/linemap/issues",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node build.mjs --serve",
+    "test": "node build.mjs && node test/smoke.mjs"
+  },
+  "dependencies": {
+    "@linemap/core": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.65.0"
+  }
+}

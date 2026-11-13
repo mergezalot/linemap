@@ -1,0 +1,45 @@
+{
+  "name": "@linemap/core",
+  "version": "0.1.0",
+  "description": "DOT text -> model -> transit-map style SVG. No I/O, runs in node and the browser.",
+  "keywords": [
+    "flowchart",
+    "diagram",
+    "transit-map",
+    "metro-map",
+    "dot",
+    "graphviz",
+    "svg"
+  ],
+  "license": "MPL-2.0",
+  "homepage": "https://github.com/mergezalot/linemap#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mergezalot/linemap.git",
+    "directory": "packages/core"
+  },
+  "bugs": "https://github.com/mergezalot/linemap/issues",
+  "type": "module",
+  "exports": "./index.mjs",
+  "files": [
+    "index.mjs",
+    "src",
+    "vendor"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "prepare": "node scripts/build-msagl.mjs",
+    "build:msagl": "node scripts/build-msagl.mjs",
+    "test": "node --test",
+    "prepack": "node scripts/build-msagl.mjs"
+  },
+  "dependencies": {
+    "@ts-graphviz/ast": "3.0.6"
+  },
+  "devDependencies": {
+    "@msagl/core": "1.1.24",
+    "esbuild": "0.28.2"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "linemap-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Flow diagrams with pinned nodes, automatic placement, orthogonal routing and transit-map style line bundles.",
+  "license": "MPL-2.0",
+  "homepage": "https://github.com/mergezalot/linemap#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mergezalot/linemap.git"
+  },
+  "bugs": "https://github.com/mergezalot/linemap/issues",
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "linemap": "node packages/cli/cli.mjs",
+    "example": "node scripts/examples.mjs",
+    "studio": "pnpm --filter @linemap/studio build",
+    "studio:serve": "pnpm --filter @linemap/studio serve",
+    "test": "pnpm --filter @linemap/core test && pnpm --filter linemap test",
+    "test:studio": "pnpm --filter @linemap/studio test",
+    "pack-check": "node scripts/pack-check.mjs"
+  }
+}

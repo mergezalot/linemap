@@ -1,0 +1,242 @@
+// How a national postal service moves letters and parcels from sender to recipient, and what
+// runs alongside: tracking data, supplies, complaints and the night mail train.
+// A large example: 13 lines, 15 containers (nested up to three deep), 7 decisions, loops, a
+// long route found by the router alone, one steered round the outside with `via`, many edges
+// between whole containers, and notes placed automatically or pinned out of the way.
+digraph postal {
+  subgraph lines {                               // order = lane order in every bundle
+    A [label="Letter",                 color="#1565c0"]
+    B [label="Registered letter",      color="#00838f"]
+    G [label="Bulk mail",              color="#2e7d32"]
+    C [label="Parcel",                 color="#ef6c00"]
+    H [label="Locker drop-off",        color="#ad1457"]
+    D [label="International parcel",   color="#6a1b9a"]
+    E [label="Express",                color="#c62828"]
+    F [label="Return to sender",       color="#5d4037"]
+    L [label="Lost item",              color="#78909c"]
+    N [label="Mail train",             color="#29b6f6"]
+    T [label="Tracking data",          color="#fdd835"]
+    S [label="Supplies",               color="#212121"]
+    Q [label="Complaints",             color="#f06292"]
+  }
+
+  // Boxes, queues, cylinders and decisions are flatter than the defaults. Notes keep their own size.
+  { node [height=1.4]
+
+  // ---- Senders ----------------------------------------------------------------------------
+  { node [shape=person, height=1.94]             // undo the flatter default: 140 px, round
+    pen_pal [label="Pen pal", pos="60,160"]
+    lawyer  [label="Lawyer", pos="60,380"]
+  }
+  shop   [label="Online shop\n(sells only socks)", pos="60,600"]
+  abroad [label="Foreign postal\nservice", pos="60,910"]
+  bank   [label="Bank\n(statements by\nthe million)", pos="1250,40"]
+  student [label="Student\n(laundry for mum)", shape=person, height=1.94, pos="4270,1130"]
+
+  subgraph cluster_office {
+    label = "Post office"; color = "#8d6e00"
+    postbox [label="Yellow postbox", shape=queue, pos="460,160"]
+    counter [label="Counter\n(queue of 12)", pos="460,380"]
+    pickup  [label="Business pickup", pos="460,600"]
+    truck   [label="Collection truck", pos="770,380"]
+  }
+
+  subgraph cluster_customs {
+    label = "Customs"; color = "#6a1b9a"
+    airport [label="Airport mail unit", shape=cylinder, pos="460,910"]
+    duties  [label="Duties\npaid?", shape=diamond, width=3.6, pos="770,910"]
+    held    [label="Held at customs\n(a stern letter is sent)", pos="770,1130", URL="https://en.wikipedia.org/wiki/Customs"]
+  }
+
+  // ---- Sorting ------------------------------------------------------------------------------
+  subgraph cluster_sorting {
+    label = "Sorting centre"; color = "#37474f"
+    intake [label="Intake dock", shape=queue, pos="1250,380"]
+    split  [label="Letter or\nparcel?", shape=diamond, width=3.6, pos="1250,600"]
+
+    subgraph cluster_letters {
+      label = "Letter hall"; color = "#1565c0"
+      ocr           [label="Address reader\n(OCR)", pos="1640,600"]
+      readable      [label="Readable?", shape=diamond, width=3.6, pos="1950,600"]
+      human         [label="Human decoder\n(reads doctors'\nhandwriting)", pos="1950,380"]
+      letter_sorter [label="Letter sorter\n(30,000 an hour)", shape=queue, pos="2260,600"]
+    }
+
+    subgraph cluster_parcels {
+      label = "Parcel hall"; color = "#bf360c"
+      scan          [label="Parcel scanner", pos="1250,910"]
+      fits          [label="Fits the\nconveyor?", shape=diamond, width=3.6, pos="1640,910"]
+      forklift      [label="Forklift\n(driven by Gerald)", pos="1640,1130"]
+      parcel_sorter [label="Parcel sorter", shape=queue, pos="2260,910"]
+    }
+  }
+
+  // ---- Delivery -----------------------------------------------------------------------------
+  subgraph cluster_depot {
+    label = "Delivery depot"; color = "#1b5e20"
+    planner [label="Route planner", pos="2740,600"]
+    postie  [label="Postie on a bike", pos="3050,380"]
+    van     [label="Delivery van", pos="3050,600"]
+    express [label="Express hub\n(the fast van)", pos="2740,1130"]
+    returns [label="Returns desk", pos="2740,1520"]
+  }
+
+  subgraph cluster_town {
+    label = "Neighbourhood"; color = "#827717"
+    home      [label="Anyone\nhome?", shape=diamond, width=3.6, pos="3490,600"]
+    next_door [label="Neighbour\nhome?", shape=diamond, width=3.6, pos="3490,910"]
+    locker    [label="Pickup point\n(open 7 days)", pos="3490,1130"]
+    collected [label="Collected\nin 7 days?", shape=diamond, width=3.6, pos="3490,1350"]
+    recipient [label="Recipient's\nfront door", pos="3890,600"]
+    letterbox [label="Letterbox", pos="3490,380"]
+    neighbour [label="Nosy neighbour\n(signs for everything)", pos="3890,910"]
+  }
+
+  }
+
+  // ---- Edges --------------------------------------------------------------------------------
+  pen_pal -> postbox [lines=A]
+  lawyer -> counter  [lines="B E"]
+  shop   -> counter  [lines=C]
+  shop   -> pickup   [lines=E]
+  postbox -> truck   [lines=A]
+  counter -> truck   [lines="B C E"]
+  pickup  -> truck   [lines=E]
+  truck -> intake [lines="A B C E"]
+  bank -> intake  [lines=G]
+  intake -> split [lines="A B G C E"]
+
+  split -> ocr [lines="A B G", label="Letter"]
+  ocr -> readable [lines="A B G"]
+  readable -> letter_sorter [lines="A B G", label="Yes"]
+  readable -> human [lines="A B", label="No"]
+  human -> letter_sorter [lines="A B"]
+
+  abroad -> airport -> duties [lines=D]
+  duties -> held [lines=D, label="No"]
+  held -> airport [lines=D, label="Paid up"]
+  duties -> scan [lines=D, label="Yes"]
+  split -> scan [lines="C E", label="Parcel"]
+
+  scan -> fits [lines="C H D E"]
+  fits -> parcel_sorter [lines="C H D E", label="Yes"]
+  fits -> forklift [lines="C H D E", label="No"]
+  forklift -> parcel_sorter [lines="C H D E"]
+
+  letter_sorter -> planner [lines="A B G"]
+  parcel_sorter -> planner [lines="C H D"]
+  parcel_sorter -> express [lines=E]
+  planner -> postie [lines="A B G"]
+  planner -> van    [lines="B C H D"]     // registered letters go by bike or by van
+  postie -> letterbox -> recipient [lines="A G"]
+  postie -> home    [lines=B]
+  van -> home       [lines="B C H D"]
+  express -> recipient [lines=E]
+
+  { edge [lines="B C H D"]
+    home -> recipient [label="Yes"]
+    home -> next_door [label="No"]
+    next_door -> neighbour [label="Yes"]
+    neighbour -> recipient
+    next_door -> locker [label="No"]
+    locker -> collected
+    collected -> recipient [label="Yes"]
+  }
+  // The student drops the laundry at the pickup point; it is collected each night and goes
+  // straight to the parcel hall, all the way back on the left.
+  student -> locker [lines=H]
+  locker -> scan    [lines=H, label="Nightly run"]
+
+  // Unclaimed and crushed items go all the way back, round the outside of everything.
+  collected -> returns [lines=F, label="No"]
+  forklift -> returns  [lines=F, label="Crushed", via="1640,1520"]
+  returns -> shop [lines=F, via="2740,1700 -160,1700 -160,600"]
+
+  // Things get lost anywhere in the sorting centre, so the edges attach to the containers.
+  dead_letters [label="Dead letter office\n(opens everything)", height=1.4, pos="2180,1420"]
+  cluster_sorting -> dead_letters [lines=L, label="Lost"]
+  dead_letters -> cluster_depot   [lines=L, label="Address found"]
+
+  // ---- Head office and supplies (top) -------------------------------------------------------
+  { node [height=1.4]
+    subgraph cluster_warehouse {
+      label = "Supplies warehouse"; color = "#4e342e"
+      stamps [label="Stamp printer", pos="460,-420"]
+      bags   [label="Mailbag store\n(mostly holes)", shape=queue, pos="770,-420"]
+    }
+    subgraph cluster_hq {
+      label = "Head office"; color = "#424242"
+      subgraph cluster_it {
+        label = "IT department"; color = "#f57f17"
+        tracking_db [label="Tracking database", shape=cylinder, pos="1950,-420"]
+        app         [label="Tracking app\n(\"out for delivery\")", pos="2260,-420"]
+      }
+      subgraph cluster_complaints {
+        label = "Complaints"; color = "#ad1457"
+        complaints [label="Complaints desk", shape=queue, pos="3540,-420"]
+        apology    [label="Apology writer\n(fountain pen)", pos="3850,-420"]
+      }
+    }
+  }
+
+  // Every part of the business reports scans to IT. These edges join container to container.
+  { edge [lines=T]
+    cluster_office  -> cluster_it [label="Counter scans", via="880,-150 1810,-150"]
+    cluster_sorting -> cluster_it [label="Sorter scans"]
+    cluster_depot   -> cluster_it [label="Van scans"]
+    tracking_db -> app
+  }
+  { edge [lines=S]
+    cluster_warehouse -> cluster_office  [label="Stamps"]
+    cluster_warehouse -> cluster_sorting [label="Mailbags", via="1010,-420"]
+  }
+  { edge [lines=Q]
+    cluster_town -> complaints [label="Where is it?"]
+    complaints -> apology
+    apology -> cluster_town [label="Sorry note"]
+    cluster_complaints -> cluster_depot [label="A stern word"]
+  }
+
+  // ---- Mail train (bottom) ------------------------------------------------------------------
+  { node [height=1.4]
+    subgraph cluster_rail {
+      label = "Mail rail yard"; color = "#0277bd"
+      platform [label="Platform 9", shape=queue, pos="1250,2030"]
+      train    [label="Night train\n(leaves 23:40)", pos="1250,2370"]
+    }
+    subgraph cluster_regions {
+      label = "Other regions"; color = "#558b2f"
+      subgraph cluster_north { label = "North"; north [label="Northern sorting centre", pos="460,2030"] }
+      subgraph cluster_south { label = "South"; south [label="Southern sorting centre", pos="460,2370"] }
+    }
+  }
+  { edge [lines=N]
+    cluster_north -> cluster_rail
+    cluster_south -> cluster_rail
+    cluster_rail -> cluster_sorting
+    cluster_sorting -> cluster_rail
+    cluster_rail -> cluster_north
+    cluster_rail -> cluster_south
+    platform -> train
+  }
+
+  // ---- Notes --------------------------------------------------------------------------------
+  { node [shape=note]
+    note_postbox [label=<Emptied twice a day,<br/>or once if it is raining.>]
+    postbox -> note_postbox
+    note_human [label=<About 1 in 200 letters needs a human.<br/>Most of them are birthday cards.>]
+    human -> note_human
+    note_forklift [pos="1495,1345", label=<Anything over 31.5 kg.<br/>Gerald has seen things.>]
+    forklift -> note_forklift
+    note_held [label=<Unpaid parcels wait 20 days,<br/>then they are sent back.>]
+    held -> note_held
+    note_express [label=<Express skips the route planner<br/>and the neighbour, and never waits.>]
+    express -> note_express
+    note_returns [pos="2740,1370", label=<The socks travel home the long way.>]
+    returns -> note_returns
+    note_bank [label=<Printed addresses:<br/>the OCR never says no.>]
+    bank -> note_bank
+    note_dead [pos="1830,1420", label=<Anything without a readable address,<br/>from any hall of the sorting centre.>]
+    dead_letters -> note_dead
+  }
+}

@@ -1,0 +1,22 @@
+diff --git a/src/routing/rectilinear/SparseVisibiltyGraphGenerator.ts b/src/routing/rectilinear/SparseVisibiltyGraphGenerator.ts
+index 98539ae864e50cf41849bd9910ef5729ed6594b6..190859733e30802e430129f094b37c57446afb4f 100644
+--- a/src/routing/rectilinear/SparseVisibiltyGraphGenerator.ts
++++ b/src/routing/rectilinear/SparseVisibiltyGraphGenerator.ts
+@@ -181,7 +181,7 @@ export class SparseVisibilityGraphGenerator extends VisibilityGraphGenerator {
+ 
+   ProcessCustomEvent(evt: SweepEvent) {
+     if (!this.ProcessAxisCoordinate(evt)) {
+-      this.ProcessCustomEvent(evt)
++      super.ProcessCustomEvent(evt)
+     }
+   }
+ 
+@@ -335,7 +335,7 @@ export class SparseVisibilityGraphGenerator extends VisibilityGraphGenerator {
+ 
+       // This is a HighObstacleSide.  If we've got overlap nesting, decrement the depth.
+       /*Assert.assert(overlapDepth > 0, 'Overlap depth must be positive')*/
+-      overlapDepth++
++      overlapDepth--
+       if (overlapDepth > 0) {
+         continue
+       }

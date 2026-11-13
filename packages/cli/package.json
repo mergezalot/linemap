@@ -1,0 +1,38 @@
+{
+  "name": "linemap",
+  "version": "0.1.0",
+  "description": "linemap command line: DOT file -> SVG",
+  "keywords": [
+    "flowchart",
+    "diagram",
+    "transit-map",
+    "metro-map",
+    "dot",
+    "graphviz",
+    "svg"
+  ],
+  "license": "MPL-2.0",
+  "homepage": "https://github.com/mergezalot/linemap#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mergezalot/linemap.git",
+    "directory": "packages/cli"
+  },
+  "bugs": "https://github.com/mergezalot/linemap/issues",
+  "type": "module",
+  "bin": {
+    "linemap": "cli.mjs"
+  },
+  "files": [
+    "cli.mjs"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@linemap/core": "workspace:^"
+  }
+}

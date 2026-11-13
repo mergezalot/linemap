@@ -1,0 +1,314 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 -190 2805 1876.5" width="2805" height="1876.5" class="linemap lm-root lm-theme-light" data-theme="light" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" fill="#1f2933">
+<style>
+.lm-root{font-family:Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif;fill:#1f2933}
+.lm-bg{fill:#ffffff}
+.lm-group-box{fill:#f3f5f7;stroke:#dbe0e6;stroke-width:1.25}
+.lm-group-title{fill:#4b5663;font-weight:700}
+.lm-shape{fill:#ffffff;stroke:#2b343f;stroke-width:2;stroke-linejoin:round}
+.lm-shape-line{fill:none;stroke:#2b343f;stroke-width:2}
+.lm-sheen{stroke:none;pointer-events:none}
+.lm-group-tab{fill:#4b5663;stroke:none}
+.lm-group-title-tab{fill:#ffffff;font-weight:600}
+.lm-person{fill:#596573;stroke:none}
+.lm-label{fill:#1f2933;font-weight:500}
+.lm-halo{stroke:#ffffff}
+.lm-halo-in{stroke:#ffffff}
+.lm-note-box{fill:#f7f8fa;stroke:#dfe3e8;stroke-width:1}
+.lm-note-text{fill:#6b7683;font-style:italic}
+.lm-note-link{fill:none;stroke:#b9c0c8;stroke-width:1.2;stroke-dasharray:5 4}
+.lm-casing{fill:none;stroke:#ffffff;stroke-linejoin:round}
+.lm-casing-in{stroke:#ffffff}
+.lm-strand{fill:none;stroke-linejoin:round}
+.lm-edge-label-box{fill:#ffffff;stroke:#cfd5dc;stroke-width:1}
+.lm-edge-label{fill:#1f2933;font-weight:600}
+.lm-legend-box{fill:#ffffff;stroke:#dbe0e6;stroke-width:1}
+.lm-legend-title{fill:#6b7683;font-weight:700;letter-spacing:0.12em}
+.lm-legend-text{fill:#1f2933}
+</style>
+<defs><filter id="lm-shadow-light-node" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="b0"/><feOffset in="b0" dx="0" dy="1" result="o0"/><feFlood flood-color="#0f1a2a" flood-opacity="0.1"/><feComposite in2="o0" operator="in" result="s0"/><feGaussianBlur in="SourceAlpha" stdDeviation="10" result="b1"/><feOffset in="b1" dx="0" dy="6" result="o1"/><feFlood flood-color="#0f1a2a" flood-opacity="0.12"/><feComposite in2="o1" operator="in" result="s1"/><feMerge><feMergeNode in="s0"/><feMergeNode in="s1"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lm-shadow-light-group" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="8" result="b0"/><feOffset in="b0" dx="0" dy="2" result="o0"/><feFlood flood-color="#0f1a2a" flood-opacity="0.05"/><feComposite in2="o0" operator="in" result="s0"/><feMerge><feMergeNode in="s0"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lm-shadow-light-small" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="2" result="b0"/><feOffset in="b0" dx="0" dy="1" result="o0"/><feFlood flood-color="#0f1a2a" flood-opacity="0.1"/><feComposite in2="o0" operator="in" result="s0"/><feMerge><feMergeNode in="s0"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect x="-100" y="-190" width="2805" height="1876.5" class="lm-bg" fill="#ffffff"/>
+<g class="group" id="cluster_storefront" data-label="Storefront">
+<rect x="235" y="189.5" width="370" height="541" rx="22" class="lm-group-box" style="fill:#eff4fb;stroke:#96bae3" filter="url(#lm-shadow-light-group)"/>
+<text x="255" y="217.5" font-size="18" class="lm-group-title" style="fill:#185396">Storefront</text>
+</g>
+<g class="group" id="cluster_backend" data-label="Backend">
+<rect x="695" y="159.5" width="1150" height="601" rx="22" class="lm-group-box" filter="url(#lm-shadow-light-group)"/>
+<text x="715" y="187.5" font-size="18" class="lm-group-title">Backend</text>
+</g>
+<g class="group" id="cluster_orders" data-label="Order service">
+<rect x="1115" y="189.5" width="700" height="221" rx="22" class="lm-group-box" style="fill:#f0f1f7;stroke:#9ea4ce" filter="url(#lm-shadow-light-group)"/>
+<text x="1135" y="217.5" font-size="18" class="lm-group-title" style="fill:#253176">Order service</text>
+</g>
+<g class="group" id="cluster_payments" data-label="Payments">
+<rect x="1115" y="509.5" width="700" height="221" rx="22" class="lm-group-box" style="fill:#f1f5ef;stroke:#a3bc9a" filter="url(#lm-shadow-light-group)"/>
+<text x="1135" y="537.5" font-size="18" class="lm-group-title" style="fill:#2d5624">Payments</text>
+</g>
+<g class="group" id="cluster_fulfilment" data-label="Fulfilment">
+<rect x="1975" y="189.5" width="690" height="221" rx="22" class="lm-group-box" style="fill:#fdf3ed;stroke:#f4b18c" filter="url(#lm-shadow-light-group)"/>
+<text x="1995" y="217.5" font-size="18" class="lm-group-title" style="fill:#aa450f">Fulfilment</text>
+</g>
+<g class="group" id="cluster_data" data-label="Data platform">
+<rect x="1285" y="1039.5" width="1060" height="221" rx="22" class="lm-group-box" style="fill:#fef6ef;stroke:#fbc597" filter="url(#lm-shadow-light-group)"/>
+<text x="1305" y="1067.5" font-size="18" class="lm-group-title" style="fill:#b5651f">Data platform</text>
+</g>
+<path d="M880,831 L880,647" class="lm-note-link"/>
+<path d="M1640,66 L1640,249.5" class="lm-note-link"/>
+<path d="M1820,1319.5 L1820,1200.5" class="lm-note-link"/>
+<path d="M2480,754 L2480,690" class="lm-note-link"/>
+<g class="edge" data-from="customer" data-to="web" data-lines="O P">
+<path d="M126.8,390 L126.8,332 Q126.8,300 158.8,300 L295,300" class="lm-casing" stroke-width="23"/>
+<path d="M122.3,390 L122.3,332 Q122.3,295.5 158.8,295.5 L295,295.5" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
+<path d="M131.3,390 L131.3,332 Q131.3,304.5 158.8,304.5 L295,304.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<g class="lm-marks" data-line="O">
+<polygon points="289,295.5 278.7,292.8 278.7,298.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="P">
+<polygon points="289,304.5 278.7,301.8 278.7,307.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="customer" data-to="app" data-lines="O P">
+<path d="M80,530 L80,588 Q80,620 112,620 L295,620" class="lm-casing" stroke-width="23"/>
+<path d="M84.5,530 L84.5,588 Q84.5,615.5 112,615.5 L295,615.5" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
+<path d="M75.5,530 L75.5,588 Q75.5,624.5 112,624.5 L295,624.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<g class="lm-marks" data-line="O">
+<polygon points="289,615.5 278.7,612.8 278.7,618.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="P">
+<polygon points="289,624.5 278.7,621.8 278.7,627.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="web" data-to="gateway" data-lines="O P">
+<path d="M545,300 L755,300" class="lm-casing" stroke-width="23"/>
+<path d="M545,295.5 L755,295.5" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
+<path d="M545,304.5 L755,304.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<g class="lm-marks" data-line="O">
+<polygon points="749,295.5 738.7,292.8 738.7,298.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="P">
+<polygon points="749,304.5 738.7,301.8 738.7,307.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="app" data-to="gateway" data-lines="O P">
+<path d="M545,620 L755,620" class="lm-casing" stroke-width="23"/>
+<path d="M545,615.5 L755,615.5" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
+<path d="M545,624.5 L755,624.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<g class="lm-marks" data-line="O">
+<polygon points="749,615.5 738.7,612.8 738.7,618.2" fill="#ffffff"/>
+</g>
+<g class="lm-marks" data-line="P">
+<polygon points="749,624.5 738.7,621.8 738.7,627.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="gateway" data-to="orders_q" data-lines="O">
+<path d="M1005,300 L1175,300" class="lm-casing" stroke-width="14"/>
+<path d="M1005,300 L1175,300" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
+<g class="lm-marks" data-line="O">
+<polygon points="1169,300 1158.7,297.3 1158.7,302.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="gateway" data-to="psp" data-lines="P">
+<path d="M1005,620 L1175,620" class="lm-casing" stroke-width="14"/>
+<path d="M1005,620 L1175,620" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<g class="lm-marks" data-line="P">
+<polygon points="1169,620 1158.7,617.3 1158.7,622.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="orders_q" data-to="check" data-lines="O">
+<path d="M1425,300 L1537.2,300" class="lm-casing" stroke-width="14"/>
+<path d="M1425,300 L1537.2,300" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
+<g class="lm-marks" data-line="O">
+<polygon points="1508.8,300 1498.4,297.3 1498.4,302.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="check" data-to="picking" data-lines="O" data-label="Yes">
+<path d="M1742.8,300 L2035,300" class="lm-casing" stroke-width="14"/>
+<path d="M1742.8,300 L2035,300" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
+<g class="lm-marks" data-line="O">
+<polygon points="2029,300 2018.7,297.3 2018.7,302.7" fill="#ffffff"/>
+<polygon points="1789,300 1778.7,297.3 1778.7,302.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="psp" data-to="paid" data-lines="P">
+<path d="M1425,620 L1537.2,620" class="lm-casing" stroke-width="14"/>
+<path d="M1425,620 L1537.2,620" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<g class="lm-marks" data-line="P">
+<polygon points="1508.8,620 1498.4,617.3 1498.4,622.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="paid" data-to="orders_q" data-lines="P" data-label="Yes">
+<path d="M1640,573.5 L1640,479.5 Q1640,447.5 1608,447.5 L1332,447.5 Q1300,447.5 1300,415.5 L1300,350.5" class="lm-casing" stroke-width="14"/>
+<path d="M1640,573.5 L1640,479.5 Q1640,447.5 1608,447.5 L1332,447.5 Q1300,447.5 1300,415.5 L1300,350.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<g class="lm-marks" data-line="P">
+<polygon points="1464.8,447.5 1475.2,450.2 1475.2,444.8" fill="#ffffff"/>
+<polygon points="1300,356.5 1297.3,366.9 1302.7,366.9" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="picking" data-to="courier" data-lines="S">
+<path d="M2285,300 L2355,300" class="lm-casing" stroke-width="14"/>
+<path d="M2285,300 L2355,300" class="lm-strand" stroke="#f97316" stroke-width="9" data-line="S"><title>Shipment</title></path>
+<g class="lm-marks" data-line="S">
+<polygon points="2349,300 2338.6,297.3 2338.6,302.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="courier" data-to="customer" data-lines="S" data-label="Delivered">
+<path d="M2480,249.5 L2480,-118 Q2480,-150 2448,-150 L112,-150 Q80,-150 80,-118 L80,390" class="lm-casing" stroke-width="14"/>
+<path d="M2480,249.5 L2480,-118 Q2480,-150 2448,-150 L112,-150 Q80,-150 80,-118 L80,390" class="lm-strand" stroke="#f97316" stroke-width="9" data-line="S"><title>Shipment</title></path>
+<g class="lm-marks" data-line="S">
+<polygon points="2480,63.1 2477.3,73.4 2482.7,73.4" fill="#ffffff"/>
+<polygon points="2202,-150 2212.4,-147.3 2212.4,-152.7" fill="#ffffff"/>
+<polygon points="1970.2,-150 1980.6,-147.3 1980.6,-152.7" fill="#ffffff"/>
+<polygon points="1738.4,-150 1748.8,-147.3 1748.8,-152.7" fill="#ffffff"/>
+<polygon points="1506.6,-150 1517,-147.3 1517,-152.7" fill="#ffffff"/>
+<polygon points="1274.8,-150 1285.2,-147.3 1285.2,-152.7" fill="#ffffff"/>
+<polygon points="1043,-150 1053.4,-147.3 1053.4,-152.7" fill="#ffffff"/>
+<polygon points="811.2,-150 821.6,-147.3 821.6,-152.7" fill="#ffffff"/>
+<polygon points="579.4,-150 589.8,-147.3 589.8,-152.7" fill="#ffffff"/>
+<polygon points="347.6,-150 358,-147.3 358,-152.7" fill="#ffffff"/>
+<polygon points="80,384 82.7,373.7 77.3,373.7" fill="#ffffff"/>
+<polygon points="80,144 82.7,133.7 77.3,133.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="check" data-to="psp" data-lines="R" data-label="No">
+<path d="M1640,346.5 L1640,440.5 Q1640,472.5 1608,472.5 L1332,472.5 Q1300,472.5 1300,504.5 L1300,569.5" class="lm-casing" stroke-width="14"/>
+<path d="M1640,346.5 L1640,440.5 Q1640,472.5 1608,472.5 L1332,472.5 Q1300,472.5 1300,504.5 L1300,569.5" class="lm-strand" stroke="#dc2626" stroke-width="9" data-line="R"><title>Refund</title></path>
+<g class="lm-marks" data-line="R">
+<polygon points="1464.8,472.5 1475.2,475.2 1475.2,469.8" fill="#ffffff"/>
+<polygon points="1300,563.5 1302.7,553.2 1297.3,553.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="support" data-to="cluster_payments" data-lines="R" data-label="Manual refund">
+<path d="M2410,620 L1815,620" class="lm-casing" stroke-width="14"/>
+<path d="M2410,620 L1815,620" class="lm-strand" stroke="#dc2626" stroke-width="9" data-line="R"><title>Refund</title></path>
+<g class="lm-marks" data-line="R">
+<polygon points="1821,620 1831.4,622.7 1831.4,617.3" fill="#ffffff"/>
+<polygon points="2061,620 2071.4,622.7 2071.4,617.3" fill="#ffffff"/>
+<polygon points="2301,620 2311.4,622.7 2311.4,617.3" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="psp" data-to="customer" data-lines="R" data-label="Money back">
+<path d="M1300,670.5 L1300,928 Q1300,960 1268,960 L-28,960 Q-60,960 -60,928 L-60,492 Q-60,460 -28,460 L10,460" class="lm-casing" stroke-width="14"/>
+<path d="M1300,670.5 L1300,928 Q1300,960 1268,960 L-28,960 Q-60,960 -60,928 L-60,492 Q-60,460 -28,460 L10,460" class="lm-strand" stroke="#dc2626" stroke-width="9" data-line="R"><title>Refund</title></path>
+<g class="lm-marks" data-line="R">
+<polygon points="1300,801.9 1302.7,791.6 1297.3,791.6" fill="#ffffff"/>
+<polygon points="1040.8,960 1051.2,962.7 1051.2,957.3" fill="#ffffff"/>
+<polygon points="827.8,960 838.2,962.7 838.2,957.3" fill="#ffffff"/>
+<polygon points="614.8,960 625.2,962.7 625.2,957.3" fill="#ffffff"/>
+<polygon points="401.8,960 412.2,962.7 412.2,957.3" fill="#ffffff"/>
+<polygon points="188.8,960 199.2,962.7 199.2,957.3" fill="#ffffff"/>
+<polygon points="-60,704.8 -62.7,715.2 -57.3,715.2" fill="#ffffff"/>
+<polygon points="4,460 -6.3,457.3 -6.3,462.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_orders" data-to="mailer" data-lines="M" data-label="Confirmation">
+<path d="M1350,189.5 L1350,90.5" class="lm-casing" stroke-width="14"/>
+<path d="M1350,189.5 L1350,90.5" class="lm-strand" stroke="#8b5cf6" stroke-width="9" data-line="M"><title>Email</title></path>
+<g class="lm-marks" data-line="M">
+<polygon points="1350,96.5 1347.3,106.9 1352.7,106.9" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="mailer" data-to="customer" data-lines="M">
+<path d="M1225,40 L135.2,40 Q103.2,40 103.2,72 L103.2,390" class="lm-casing" stroke-width="14"/>
+<path d="M1225,40 L135.2,40 Q103.2,40 103.2,72 L103.2,390" class="lm-strand" stroke="#8b5cf6" stroke-width="9" data-line="M"><title>Email</title></path>
+<g class="lm-marks" data-line="M">
+<polygon points="1000.5,40 1010.8,42.7 1010.8,37.3" fill="#ffffff"/>
+<polygon points="785.1,40 795.4,42.7 795.4,37.3" fill="#ffffff"/>
+<polygon points="569.7,40 580.1,42.7 580.1,37.3" fill="#ffffff"/>
+<polygon points="354.4,40 364.7,42.7 364.7,37.3" fill="#ffffff"/>
+<polygon points="103.2,384 105.9,373.7 100.5,373.7" fill="#ffffff"/>
+<polygon points="103.2,144 105.9,133.6 100.5,133.6" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_backend" data-to="bus" data-lines="E">
+<path d="M1470,760.5 L1470,1099.5" class="lm-casing" stroke-width="14"/>
+<path d="M1470,760.5 L1470,1099.5" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="1470,1093.5 1472.7,1083.2 1467.3,1083.2" fill="#ffffff"/>
+<polygon points="1470,853.5 1472.7,843.2 1467.3,843.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_storefront" data-to="bus" data-lines="E" data-label="Clicks">
+<path d="M520,730.5 L520,1118 Q520,1150 552,1150 L1345,1150" class="lm-casing" stroke-width="14"/>
+<path d="M520,730.5 L520,1118 Q520,1150 552,1150 L1345,1150" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="520,926.9 522.7,916.6 517.3,916.6" fill="#ffffff"/>
+<polygon points="1339,1150 1328.7,1147.3 1328.7,1152.7" fill="#ffffff"/>
+<polygon points="1099,1150 1088.7,1147.3 1088.7,1152.7" fill="#ffffff"/>
+<polygon points="859,1150 848.7,1147.3 848.7,1152.7" fill="#ffffff"/>
+<polygon points="619,1150 608.7,1147.3 608.7,1152.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="bus" data-to="lake" data-lines="E">
+<path d="M1595,1150 L1695,1150" class="lm-casing" stroke-width="14"/>
+<path d="M1595,1150 L1695,1150" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="1689,1150 1678.7,1147.3 1678.7,1152.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="lake" data-to="dash" data-lines="E">
+<path d="M1945,1150 L2035,1150" class="lm-casing" stroke-width="14"/>
+<path d="M1945,1150 L2035,1150" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="2029,1150 2018.7,1147.3 2018.7,1152.7" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_fulfilment" data-to="cluster_data" data-lines="E" data-label="Scans">
+<path d="M2160,410.5 L2160,1039.5" class="lm-casing" stroke-width="14"/>
+<path d="M2160,410.5 L2160,1039.5" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="2160,1033.5 2162.7,1023.2 2157.3,1023.2" fill="#ffffff"/>
+<polygon points="2160,793.5 2162.7,783.2 2157.3,783.2" fill="#ffffff"/>
+<polygon points="2160,553.5 2162.7,543.2 2157.3,543.2" fill="#ffffff"/>
+</g>
+</g>
+<g class="edge" data-from="cluster_data" data-to="cluster_storefront" data-lines="E" data-label="Recommendations">
+<path d="M1285,1120 L362,1120 Q330,1120 330,1088 L330,730.5" class="lm-casing" stroke-width="14"/>
+<path d="M1285,1120 L362,1120 Q330,1120 330,1088 L330,730.5" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
+<g class="lm-marks" data-line="E">
+<polygon points="1048.3,1120 1058.7,1122.7 1058.7,1117.3" fill="#ffffff"/>
+<polygon points="820.8,1120 831.2,1122.7 831.2,1117.3" fill="#ffffff"/>
+<polygon points="593.3,1120 603.7,1122.7 603.7,1117.3" fill="#ffffff"/>
+<polygon points="330,736.5 327.3,746.8 332.7,746.8" fill="#ffffff"/>
+<polygon points="330,976.5 327.3,986.9 332.7,986.9" fill="#ffffff"/>
+</g>
+</g>
+<g class="node" id="customer" data-label="Customer" data-shape="person"><circle cx="80" cy="432" r="23.8" class="lm-person"/><path d="M29.6,530 V499.2 Q29.6,462.8 80,462.8 Q130.4,462.8 130.4,499.2 V530 Z" class="lm-person"/><text font-size="15" text-anchor="start" dominant-baseline="central" class="lm-label lm-halo" stroke-width="5" stroke-linejoin="round" paint-order="stroke" style="font-weight:600"><tspan x="136.4" y="485.2">Customer</tspan></text></g>
+<g class="node human" id="support" data-label="Support agent" data-shape="person"><circle cx="2480" cy="592" r="23.8" class="lm-person"/><path d="M2429.6,690 V659.2 Q2429.6,622.8 2480,622.8 Q2530.4,622.8 2530.4,659.2 V690 Z" class="lm-person"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label lm-halo" stroke-width="5" stroke-linejoin="round" paint-order="stroke" style="font-weight:600"><tspan x="2480" y="707.5">Support agent</tspan></text></g>
+<g class="node" id="web" data-label="Web shop" data-shape="box"><rect x="295" y="249.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="420" y="300">Web shop</tspan></text></g>
+<g class="node" id="app" data-label="Mobile app" data-shape="box"><rect x="295" y="569.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="420" y="620">Mobile app</tspan></text></g>
+<g class="node through critical" id="gateway" data-label="API gateway" data-url="https://en.wikipedia.org/wiki/API_management" data-shape="box" data-through="true"><a href="https://en.wikipedia.org/wiki/API_management"><rect x="755" y="273" width="250" height="374" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="880" y="460"></tspan></text><path d="M771.9,295.5 C834.8,295.8 863.1,297.2 899,298.4" class="lm-casing lm-casing-in" stroke-width="13"/><path d="M755,295.5 C880,295.5 880,300 1005,300" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path><path d="M762.8,304.9 C832.1,312.5 861.4,421.3 899,508.9" class="lm-casing lm-casing-in" stroke-width="13"/><path d="M755,304.5 C880,304.5 880,620 1005,620" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path><path d="M762.8,615.1 C832.1,607.5 861.4,498.7 899,411.1" class="lm-casing lm-casing-in" stroke-width="13"/><path d="M755,615.5 C880,615.5 880,300 1005,300" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path><path d="M771.9,624.5 C834.8,624.2 863.1,622.8 899,621.6" class="lm-casing lm-casing-in" stroke-width="13"/><path d="M755,624.5 C880,624.5 880,620 1005,620" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label lm-halo lm-halo-in" stroke-width="5" stroke-linejoin="round" paint-order="stroke" style="font-weight:600"><tspan x="880" y="327.8">API gateway</tspan></text></a></g>
+<g class="node" id="orders_q" data-label="Order queue" data-shape="queue"><path d="M1191,249.5 H1409 A16,50.5 0 0 1 1409,350.5 H1191 A16,50.5 0 0 1 1191,249.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M1409,249.5 A16,50.5 0 0 0 1409,350.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1292" y="300">Order queue</tspan></text></g>
+<g class="node" id="check" data-label="In stock?" data-shape="diamond"><polygon points="1640,249.5 1755,300 1640,350.5 1525,300" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1640" y="300">In stock?</tspan></text></g>
+<g class="node external" id="psp" data-label="Payment provider&#10;(external)" data-shape="box"><rect x="1175" y="569.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1300" y="610.5">Payment provider</tspan><tspan x="1300" y="629.5">(external)</tspan></text></g>
+<g class="node" id="paid" data-label="Paid?" data-shape="diamond"><polygon points="1640,569.5 1755,620 1640,670.5 1525,620" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1640" y="620">Paid?</tspan></text></g>
+<g class="node" id="picking" data-label="Picking" data-shape="box"><rect x="2035" y="249.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2160" y="300">Picking</tspan></text></g>
+<g class="node" id="courier" data-label="Courier" data-shape="box"><rect x="2355" y="249.5" width="250" height="101" rx="14" class="lm-shape" style="stroke:#ef6c00" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="2480" y="300">Courier</tspan></text></g>
+<g class="node" id="bus" data-label="Event bus" data-shape="queue"><path d="M1361,1099.5 H1579 A16,50.5 0 0 1 1579,1200.5 H1361 A16,50.5 0 0 1 1361,1099.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M1579,1099.5 A16,50.5 0 0 0 1579,1200.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1462" y="1150">Event bus</tspan></text></g>
+<g class="node" id="lake" data-label="Data lake" data-shape="cylinder"><path d="M1695,1113.5 A125,14 0 0 1 1945,1113.5 V1186.5 A125,14 0 0 1 1695,1186.5 Z" class="lm-shape" filter="url(#lm-shadow-light-node)"/><path d="M1695,1113.5 A125,14 0 0 0 1945,1113.5" class="lm-shape-line"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1820" y="1157">Data lake</tspan></text></g>
+<g class="node" id="dash" data-label="Dashboard" data-shape="box"><rect x="2035" y="1099.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="17" text-anchor="middle" dominant-baseline="central" class="lm-label" style="fill:#e65100"><tspan x="2160" y="1150">Dashboard</tspan></text></g>
+<g class="node" id="mailer" data-label="Mailer" data-shape="box"><rect x="1225" y="-10.5" width="250" height="101" rx="14" class="lm-shape" filter="url(#lm-shadow-light-node)"/><text font-size="15" text-anchor="middle" dominant-baseline="central" class="lm-label"><tspan x="1350" y="40">Mailer</tspan></text></g>
+<g class="note" id="note_gateway" data-label="One entry point for web and app.&#10;Rate limits apply per client." data-url="https://en.wikipedia.org/wiki/Rate_limiting"><a href="https://en.wikipedia.org/wiki/Rate_limiting"><rect x="751.5" y="831" width="257" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="763.5" y="851.5">One entry point for web and app.</tspan><tspan x="763.5" y="868.5">Rate limits apply per client.</tspan></text></a></g>
+<g class="note" id="note_check" data-label="Out of stock means&#10;an instant refund."><rect x="1562" y="8" width="156" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="1574" y="28.5">Out of stock means</tspan><tspan x="1574" y="45.5">an instant refund.</tspan></text></g>
+<g class="note" id="note_lake" data-label="Kept for 2 years."><rect x="1746" y="1319.5" width="148" height="41" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="1758" y="1340">Kept for 2 years.</tspan></text></g>
+<g class="note" id="note_support" data-label="For the cases&#10;no rule covers."><rect x="2413" y="754" width="134" height="58" rx="8" class="lm-note-box" filter="url(#lm-shadow-light-small)"/><text font-size="13" class="lm-note-text" dominant-baseline="central"><tspan x="2425" y="774.5">For the cases</tspan><tspan x="2425" y="791.5">no rule covers.</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1770.9" y="266.5" width="38.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1790" y="278">Yes</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1591.3" y="512.3" width="38.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1610.4" y="523.8">Yes</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="2391" y="88.2" width="78.5" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="2430.3" y="99.7">Delivered</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1650.5" y="384.8" width="31.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1666.2" y="396.3">No</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="2282.9" y="630.5" width="105.4" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="2335.6" y="642">Manual refund</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1310.5" y="803.8" width="85.2" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1353.1" y="815.3">Money back</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1360.5" y="178" width="98.6" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1409.8" y="189.5">Confirmation</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="530.5" y="719" width="58.3" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="559.7" y="730.5">Clicks</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="2170.5" y="399" width="51.6" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="2196.3" y="410.5">Scans</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="1106.2" y="1086.5" width="118.8" height="23" rx="11.5" class="lm-edge-label-box" filter="url(#lm-shadow-light-small)"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="1165.6" y="1098">Recommendations</tspan></text></g>
+<g class="legend"><rect x="-60" y="1420.5" width="176.7" height="226" rx="12" class="lm-legend-box" filter="url(#lm-shadow-light-small)"/><text x="-42" y="1442.5" font-size="12" class="lm-legend-title" dominant-baseline="central">LINES</text><g class="legend-row" data-line="O"><line x1="-38" y1="1470.5" x2="14" y2="1470.5" stroke="#2563eb" stroke-width="9" stroke-linecap="round"/><polygon points="-7,1470.5 -17,1467.8 -17,1473.2" fill="#ffffff"/><text x="32" y="1470.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Order</text></g><g class="legend-row" data-line="P"><line x1="-38" y1="1498.5" x2="14" y2="1498.5" stroke="#16a34a" stroke-width="9" stroke-linecap="round"/><polygon points="-7,1498.5 -17,1495.8 -17,1501.2" fill="#ffffff"/><text x="32" y="1498.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Payment</text></g><g class="legend-row" data-line="S"><line x1="-38" y1="1526.5" x2="14" y2="1526.5" stroke="#f97316" stroke-width="9" stroke-linecap="round"/><polygon points="-7,1526.5 -17,1523.8 -17,1529.2" fill="#ffffff"/><text x="32" y="1526.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Shipment</text></g><g class="legend-row" data-line="R"><line x1="-38" y1="1554.5" x2="14" y2="1554.5" stroke="#dc2626" stroke-width="9" stroke-linecap="round"/><polygon points="-7,1554.5 -17,1551.8 -17,1557.2" fill="#ffffff"/><text x="32" y="1554.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Refund</text></g><g class="legend-row" data-line="E"><line x1="-38" y1="1582.5" x2="14" y2="1582.5" stroke="#0ea5b7" stroke-width="9" stroke-linecap="round"/><polygon points="-7,1582.5 -17,1579.8 -17,1585.2" fill="#ffffff"/><text x="32" y="1582.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Event</text></g><g class="legend-row" data-line="M"><line x1="-38" y1="1610.5" x2="14" y2="1610.5" stroke="#8b5cf6" stroke-width="9" stroke-linecap="round"/><polygon points="-7,1610.5 -17,1607.8 -17,1613.2" fill="#ffffff"/><text x="32" y="1610.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Email</text></g></g>
+</svg>
