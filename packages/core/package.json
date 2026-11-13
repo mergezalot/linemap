@@ -1,6 +1,6 @@
 {
   "name": "@linemap/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DOT text -> model -> transit-map style SVG. No I/O, runs in node and the browser.",
   "keywords": [
     "flowchart",
