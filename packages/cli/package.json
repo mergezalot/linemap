@@ -1,5 +1,5 @@
 {
-  "name": "linemap",
+  "name": "@linemap/cli",
   "version": "0.1.0",
   "description": "linemap command line: DOT file -> SVG",
   "keywords": [

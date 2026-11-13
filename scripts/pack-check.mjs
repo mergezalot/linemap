@@ -1,5 +1,5 @@
-// Checks the npm tarballs as a user would get them: packs @linemap/core and linemap, installs both
-// into an empty folder outside the repository, draws an example with `npx linemap`, and checks
+// Checks the npm tarballs as a user would get them: packs @linemap/core and @linemap/cli, installs both
+// into an empty folder outside the repository, draws an example with `npx @linemap/cli`, and checks
 // that the bundled MSAGL carries its license header.
 //   pnpm pack-check
 import { execFileSync } from 'node:child_process';
@@ -24,7 +24,7 @@ try {
   // the CLI's tarball must name core by version, not workspace:
   const cliPkg = JSON.parse(run('tar', ['-xOzf', tarballs[1], 'package/package.json']));
   const dep = cliPkg.dependencies?.['@linemap/core'];
-  if (!dep || dep.startsWith('workspace:')) fail(`linemap depends on @linemap/core as "${dep}"`);
+  if (!dep || dep.startsWith('workspace:')) fail(`@linemap/cli depends on @linemap/core as "${dep}"`);
 
   // each tarball carries its README (the npm page) and the license, and publishes as public
   for (const file of tarballs) {
@@ -47,11 +47,11 @@ try {
   }
 
   const out = path.join(app, 'webshop.svg');
-  run('npx', ['--no-install', 'linemap', path.join(root, 'examples/webshop.dot'), out], app);
-  if (!fs.readFileSync(out, 'utf8').startsWith('<svg ')) fail('npx linemap wrote no SVG');
-  const version = run('npx', ['--no-install', 'linemap', '--version'], app).trim();
+  run('npx', ['--no-install', '@linemap/cli', path.join(root, 'examples/webshop.dot'), out], app);
+  if (!fs.readFileSync(out, 'utf8').startsWith('<svg ')) fail('npx @linemap/cli wrote no SVG');
+  const version = run('npx', ['--no-install', '@linemap/cli', '--version'], app).trim();
 
-  console.log(`pack-check: ok (linemap ${version}, @linemap/core ${dep}, license header present)`);
+  console.log(`pack-check: ok (@linemap/cli ${version}, @linemap/core ${dep}, license header present)`);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }

@@ -109,7 +109,7 @@ class on top.
 Needs Node 22 or later.
 
 ```sh
-npx linemap <flow.dot> <out.svg> [--positions]
+npx @linemap/cli <flow.dot> <out.svg> [--positions]
             [--theme light|dark|minimal|neon|neond] [--css extra.css]
 ```
 
@@ -133,7 +133,7 @@ pnpm example       # redraws examples/*.svg, docs/pipeline.svg and the studio sc
 pnpm linemap <flow.dot> <out.svg> [options]
 pnpm test          # core and CLI (node:test): errors, rendering, the committed SVGs, the CLI
 pnpm test:studio   # the studio in headless Chromium (see below)
-pnpm pack-check    # packs both npm packages, installs them in an empty folder, runs npx linemap
+pnpm pack-check    # packs both npm packages, installs them in an empty folder, runs npx @linemap/cli
 ```
 
 If a test says an example no longer matches its SVG, run `pnpm example` and

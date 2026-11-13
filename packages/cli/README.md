@@ -9,9 +9,11 @@ drawn as transit-map bundles.
 **[Try the examples in the studio](https://mergezalot.github.io/linemap/)**, in your browser, nothing to install.
 
 ```sh
-npx linemap <flow.dot> <out.svg> [--positions]
+npx @linemap/cli <flow.dot> <out.svg> [--positions]
             [--theme light|dark|minimal|neon|neond] [--css extra.css]
 ```
+
+Or install it once with `npm install -g @linemap/cli` and run `linemap` with the same arguments.
 
 - `--positions` prints the computed positions as `name [pos="x,y"]`, ready to paste into the file.
 - `--css` adds a CSS file after the theme's, to restyle any `lm-*` class.

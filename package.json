@@ -20,7 +20,7 @@
     "example": "node scripts/examples.mjs",
     "studio": "pnpm --filter @linemap/studio build",
     "studio:serve": "pnpm --filter @linemap/studio serve",
-    "test": "pnpm --filter @linemap/core test && pnpm --filter linemap test",
+    "test": "pnpm --filter @linemap/core test && pnpm --filter @linemap/cli test",
     "test:studio": "pnpm --filter @linemap/studio test",
     "pack-check": "node scripts/pack-check.mjs"
   }
