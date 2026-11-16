@@ -1,7 +1,7 @@
 {
   "name": "@linemap/studio",
   "version": "0.2.0",
-  "description": "The linemap studio as one self-contained HTML file, and the few lines that bake DOT flows into it. The CLI (`linemap export`, `linemap studio`) uses this.",
+  "description": "Flow diagrams with pinned nodes and transit-map style line bundles. The studio as one self-contained HTML file; used by the linemap CLI.",
   "keywords": [
     "flowchart",
     "diagram",
