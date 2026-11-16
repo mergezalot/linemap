@@ -1,6 +1,6 @@
-// Checks the npm tarballs as a user would get them: packs @linemap/core and @linemap/cli, installs both
-// into an empty folder outside the repository, draws an example with `npx @linemap/cli`, and checks
-// that the bundled MSAGL carries its license header.
+// Checks the npm tarballs as a user would get them: packs @linemap/core, @linemap/studio and
+// @linemap/cli, installs them into an empty folder outside the repository, exports an example to SVG
+// and to HTML with `npx @linemap/cli`, and checks that the bundled MSAGL carries its license header.
 //   pnpm pack-check
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -14,17 +14,26 @@ const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, encoding: 'utf8',
 const fail = (msg) => { console.error(`pack-check: ${msg}`); process.exit(1); };
 
 try {
-  const tarballs = ['core', 'cli'].map((dir) => {
+  const tarballs = ['core', 'studio', 'cli'].map((dir) => {
     const out = run('pnpm', ['pack', '--pack-destination', tmp], path.join(root, 'packages', dir));
     const file = out.trim().split('\n').pop().trim();
     console.log(`packed ${path.basename(file)}`);
     return path.isAbsolute(file) ? file : path.join(tmp, path.basename(file));
   });
 
-  // the CLI's tarball must name core by version, not workspace:
-  const cliPkg = JSON.parse(run('tar', ['-xOzf', tarballs[1], 'package/package.json']));
-  const dep = cliPkg.dependencies?.['@linemap/core'];
-  if (!dep || dep.startsWith('workspace:')) fail(`@linemap/cli depends on @linemap/core as "${dep}"`);
+  // the CLI's tarball must name core and studio by version, not workspace:
+  const cliPkg = JSON.parse(run('tar', ['-xOzf', tarballs[2], 'package/package.json']));
+  for (const name of ['@linemap/core', '@linemap/studio']) {
+    const v = cliPkg.dependencies?.[name];
+    if (!v || v.startsWith('workspace:')) fail(`@linemap/cli depends on ${name} as "${v}"`);
+  }
+  const dep = cliPkg.dependencies['@linemap/core'];
+
+  // the studio's tarball carries the built page, and needs nothing at runtime
+  const studioEntries = run('tar', ['-tzf', tarballs[1]]).split('\n');
+  if (!studioEntries.includes('package/dist/linemap.html')) fail('@linemap/studio has no dist/linemap.html');
+  const studioPkg = JSON.parse(run('tar', ['-xOzf', tarballs[1], 'package/package.json']));
+  if (Object.keys(studioPkg.dependencies ?? {}).length) fail(`@linemap/studio has dependencies: ${Object.keys(studioPkg.dependencies)}`);
 
   // each tarball carries its README (the npm page) and the license, and publishes as public
   for (const file of tarballs) {
@@ -47,11 +56,14 @@ try {
   }
 
   const out = path.join(app, 'webshop.svg');
-  run('npx', ['--no-install', '@linemap/cli', path.join(root, 'examples/webshop.dot'), out], app);
+  run('npx', ['--no-install', '@linemap/cli', 'export', path.join(root, 'examples/webshop.dot'), '-o', out], app);
   if (!fs.readFileSync(out, 'utf8').startsWith('<svg ')) fail('npx @linemap/cli wrote no SVG');
+  const page = path.join(app, 'webshop.html');
+  run('npx', ['--no-install', '@linemap/cli', 'export', path.join(root, 'examples/webshop.dot'), '-o', page], app);
+  if (!fs.readFileSync(page, 'utf8').includes('"name":"webshop.dot"')) fail('npx @linemap/cli wrote no studio page with the flow');
   const version = run('npx', ['--no-install', '@linemap/cli', '--version'], app).trim();
 
-  console.log(`pack-check: ok (@linemap/cli ${version}, @linemap/core ${dep}, license header present)`);
+  console.log(`pack-check: ok (@linemap/cli ${version}, @linemap/core ${dep}, SVG and HTML export, license header present)`);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }

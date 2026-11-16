@@ -336,7 +336,7 @@ async function renderEmpty() {
   rl.querySelector('.links').innerHTML = recent.slice(0, 6).map((r, i) => `<button data-i="${i}">${esc(r.name)}</button>`).join('');
   if (!examplesChecked && isHttp()) {
     examplesChecked = true;
-    // served from the repo (pnpm studio:serve)? then offer the examples
+    // served from the repo (pnpm studio)? then offer the examples
     const ok = await fetch(EXAMPLES[0], { method: 'HEAD', cache: 'no-store' }).then((r) => r.ok, () => false);
     const ex = el.empty.querySelector('.examples');
     ex.querySelector('.links').innerHTML = EXAMPLES.map((p) => `<a href="?src=${p}">${p.split('/').pop().replace('.dot', '')}</a>`).join('');

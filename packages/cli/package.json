@@ -1,7 +1,7 @@
 {
   "name": "@linemap/cli",
   "version": "0.2.0",
-  "description": "linemap command line: DOT file -> SVG",
+  "description": "linemap command line: DOT file -> SVG, or the studio as one HTML file",
   "keywords": [
     "flowchart",
     "diagram",
@@ -34,7 +34,8 @@
     "prepack": "node -e \"require('fs').copyFileSync('../../LICENSE', 'LICENSE')\""
   },
   "dependencies": {
-    "@linemap/core": "workspace:^"
+    "@linemap/core": "workspace:^",
+    "@linemap/studio": "workspace:^"
   },
   "publishConfig": {
     "access": "public"

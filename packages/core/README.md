@@ -19,7 +19,7 @@ const svg = render(layout(parseFlow(dotText)), { theme: 'dark' });
   `light`, `dark`, `neon`, `neond`, each also as `-fancy` (shadows, glows, moving arrows; costlier).
 - `positions(model)` gives the computed positions of unpinned nodes, ready to pin with `pos`.
 
-The command line is [`@linemap/cli`](https://www.npmjs.com/package/@linemap/cli): `npx @linemap/cli flow.dot out.svg`.
+The command line is [`@linemap/cli`](https://www.npmjs.com/package/@linemap/cli): `npx @linemap/cli export flow.dot`.
 The DOT format, themes and the studio are described in the
 [project README](https://github.com/mergezalot/linemap#readme).
 

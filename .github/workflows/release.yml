@@ -1,12 +1,12 @@
 name: Release
 
-# Publishes @linemap/core and linemap to npm when a version tag is pushed:
-#   (bump "version" in packages/core and packages/cli, commit)
+# Publishes @linemap/core, @linemap/studio and @linemap/cli to npm when a version tag is pushed:
+#   (bump "version" in packages/core, packages/studio and packages/cli, commit; pnpm release does that)
 #   git tag v0.2.0 && git push origin v0.2.0
 # No npm token: each package lists this workflow as its trusted publisher on npmjs.com
 # (package settings -> Trusted publishing -> GitHub Actions, workflow file release.yml), and
 # npm adds provenance on its own. A version already on npm is skipped, so a tag can release
-# just one of the two packages.
+# just some of the packages.
 
 on:
   push:
@@ -36,17 +36,17 @@ jobs:
 
       - name: Tag matches the package versions
         run: |
-          for dir in core cli; do
+          for dir in core studio cli; do
             v=$(node -p "require('./packages/$dir/package.json').version")
             [ "v$v" = "$GITHUB_REF_NAME" ] || { echo "packages/$dir is $v, tag is $GITHUB_REF_NAME"; exit 1; }
           done
 
-      # pnpm pack turns workspace:^ into a version; npm publishes the tarball. Core goes first,
-      # since the CLI depends on it.
+      # pnpm pack turns workspace:^ into a version; npm publishes the tarball. Core and studio go
+      # first, since the CLI depends on them.
       - name: Publish
         run: |
           mkdir -p "$RUNNER_TEMP/dist"
-          for dir in core cli; do
+          for dir in core studio cli; do
             name=$(node -p "require('./packages/$dir/package.json').name")
             version=$(node -p "require('./packages/$dir/package.json').version")
             if npm view "$name@$version" version >/dev/null 2>&1; then

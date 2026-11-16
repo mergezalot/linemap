@@ -1,19 +1,34 @@
 #!/usr/bin/env node
-// linemap <flow.dot> <out.svg> [options]; `linemap --help` lists the options.
-// Exit codes: 0 done, 1 the file could not be drawn, 2 wrong usage.
+// linemap export | studio [...]; `linemap --help` lists the options.
+// Exit codes: 0 done, 1 the file could not be drawn (or served), 2 wrong usage.
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { parseFlow, layout, crowding, render, positions, THEMES, THEME_NAMES } from '@linemap/core';
+import { studioHtml, serve, announce, openBrowser } from '@linemap/studio';
 
-const USAGE = `usage: linemap <flow.dot> <out.svg> [options]
+const USAGE = `usage: linemap <command> [options]
 
-  --theme <name>   ${THEME_NAMES.join(', ')} (default: the DOT file's \`theme\`, else minimal)
-  --css <file>     a CSS file added after the theme's, to restyle any lm-* class
-  --positions      also print the computed position of every unpinned node and note,
-                   ready to paste into the DOT file as \`pos\` to pin it
-  -h, --help       print this help
-  -v, --version    print the version`;
+linemap export [flow.dot ...] [-o <out.svg|out.html>] [options]
+  writes a file; its extension picks what:
+    .svg    the map as a static SVG; exactly one flow (default: <flow>.svg beside it)
+    .html   the studio as one self-contained HTML file, with the flows baked in;
+            no flows gives the empty studio (default with no flows: linemap.html)
+  -o, --out <file>   the file to write
+  --theme <name>     ${THEME_NAMES.join(', ')}
+                     (default: the DOT file's \`theme\`, else minimal; SVG only)
+  --css <file>       a CSS file added after the theme's, to restyle any lm-* class (SVG only)
+  --positions        also print the computed position of every unpinned node and note,
+                     ready to paste into the DOT file as \`pos\` to pin it (SVG only)
+
+linemap studio [dir] [options]
+  serves the studio and the DOT files under dir (default: here) on this machine;
+  open one with ?src=<file>, and Watch redraws it on every save
+  --port <n>         default 8000
+  --open             also open the studio in the browser
+
+  -h, --help         print this help
+  -v, --version      print the version`;
 
 // Wrong usage: the problem, then the usage, and exit 2.
 function usage(problem) {
@@ -21,19 +36,28 @@ function usage(problem) {
   process.exit(2);
 }
 
+const COMMON = {
+  help: { type: 'boolean', short: 'h' },
+  version: { type: 'boolean', short: 'v' },
+};
+const COMMANDS = {
+  export: {
+    out: { type: 'string', short: 'o' },
+    theme: { type: 'string' },
+    css: { type: 'string' },
+    positions: { type: 'boolean' },
+  },
+  studio: {
+    port: { type: 'string' },
+    open: { type: 'boolean' },
+  },
+};
+
+const argv = process.argv.slice(2);
+const command = Object.hasOwn(COMMANDS, argv[0]) ? argv[0] : null;
 let opts;
 try {
-  opts = parseArgs({
-    strict: true,
-    allowPositionals: true,
-    options: {
-      theme: { type: 'string' },
-      css: { type: 'string' },
-      positions: { type: 'boolean' },
-      help: { type: 'boolean', short: 'h' },
-      version: { type: 'boolean', short: 'v' },
-    },
-  });
+  opts = parseArgs({ args: command ? argv.slice(1) : argv, strict: true, allowPositionals: true, options: { ...COMMON, ...COMMANDS[command] } });
 } catch (e) {
   usage(e.message);
 }
@@ -47,9 +71,7 @@ if (o.version) {
   console.log(pkg.version);
   process.exit(0);
 }
-if (o.theme !== undefined && !THEMES[o.theme]) usage(`unknown theme "${o.theme}" (known: ${THEME_NAMES.join(', ')})`);
-if (positionals.length !== 2) usage(`expected an input and an output file, got ${positionals.length} argument${positionals.length === 1 ? '' : 's'}`);
-const [input, output] = positionals;
+if (!command) usage(positionals.length ? `unknown command "${positionals[0]}" (known: ${Object.keys(COMMANDS).join(', ')})` : 'no command');
 
 // File errors carry the path, so the one line says which file.
 const read = (file) => {
@@ -62,16 +84,19 @@ const write = (file, data) => {
   } catch (e) { throw new Error(`${file}: ${e.message}`); }
 };
 
-function run() {
-  let model;
+// The flow in a DOT file; the DOT parser's errors point at a line and column of it.
+function load(file, text = read(file)) {
   try {
-    model = layout(parseFlow(read(input)));
+    return parseFlow(text);
   } catch (e) {
-    // the DOT parser's errors point at a line and column of the input
     const at = e.name === 'DotSyntaxError' ? (e.cause?.location ?? e.location)?.start : null;
-    if (at) throw new Error(`${input}:${at.line}:${at.column}: ${e.message}`, { cause: e });
+    if (at) throw new Error(`${file}:${at.line}:${at.column}: ${e.message}`, { cause: e });
     throw e;
   }
+}
+
+function exportSvg(input, output) {
+  const model = layout(load(input));
   for (const w of crowding(model)) console.error(`warning: ${w}`);
   const svg = render(model, { theme: o.theme, css: o.css !== undefined ? read(o.css) : '' });
   write(output, svg);
@@ -82,8 +107,58 @@ function run() {
   }
 }
 
+// Every flow is parsed first, so a broken file fails here and not later in the browser.
+function exportHtml(inputs, output) {
+  const flows = inputs.map((file) => {
+    const text = read(file);
+    load(file, text);
+    return { name: path.basename(file), text };
+  });
+  const html = studioHtml(flows);
+  write(output, html);
+  const what = flows.length ? `${flows.length} flow${flows.length === 1 ? '' : 's'}` : 'no flows';
+  console.error(`wrote ${output}: the studio with ${what} (${Math.round(Buffer.byteLength(html) / 1024)} KiB)`);
+}
+
+function exportCommand() {
+  const inputs = positionals;
+  const output = o.out ?? (inputs.length ? inputs[0].replace(/(\.[^./\\]*)?$/, '.svg') : 'linemap.html');
+  const ext = path.extname(output).toLowerCase();
+  if (ext === '.svg') {
+    if (inputs.length !== 1) usage(`an SVG is drawn from exactly one flow, got ${inputs.length}`);
+    if (o.theme !== undefined && !THEMES[o.theme]) usage(`unknown theme "${o.theme}" (known: ${THEME_NAMES.join(', ')})`);
+    return exportSvg(inputs[0], output);
+  }
+  if (ext === '.html' || ext === '.htm') {
+    const svgOnly = ['theme', 'css', 'positions'].filter((k) => o[k] !== undefined);
+    if (svgOnly.length) usage(`${svgOnly.map((k) => `--${k}`).join(', ')} only ${svgOnly.length === 1 ? 'applies' : 'apply'} to an SVG export`);
+    return exportHtml(inputs, output);
+  }
+  usage(`the output must end in .svg or .html, got "${output}"`);
+}
+
+async function studioCommand() {
+  if (positionals.length > 1) usage(`expected at most one folder, got ${positionals.length}`);
+  const dir = path.resolve(positionals[0] ?? '.');
+  if (!fs.statSync(dir, { throwIfNoEntry: false })?.isDirectory()) throw new Error(`${positionals[0]}: no such folder`);
+  const port = o.port === undefined ? 8000 : Number(o.port);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) usage(`--port must be a port number, got "${o.port}"`);
+
+  const html = studioHtml(); // read once: the page does not change while serving
+  let server;
+  try {
+    server = await serve({ root: dir, port, page: () => html, onError: (e) => console.error(`linemap: ${e.message}`) });
+  } catch (e) {
+    if (e.code === 'EADDRINUSE') throw new Error(`port ${port} is in use; pick another with --port`);
+    throw e;
+  }
+  const { text, url } = announce(server, dir);
+  console.log(text);
+  if (o.open) openBrowser(url);
+}
+
 try {
-  run();
+  await (command === 'export' ? exportCommand() : studioCommand());
 } catch (e) {
   // one line, unless LINEMAP_DEBUG=1 asks for the stack
   console.error(process.env.LINEMAP_DEBUG === '1' ? (e.cause?.stack ?? e.stack) : `linemap: ${e.message}`);

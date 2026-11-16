@@ -112,18 +112,26 @@ class on top.
 Needs Node 22 or later.
 
 ```sh
-npx @linemap/cli <flow.dot> <out.svg> [--positions]
+npx @linemap/cli export flow.dot                      # -> flow.svg
+npx @linemap/cli export flow.dot -o map.svg [--positions]
             [--theme minimal|light|dark|neon|neond[-fancy]] [--css extra.css]
+npx @linemap/cli export flow.dot -o flow.html         # the studio with the flow baked in
+npx @linemap/cli export a.dot b.dot -o flows.html     # several, picked on the start screen
+npx @linemap/cli export                               # the empty studio: linemap.html
+npx @linemap/cli studio [dir] [--port 8000] [--open]  # serve the DOT files under dir, with Watch
 ```
 
-`--positions` prints the computed positions as `name [pos="x,y"]`, ready to paste into the file.
-`linemap --help` lists the options. Exit codes: 0 done, 1 the file could not be drawn, 2 wrong
+`export` writes what the output's extension says: `.svg` is the static map, `.html` is the
+[studio](#studio) as one self-contained file, which works offline, from `file://`, and as an
+embed in pages that cannot fetch files (e.g. Notion). `--positions` prints the computed positions as `name [pos="x,y"]`, ready to paste into the file.
+`--theme`, `--css` and `--positions` are for SVG. `linemap --help` lists the options. Exit codes: 0 done, 1 the file could not be drawn, 2 wrong
 usage. Errors are one line; `LINEMAP_DEBUG=1` prints the stack instead.
 
 To get a PNG, convert the SVG, e.g. `resvg out.svg out.png` or `rsvg-convert`. The text uses
 Inter where it is installed, otherwise the next font in the list.
 
-The library is `@linemap/core` (DOT text in, SVG string out; runs in Node and the browser).
+The library is `@linemap/core` (DOT text in, SVG string out; runs in Node and the browser);
+the studio page is `@linemap/studio`.
 
 ## Development
 
@@ -133,18 +141,21 @@ Needs pnpm as well.
 git clone https://github.com/mergezalot/linemap.git && cd linemap
 pnpm install       # also bundles MSAGL into packages/core/vendor/
 pnpm example       # redraws examples/*.svg, docs/pipeline.svg and the studio screenshot docs/studio.png
-pnpm linemap <flow.dot> <out.svg> [options]
-pnpm test          # core and CLI (node:test): errors, rendering, the committed SVGs, the CLI
+pnpm export [flow.dot ...] [-o out.svg|out.html] [options]   # linemap export, from the sources
+pnpm studio [dir] [--port n] [--open]   # linemap studio, the page rebuilt when its sources change
+pnpm build         # the studio page, packages/studio/dist/linemap.html, which export fills
+pnpm test          # builds the studio, then core and CLI (node:test): errors, rendering, the committed SVGs, the CLI
 pnpm test:studio   # the studio in headless Chromium (see below)
-pnpm pack-check    # packs both npm packages, installs them in an empty folder, runs npx @linemap/cli
+pnpm pack-check    # packs the npm packages, installs them in an empty folder, runs npx @linemap/cli
 ```
 
 If a test says an example no longer matches its SVG, run `pnpm example` and
 look at the result.
 
-To release, set the same `version` in `packages/core` and `packages/cli`, commit, and push a tag
-`v<version>`. The Release workflow tests, packs and publishes both packages to npm (a version
-already on npm is skipped).
+To release, run `pnpm release patch|minor|major|<x.y.z>`: it sets the same `version` in
+`packages/core`, `packages/studio` and `packages/cli`, commits, and pushes a tag `v<version>`. The
+Release workflow tests, packs and publishes the packages to npm (a version already on npm is
+skipped).
 
 ## Studio
 
@@ -152,9 +163,8 @@ One self-contained HTML file that runs the whole pipeline in the browser. A buil
 examples baked in is at **https://mergezalot.github.io/linemap/**, published from `master` by `.github/workflows/pages.yml`.
 
 ```sh
-pnpm studio                     # -> packages/studio/dist/linemap-studio.html
-pnpm studio:serve               # serves http://localhost:8000/studio.html?src=examples/postal.dot
-pnpm studio --embed a.dot b.dot # bakes flows into the file, e.g. for Notion
+pnpm studio                     # serves http://localhost:8000/studio.html?src=examples/postal.dot
+pnpm export a.dot b.dot -o flows.html   # bakes flows into the page, e.g. for Notion
 ```
 
 Open a file with the toolbar, by dropping it on the page, by pasting DOT text, or with `?src=`.

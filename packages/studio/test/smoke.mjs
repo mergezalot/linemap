@@ -9,7 +9,7 @@ import { chromium } from 'playwright';
 import { serve, build } from '../build.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const dist = path.join(here, '..', 'dist', 'linemap-studio.html');
+const dist = path.join(here, '..', 'dist', 'linemap.html');
 const shotsArg = process.argv.indexOf('--shots');
 const shots = shotsArg > 0 ? process.argv[shotsArg + 1] : null;
 if (shots) fs.mkdirSync(shots, { recursive: true });
@@ -22,7 +22,7 @@ const check = (ok, what) => {
   if (!ok) failures++;
 };
 
-const server = await serve(0, { quiet: true });
+const server = await serve({ port: 0, quiet: true });
 const base = `http://127.0.0.1:${server.address().port}/studio.html`;
 const browser = await chromium.launch();
 

@@ -9,12 +9,22 @@ drawn as transit-map bundles.
 **[Try the examples in the studio](https://mergezalot.github.io/linemap/)**, in your browser, nothing to install.
 
 ```sh
-npx @linemap/cli <flow.dot> <out.svg> [--positions]
+npx @linemap/cli export flow.dot                      # -> flow.svg
+npx @linemap/cli export flow.dot -o map.svg [--positions]
             [--theme minimal|light|dark|neon|neond[-fancy]] [--css extra.css]
+npx @linemap/cli export flow.dot -o flow.html         # the studio with the flow baked in
+npx @linemap/cli export a.dot b.dot -o flows.html     # several, picked on the start screen
+npx @linemap/cli export                               # the empty studio: linemap.html
+npx @linemap/cli studio [dir] [--port 8000] [--open]  # serve the DOT files under dir, with Watch
 ```
 
 Or install it once with `npm install -g @linemap/cli` and run `linemap` with the same arguments.
 
+- `export` writes what the output's extension says: `.svg` is the static map, `.html` the
+  studio as one self-contained file (works offline, from `file://`, and as an embed, e.g. in
+  Notion). `--theme`, `--css` and `--positions` are for SVG.
+- `studio` serves the studio and the DOT files under a folder on this machine; open one with
+  `?src=<file>`, and **Watch** redraws it on every save.
 - `--positions` prints the computed positions as `name [pos="x,y"]`, ready to paste into the file.
 - `--css` adds a CSS file after the theme's, to restyle any `lm-*` class.
 - Exit codes: 0 done, 1 the file could not be drawn, 2 wrong usage. `LINEMAP_DEBUG=1` prints

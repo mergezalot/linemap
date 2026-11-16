@@ -51,7 +51,7 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
       return true;
     } catch (err) {
       const hint = location.protocol === 'file:'
-        ? '\n\nBrowsers do not let a page opened from a file fetch other files. Serve over http, e.g. pnpm studio:serve, or open the file with Open / drag-and-drop.'
+        ? '\n\nBrowsers do not let a page opened from a file fetch other files. Serve over http, e.g. with npx @linemap/cli studio, or open the file with Open / drag-and-drop.'
         : '';
       onError(`Could not load ${src}`, `${err.message}${hint}`);
       return false;

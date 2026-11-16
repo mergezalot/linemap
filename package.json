@@ -1,6 +1,5 @@
 {
   "name": "linemap-workspace",
-  "version": "0.1.0",
   "private": true,
   "description": "Flow diagrams with pinned nodes, automatic placement, orthogonal routing and transit-map style line bundles.",
   "license": "MPL-2.0",
@@ -16,11 +15,11 @@
     "node": ">=22"
   },
   "scripts": {
-    "linemap": "node packages/cli/cli.mjs",
     "example": "node scripts/examples.mjs",
-    "studio": "pnpm --filter @linemap/studio build",
-    "studio:serve": "pnpm --filter @linemap/studio serve",
-    "test": "pnpm --filter @linemap/core test && pnpm --filter @linemap/cli test",
+    "build": "pnpm --filter @linemap/studio build",
+    "export": "node packages/cli/cli.mjs export",
+    "studio": "node packages/studio/build.mjs --serve",
+    "test": "pnpm build && pnpm --filter @linemap/core test && pnpm --filter @linemap/cli test",
     "test:studio": "pnpm --filter @linemap/studio test",
     "pack-check": "node scripts/pack-check.mjs",
     "release": "scripts/release.sh"

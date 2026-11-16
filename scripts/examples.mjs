@@ -15,7 +15,7 @@ const flows = [
   ...fs.readdirSync(path.join(root, 'examples')).filter((f) => f.endsWith('.dot')).map((f) => `examples/${f}`),
   'docs/pipeline.dot',
 ];
-for (const dot of flows) run('packages/cli/cli.mjs', dot, dot.replace(/\.dot$/, '.svg'));
+for (const dot of flows) run('packages/cli/cli.mjs', 'export', dot);
 
 if (!process.argv.includes('--svg-only')) {
   run('packages/studio/screenshot.mjs', 'examples/postal.dot', 'docs/studio.png', '--line', 'C');
