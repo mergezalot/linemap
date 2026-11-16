@@ -1,6 +1,6 @@
 {
   "name": "@linemap/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Flow diagrams with pinned nodes and transit-map style line bundles. Command line: DOT file -> SVG, or the studio as one HTML file.",
   "keywords": [
     "flowchart",
