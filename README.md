@@ -153,9 +153,12 @@ If a test says an example no longer matches its SVG, run `pnpm example` and
 look at the result.
 
 To release, run `pnpm release patch|minor|major|<x.y.z>`: it sets the same `version` in
-`packages/core`, `packages/studio` and `packages/cli`, commits, and pushes a tag `v<version>`. The
+`packages/core`, `packages/studio` and `packages/cli`, commits, and pushes a tag `v<version>`
+(`scripts/release.sh`, plain bash with git, sed and grep; it releases only a clean `master` that
+matches `origin/master`). The
 Release workflow tests, packs and publishes the packages to npm (a version already on npm is
-skipped).
+skipped). The tag's message lists the commit subjects since the previous release, and the workflow
+posts them as the GitHub release notes.
 
 ## Studio
 

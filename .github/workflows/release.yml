@@ -2,7 +2,8 @@ name: Release
 
 # Publishes @linemap/core, @linemap/studio and @linemap/cli to npm when a version tag is pushed:
 #   (bump "version" in packages/core, packages/studio and packages/cli, commit; pnpm release does that)
-#   git tag v0.2.0 && git push origin v0.2.0
+#   git tag -a v0.2.0 && git push origin v0.2.0
+# and then makes a GitHub release whose notes are the tag's message (pnpm release writes them).
 # No npm token: each package lists this workflow as its trusted publisher on npmjs.com
 # (package settings -> Trusted publishing -> GitHub Actions, workflow file release.yml), and
 # npm adds provenance on its own. A version already on npm is skipped, so a tag can release
@@ -19,7 +20,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # the GitHub release
       id-token: write # trusted publishing
     steps:
       - uses: actions/checkout@v4
@@ -55,3 +56,15 @@ jobs:
             (cd "packages/$dir" && pnpm pack --pack-destination "$RUNNER_TEMP/dist")
             npm publish "$RUNNER_TEMP/dist/$(echo "$name" | sed 's/^@//; s/\//-/')-$version.tgz"
           done
+
+      # The release notes are the message of the annotated tag that pnpm release made. Checkout may
+      # leave a tag push as a lightweight tag, so fetch the tag object itself first.
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$GITHUB_REF_NAME
+          if gh release view "$tag" >/dev/null 2>&1; then echo "release $tag exists, skipping"; exit 0; fi
+          git fetch --quiet --force --depth=1 origin "+refs/tags/$tag:refs/tags/$tag"
+          pre=(); if [[ $tag == *-* ]]; then pre=(--prerelease); fi # v1.0.0-rc.1
+          git tag --list --format='%(contents:body)' "$tag" | gh release create "$tag" --verify-tag --title "$tag" "${pre[@]}" --notes-file -
