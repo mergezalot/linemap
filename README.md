@@ -166,11 +166,11 @@ One self-contained HTML file that runs the whole pipeline in the browser. A buil
 examples baked in is at **https://mergezalot.github.io/linemap/**, published from `master` by `.github/workflows/pages.yml`.
 
 ```sh
-pnpm studio                     # serves http://localhost:8000/studio.html?src=examples/postal.dot
+pnpm studio                     # serves http://localhost:8000/studio.html#src=examples/postal.dot
 pnpm export a.dot b.dot -o flows.html   # bakes flows into the page, e.g. for Notion
 ```
 
-Open a file with the toolbar, by dropping it on the page, by pasting DOT text, or with `?src=`.
+Open a file with the toolbar, by dropping it on the page, by pasting DOT text, or with `#src=` in the address, also in a page with flows baked in.
 **Watch** redraws on every save (for a file the studio serves, as under `linemap studio`). The legend hides and solos lines; the toolbar switches lines
 through nodes and the theme, without moving any box. The address keeps these
 settings and the view, so a link reopens the same map. Press `?` for keys.

@@ -48,8 +48,12 @@ let pendingView = initial.view;  // applied to the first map
 let pendingPin = null;           // line to pin once the next map is shown (search on a hidden line)
 let shown = null;                // { model, base, svg, theme } on screen
 let loadedOnce = false;
+let keepBanner = false;          // the next map leaves the error banner up
 const writeHash = hashWriter();
-const syncHash = () => writeHash(state.get(), shown ? viewport.getView() : null);
+// the file's URL goes into the hash only where it can be fetched again
+const hashSrc = () => (isHttp() ? source.current()?.src ?? null : null);
+const syncHash = () => writeHash(state.get(), shown ? viewport.getView() : null, hashSrc());
+let linked = null; // { settings, view } of a #src= link typed or clicked, for the file it opens
 
 // ---------- map ----------
 const tooltip = createTooltip(el.tooltip);
@@ -104,7 +108,7 @@ function show(result, meta) {
     if (!shown) setEmpty(true);
     return;
   }
-  hideBanner();
+  if (keepBanner) keepBanner = false; else hideBanner();
   setEmpty(false);
   const keep = !!shown && !meta.fresh;
   el.map.innerHTML = result.svg;
@@ -222,15 +226,16 @@ function updateToolbar() {
 const source = createSource({
   onText({ src, fresh }) {
     if (fresh && loadedOnce) {
-      // a different file: its own settings, fitted view, nothing pinned
-      pendingView = null;
+      // a different file: its own settings (or the link's), fitted view, nothing pinned
+      const link = src ? linked : null;
+      linked = null;
+      pendingView = link?.view ?? null;
       highlight.clearPins();
-      setQuery(src);
       freshNext = true;
-      state.set({ hidden: new Set(), mode: 'file' }); // runs it
+      const { hidden, mode, theme } = link?.settings ?? { hidden: new Set(), mode: 'file' };
+      state.set(theme ? { hidden, mode, theme } : { hidden, mode }); // runs it
       return;
     }
-    if (fresh) setQuery(src);
     loadedOnce = true;
     run({ fresh });
     updateToolbar();
@@ -239,13 +244,6 @@ const source = createSource({
   onWatch: () => updateToolbar(),
   embedded,
 });
-function setQuery(src) {
-  if (!isHttp()) return;
-  const q = new URLSearchParams(location.search);
-  if (src) q.set('src', src); else q.delete('src');
-  const s = q.toString().replace(/%2F/g, '/');
-  try { history.replaceState(null, '', location.pathname + (s ? `?${s}` : '') + location.hash); } catch { /* ignore */ }
-}
 
 source.bindDrop(el.drop);
 source.bindPaste();
@@ -339,7 +337,7 @@ async function renderEmpty() {
     // served from the repo (pnpm studio)? then offer the examples
     const ok = await fetch(EXAMPLES[0], { method: 'HEAD', cache: 'no-store' }).then((r) => r.ok, () => false);
     const ex = el.empty.querySelector('.examples');
-    ex.querySelector('.links').innerHTML = EXAMPLES.map((p) => `<a href="?src=${p}">${p.split('/').pop().replace('.dot', '')}</a>`).join('');
+    ex.querySelector('.links').innerHTML = EXAMPLES.map((p) => `<a href="#src=${p}">${p.split('/').pop().replace('.dot', '')}</a>`).join('');
     ex.hidden = !ok;
   }
 }
@@ -447,25 +445,36 @@ window.addEventListener('keydown', (e) => {
   fn();
 });
 
-// a hash typed or pasted into the address bar
-window.addEventListener('hashchange', () => {
-  const { settings, view } = readHash();
+// a hash typed or pasted into the address bar, or a #src= link clicked
+window.addEventListener('hashchange', async () => {
+  const { settings, view, src } = readHash();
+  if (src && src !== source.current()?.src) {
+    linked = { settings, view };
+    if (!(await source.loadUrl(src))) linked = null;
+    return;
+  }
   if (view && shown) viewport.setView(view); else pendingView = view;
   state.set(settings);
 });
 
 // ---------- start ----------
 updateToolbar();
-// Baked-in flows win over ?src: hosts such as Notion's file preview put their own ?src= (the
-// page itself, on another origin) into the query, which is not ours to fetch. One flow opens
-// right away; several are offered on the start screen.
-const src = new URLSearchParams(location.search).get('src');
-if (embedded.length === 1) {
-  source.loadEmbedded(0);
+// A #src= link opens that file, also in a page with flows baked in; if it cannot be loaded,
+// the baked-in flows are there as without it. The query is not read: hosts such as Notion's
+// file preview put their own ?src= there. One baked-in flow opens right away; several are
+// offered on the start screen.
+function openEmbedded() {
+  if (embedded.length === 1) source.loadEmbedded(0); else setEmpty(true);
+}
+if (initial.src) {
+  source.loadUrl(initial.src).then((ok) => {
+    if (ok) source.restoreWatch();
+    if (ok || !embedded.length) return;
+    keepBanner = embedded.length === 1; // the baked-in flow is drawn under the error, which stays
+    openEmbedded();
+  });
 } else if (embedded.length) {
-  setEmpty(true);
-} else if (src) {
-  source.loadUrl(src).then(() => source.restoreWatch());
+  openEmbedded();
 } else {
   const last = source.last();
   if (last?.text) { source.loadText(last.text, last.name, last.src); source.restoreWatch(); } else setEmpty(true);

@@ -136,7 +136,7 @@ test('studio serves the page and the DOT files, and lists them', async () => {
   const { child, out: text } = await studio(dir, '--port', '0');
   try {
     const base = text.match(/http:\/\/localhost:\d+/)[0];
-    assert.match(text, /studio\.html\?src=sub%20dir\/flow\.dot\n/);
+    assert.match(text, /studio\.html#src=sub%20dir\/flow\.dot\n/);
     const page = await fetch(`${base}/studio.html`);
     assert.equal(page.status, 200);
     assert.match(await page.text(), /id="linemap-flows">\[\]<\/script>/);

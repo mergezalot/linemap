@@ -68,7 +68,7 @@ for (const src of EXAMPLES) {
   const name = path.basename(src, '.dot');
   console.log(`${src}`);
   const page = await newPage();
-  await page.goto(`${base}?src=${src}`);
+  await page.goto(`${base}#src=${src}`);
   await ready(page);
   await page.waitForTimeout(300);
   const info = await page.evaluate(() => ({
@@ -301,7 +301,7 @@ for (const src of EXAMPLES) {
 console.log('state in the hash');
 {
   const page = await newPage();
-  await page.goto(`${base}?src=examples/webshop.dot#hide=R,E&through=none&view=800,100,900,600`);
+  await page.goto(`${base}#src=examples/webshop.dot&hide=R,E&through=none&view=800,100,900,600`);
   await ready(page);
   await page.waitForTimeout(300);
   const s = await page.evaluate(() => ({
@@ -314,6 +314,25 @@ console.log('state in the hash');
   check(s.through === 0 && s.mode === 'none', 'hash sets through none');
   // the view rectangle 800,100 900x600 fits inside the restored view
   check(s.vb[0] <= 800 && s.vb[1] <= 100 && s.vb[0] + s.vb[2] >= 1700 && s.vb[1] + s.vb[3] >= 700 && s.vb[2] < 1400, `hash view restored (${s.vb.map(Math.round).join(' ')})`);
+  await page.waitForTimeout(400); // the hash is written after 250 ms
+  const url = new URL(page.url());
+  check(!url.search && url.hash.startsWith('#src=examples/webshop.dot&hide=R,E&through=none&view='), `src stays in the hash, nothing in the query (${url.search}${url.hash})`);
+  await page.reload();
+  await ready(page);
+  check(await page.evaluate(() => document.querySelector('#file-name .name').textContent) === 'webshop.dot', 'a reload opens the same file');
+  // a #src= link to another file: opens it, with the link's settings
+  await rerun(page, () => page.evaluate(() => { location.hash = '#src=examples/postal.dot&through=all'; }));
+  const o = await page.evaluate(() => ({
+    name: document.querySelector('#file-name .name').textContent,
+    mode: document.querySelector('#through [aria-checked="true"]').dataset.mode,
+  }));
+  check(o.name === 'postal.dot' && o.mode === 'all', `a #src= change opens that file with its settings (${o.name}, through ${o.mode})`);
+  // a file opened by hand drops the src from the hash
+  await page.click('#paste');
+  await page.fill('#paste-dialog textarea', 'digraph pasted { subgraph lines { A } a -> b [lines=A] }');
+  await rerun(page, () => page.click('#paste-dialog button[value="ok"]'));
+  await page.waitForTimeout(400);
+  check(!new URL(page.url()).hash.includes('src='), `pasted text: no src in the hash (${new URL(page.url()).hash})`);
   check(page.errors.length === 0, 'no page errors');
   await page.close();
 }
@@ -321,7 +340,7 @@ console.log('state in the hash');
 console.log('errors keep the last map');
 {
   const page = await newPage();
-  await page.goto(`${base}?src=examples/webshop.dot`);
+  await page.goto(`${base}#src=examples/webshop.dot`);
   await ready(page);
   await page.click('#paste');
   await page.fill('#paste-dialog textarea', 'digraph broken { subgraph lines { A [color="#f00"] } a -> b [lines=Z] }');
@@ -347,9 +366,9 @@ console.log('watch');
   // a context of its own, so a second tab can share its localStorage
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 860 } });
   const page = await ctx.newPage();
-  await page.goto(`${base}?src=${rel}`);
+  await page.goto(`${base}#src=${rel}`);
   await ready(page);
-  check(await page.isVisible('#watch'), 'watch button shown for ?src over http');
+  check(await page.isVisible('#watch'), 'watch button shown for #src over http');
   await page.click('#watch');
   const vb = await viewBox(page);
   fs.writeFileSync(file, text.replace('label="Order",', 'label="Orders (edited)",'));
@@ -377,10 +396,11 @@ console.log('watch');
   check(await page.getAttribute('#watch', 'aria-pressed') === 'true', 'a page reload watches it again');
   // the saved value is the browser's: another tab loading the URL watches it too
   const tab = await ctx.newPage();
-  await tab.goto(`${base}?src=${rel}`);
+  await tab.goto(`${base}#src=${rel}`);
   await ready(tab);
   check(await tab.getAttribute('#watch', 'aria-pressed') === 'true', 'another tab loading the URL watches it');
-  await tab.goto(`${base}?src=examples/postal.dot`);
+  await tab.goto('about:blank'); // a page load, not a hash change in the page
+  await tab.goto(`${base}#src=examples/postal.dot`);
   await ready(tab);
   check(await tab.getAttribute('#watch', 'aria-pressed') === 'false', 'a URL never watched loads unwatched');
   await tab.close();
@@ -404,7 +424,7 @@ console.log('watch without localStorage');
   await page.addInitScript(() => {
     Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } });
   });
-  await page.goto(`${base}?src=${rel}`);
+  await page.goto(`${base}#src=${rel}`);
   await ready(page);
   await page.click('#watch');
   check(await page.getAttribute('#watch', 'aria-pressed') === 'true', 'watch switches on with storage blocked');
@@ -450,7 +470,7 @@ console.log('file:// page, recent list, empty state');
 console.log('phone width');
 {
   const page = await newPage(390, 800);
-  await page.goto(`${base}?src=examples/postal.dot`);
+  await page.goto(`${base}#src=examples/postal.dot`);
   await ready(page);
   await page.waitForTimeout(300);
   const p = await page.evaluate(() => ({
@@ -508,7 +528,7 @@ console.log('touch screen');
 {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
-  await page.goto(`${base}?src=examples/postal.dot`);
+  await page.goto(`${base}#src=examples/postal.dot`);
   await ready(page);
   check(!(await page.isVisible('#zoom-in')) && !(await page.isVisible('#zoom-out')) && await page.isVisible('#zoom-fit'), 'no + and - buttons (pinch instead); fit stays');
   await shot(page, 'touch');
@@ -525,7 +545,7 @@ console.log('strict Content-Security-Policy (embeds)');
   await page.route('https://embed.test/**', (r) => (new URL(r.request().url()).pathname.endsWith('.dot')
     ? r.fulfill({ body: dot, contentType: 'text/plain' })
     : r.fulfill({ body: html, contentType: 'text/html', headers: { 'Content-Security-Policy': csp } })));
-  await page.goto('https://embed.test/studio.html?src=webshop.dot');
+  await page.goto('https://embed.test/studio.html#src=webshop.dot');
   const ok = await ready(page).then(() => true, () => false);
   check(ok && !(await page.evaluate(() => document.getElementById('banner').hidden === false)), 'draws the map under a CSP that blocks data: fetches and WASM');
   await page.close();
@@ -556,6 +576,28 @@ console.log('flows baked in (build --embed), under the same CSP');
     const name = await page.evaluate(() => document.querySelector('#file-name .name').textContent);
     check(name === 'webshop.dot', `one baked-in flow opens right away (${name})`);
     check(!(await bannerShown(page)), 'ignores a ?src= from the host page (no error banner)');
+    await page.close();
+  }
+
+  // #src= opens that file instead of the baked-in one, and Watch can follow it
+  {
+    const page = await newPage();
+    const html = await embedHtml('webshop.dot');
+    const dot = fs.readFileSync(path.join(repo, 'examples', 'postal.dot'), 'utf8');
+    await page.route('https://embed.test/**', (r) => (new URL(r.request().url()).pathname.endsWith('.dot')
+      ? (r.request().url().includes('missing') ? r.fulfill({ status: 404, body: 'no' }) : r.fulfill({ body: dot, contentType: 'text/plain' }))
+      : r.fulfill({ body: html, contentType: 'text/html', headers: { 'Content-Security-Policy': `${csp}; connect-src https://embed.test` } })));
+    await page.goto('https://embed.test/embed.html' + hostSrc + '#src=flows/postal.dot');
+    await ready(page);
+    const name = await page.evaluate(() => document.querySelector('#file-name .name').textContent);
+    check(name === 'postal.dot' && !(await bannerShown(page)), `#src= wins over the baked-in flow (${name})`);
+    check(await page.isVisible('#watch'), 'and can be watched');
+    // a src that cannot be loaded: the baked-in flow, under the error
+    await page.goto('https://embed.test/embed.html#src=missing.dot');
+    await ready(page);
+    const fb = await page.evaluate(() => ({ name: document.querySelector('#file-name .name').textContent, msg: document.querySelector('#banner .title').textContent }));
+    check(fb.name === 'webshop.dot' && (await bannerShown(page)) && /missing\.dot/.test(fb.msg), `a missing #src= falls back to the baked-in flow and says so (${fb.name}; ${fb.msg})`);
+    check(page.errors.filter((e) => !/404/.test(e)).length === 0, 'no page errors');
     await page.close();
   }
 

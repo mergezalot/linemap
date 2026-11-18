@@ -33,6 +33,7 @@
   "scripts": {
     "build": "node build.mjs",
     "test": "node build.mjs && node test/smoke.mjs",
+    "test:unit": "node --test test/state.test.mjs",
     "prepack": "node build.mjs && node -e \"require('fs').copyFileSync('../../LICENSE', 'LICENSE')\""
   },
   "devDependencies": {

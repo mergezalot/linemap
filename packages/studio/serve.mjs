@@ -1,4 +1,4 @@
-// A local server for the studio: the page at /studio.html (/ redirects there, keeping ?src=) and the
+// A local server for the studio: the page at /studio.html (/ redirects there) and the
 // DOT files (.dot, .gv) under root, nothing else. `page` returns the HTML on every request, so a
 // caller can rebuild it in between. Listens on 127.0.0.1 only; port 0 = any free port.
 // Resolves with the listening server, rejects if it cannot listen (e.g. EADDRINUSE).
@@ -49,11 +49,11 @@ export function serve({ root, page, port = 8000, onError = console.error }) {
   });
 }
 
-// What a serving command prints: where it serves, the studio's URL, and one ?src= link per DOT file.
+// What a serving command prints: where it serves, the studio's URL, and one #src= link per DOT file.
 export function announce(server, root) {
   const base = `http://localhost:${server.address().port}/studio.html`;
   const files = dotFiles(root);
-  const src = (f) => `${base}?src=${f.split('/').map(encodeURIComponent).join('/')}`;
+  const src = (f) => `${base}#src=${f.split('/').map(encodeURIComponent).join('/')}`;
   return {
     text: [`serving the studio and the DOT files in ${path.resolve(root)} (Ctrl+C stops)`, base, ...files.map(src)].join('\n  '),
     // the one to open: the only flow, or the start screen
@@ -69,7 +69,7 @@ export function openBrowser(url) {
   try { spawn(cmd, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref(); } catch { /* no browser */ }
 }
 
-// DOT files under root, relative and with / separators, for listing ?src= links. Skips hidden
+// DOT files under root, relative and with / separators, for listing #src= links. Skips hidden
 // folders and node_modules; stops at `max`.
 export function dotFiles(root, max = 20) {
   const found = [];

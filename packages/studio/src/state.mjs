@@ -1,8 +1,9 @@
 // The view settings that change the drawing (hidden lines, lines through nodes, the theme) and
-// the URL hash that carries them, plus the view rectangle, so a link shows the same map:
-//   #hide=A,B&through=all&theme=dark&view=x,y,w,h
-// theme null = the DOT file's own theme, else minimal.
-// `?src=` stays in the query; the hash is written with history.replaceState (no history spam).
+// the URL hash that carries them, plus the file and the view rectangle, so a link shows the same map:
+//   #src=flows/a.dot&hide=A,B&through=all&theme=dark&view=x,y,w,h
+// theme null = the DOT file's own theme, else minimal. `src` is in the hash, not the query, so it
+// works in pages with baked-in flows too: hosts such as Notion put their own ?src= into the query.
+// The hash is written with history.replaceState (no history spam).
 
 import { THEME_NAMES } from '@linemap/core';
 
@@ -26,17 +27,20 @@ export function createState(initial = emptySettings()) {
 }
 
 const enc = (s) => encodeURIComponent(s);
+// a src stays readable: / and : as they are
+const encSrc = (s) => enc(s).replace(/%2F/gi, '/').replace(/%3A/gi, ':');
 const dec = (s) => { try { return decodeURIComponent(s); } catch { return s; } };
 
-// Hash -> { settings, view }. Unknown or malformed parts are ignored.
+// Hash -> { settings, view, src }. Unknown or malformed parts are ignored.
 export function readHash(hash = location.hash) {
   const settings = emptySettings();
-  let view = null;
+  let view = null, src = null;
   for (const part of hash.replace(/^#/, '').split('&')) {
     const i = part.indexOf('=');
     if (i < 0) continue;
     const [k, v] = [part.slice(0, i), part.slice(i + 1)];
-    if (k === 'hide') settings.hidden = new Set(v.split(',').filter(Boolean).map(dec));
+    if (k === 'src') src = dec(v) || null;
+    else if (k === 'hide') settings.hidden = new Set(v.split(',').filter(Boolean).map(dec));
     else if (k === 'through' && MODES.includes(v)) settings.mode = v;
     else if (k === 'theme' && THEME_NAMES.includes(v)) settings.theme = v;
     else if (k === 'view') {
@@ -44,11 +48,12 @@ export function readHash(hash = location.hash) {
       if (n.length === 4 && n.every(Number.isFinite) && n[2] > 0 && n[3] > 0) view = { x: n[0], y: n[1], w: n[2], h: n[3] };
     }
   }
-  return { settings, view };
+  return { settings, view, src };
 }
 
-function hashOf(settings, view) {
+export function hashOf(settings, view, src = null) {
   const parts = [];
+  if (src) parts.push(`src=${encSrc(src)}`);
   if (settings.hidden.size) parts.push(`hide=${[...settings.hidden].map(enc).join(',')}`);
   if (settings.mode !== 'file') parts.push(`through=${settings.mode}`);
   if (settings.theme) parts.push(`theme=${settings.theme}`);
@@ -59,10 +64,10 @@ function hashOf(settings, view) {
 // Writes the hash; calls within `delay` ms of each other collapse into one write.
 export function hashWriter(delay = 250) {
   let timer = 0;
-  return (settings, view) => {
+  return (settings, view, src) => {
     clearTimeout(timer);
     timer = setTimeout(() => {
-      const h = hashOf(settings, view);
+      const h = hashOf(settings, view, src);
       if (h === location.hash || (!h && !location.hash)) return;
       try { history.replaceState(null, '', location.pathname + location.search + h); } catch { /* sandboxed pages */ }
     }, delay);

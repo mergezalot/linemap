@@ -24,7 +24,7 @@ Or install it once with `npm install -g @linemap/cli` and run `linemap` with the
   studio as one self-contained file (works offline, from `file://`, and as an embed, e.g. in
   Notion). `--theme`, `--css` and `--positions` are for SVG.
 - `studio` serves the studio and the DOT files under a folder on this machine; open one with
-  `?src=<file>`, and **Watch** redraws it on every save.
+  `#src=<file>`, and **Watch** redraws it on every save.
 - `--positions` prints the computed positions as `name [pos="x,y"]`, ready to paste into the file.
 - `--css` adds a CSS file after the theme's, to restyle any `lm-*` class.
 - Exit codes: 0 done, 1 the file could not be drawn, 2 wrong usage. `LINEMAP_DEBUG=1` prints

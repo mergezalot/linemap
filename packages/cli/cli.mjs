@@ -23,7 +23,7 @@ linemap export [flow.dot ...] [-o <out.svg|out.html>] [options]
 
 linemap studio [dir] [options]
   serves the studio and the DOT files under dir (default: here) on this machine;
-  open one with ?src=<file>, and Watch redraws it on every save
+  open one with #src=<file>, and Watch redraws it on every save
   --port <n>         default 8000
   --open             also open the studio in the browser
 

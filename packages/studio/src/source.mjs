@@ -1,7 +1,7 @@
-// Where the DOT text comes from: flows baked into the page (build --embed), ?src= URL, file
+// Where the DOT text comes from: flows baked into the page (build --embed), a #src= URL, file
 // picker, drag-and-drop, paste. Remembers the last file and a short recent list in localStorage
-// (not the baked-in flows: several embeds of one site share it), and can watch a ?src URL.
-// Watch only works for a file the studio fetches over http (?src=, e.g. under `linemap studio`);
+// (not the baked-in flows: several embeds of one site share it), and can watch a #src URL.
+// Watch only works for a file the studio fetches over http (#src=, e.g. under `linemap studio`);
 // a file opened, dropped or pasted cannot be watched. Switching Watch keeps the URL's state in
 // localStorage, which only a page load reads (restoreWatch): reloading the page, in any tab of
 // this browser, keeps watching a URL that was watched. Opening another file in the page does
@@ -97,7 +97,7 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
     emit(f.text, f.name, null, true, { keep: false });
   }
 
-  // Watching polls the ?src URL and re-runs when its text changed (only over http).
+  // Watching polls the src URL and re-runs when its text changed (only over http).
   // remember: the user switched it, so a page reload on this URL watches it (or not).
   function setWatch(on, { remember: keepIt = false } = {}) {
     on = !!(on && current?.src && isHttp());
