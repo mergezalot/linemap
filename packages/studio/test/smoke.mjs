@@ -337,6 +337,123 @@ console.log('state in the hash');
   await page.close();
 }
 
+console.log('notes off: the map without them, a badge for each');
+{
+  const page = await newPage();
+  await page.goto(`${base}#src=examples/postal.dot`);
+  await ready(page);
+  await page.waitForTimeout(300);
+  const notes = await page.evaluate(() => document.querySelectorAll('#map g.note').length);
+  check(notes > 0 && await page.isVisible('#notes') && await page.getAttribute('#notes', 'aria-pressed') === 'true', `notes button shown and on (${notes} notes)`);
+  const paths = () => page.evaluate(() => [...document.querySelectorAll('#map g.edge')].map((g) => g.querySelector('.lm-casing').getAttribute('d')).join('|'));
+  const before = await paths();
+  await rerun(page, () => page.click('#notes'));
+  const off = await page.evaluate(() => ({
+    badges: document.querySelectorAll('#map g.note.lm-note-folded .lm-note-icon').length,
+    attached: [...document.querySelectorAll('#map g.note.lm-note-folded')].every((g) => !g.dataset.attach || document.getElementById(g.dataset.attach)?.matches('g.node')),
+    shown: [...document.querySelectorAll('#map .lm-note-full')].filter((e) => e.getBoundingClientRect().width > 0).length,
+    links: document.querySelectorAll('#map .lm-note-link').length,
+    pressed: document.getElementById('notes').getAttribute('aria-pressed'),
+  }));
+  check(off.badges === notes && off.attached && off.shown === 0 && off.links === 0 && off.pressed === 'false', `notes off: ${off.badges} badges on their nodes, no note or link drawn`);
+  const inside = await page.evaluate(() => [...document.querySelectorAll('#map g.note.lm-note-folded[data-attach]')].every((g) => {
+    const b = g.querySelector('.lm-note-icon').getBoundingClientRect();
+    const node = document.getElementById(g.dataset.attach);
+    const n = (node.querySelector('.lm-shape') ?? node).getBoundingClientRect();
+    return b.left < n.right && n.left < b.right && b.top < n.bottom && n.top < b.bottom;
+  }));
+  check(inside, 'each badge sits on its node');
+  const faded = await page.evaluate(() => [...document.querySelectorAll('#map .lm-note-icon')].every((e) => +getComputedStyle(e).opacity < 0.7));
+  check(faded, 'badges are half-transparent');
+  check(await paths() !== before, 'notes off routes the lines again, through the room the notes took');
+  await page.waitForTimeout(400);
+  check((await page.evaluate(() => location.hash)).includes('notes=off'), 'hash records notes=off');
+  check(await page.evaluate(() => localStorage.getItem('linemap:notes')) === 'false', 'notes off is remembered in localStorage');
+  // a badge that is on top where it is drawn
+  const icon = await page.evaluate(() => {
+    for (const g of document.querySelectorAll('#map g.note.lm-note-folded')) {
+      const r = g.querySelector('.lm-note-icon').getBoundingClientRect();
+      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      if (x < 300 || y < 60 || x > innerWidth - 60 || y > innerHeight - 20) continue;
+      if (document.elementFromPoint(x, y)?.closest('g.note') === g) return { id: g.id, x, y, label: g.dataset.label };
+    }
+    return null;
+  });
+  check(!!icon, 'found a note badge to hover');
+  if (icon) {
+    await page.mouse.move(icon.x, icon.y);
+    await page.waitForTimeout(300);
+    check(await page.evaluate((id) => +getComputedStyle(document.getElementById(id).querySelector('.lm-note-icon')).opacity, icon.id) === 1, 'the badge pointed at is opaque');
+    const tip = await page.evaluate(() => document.getElementById('tooltip').hidden ? '' : document.getElementById('tooltip').innerText);
+    check(tip.includes(icon.label.split('\n')[0]) && !/click to (keep|fold)|keep it open/i.test(tip), `hovering the badge shows the note, no click hint ("${icon.label.split('\n')[0]}")`);
+    const open = (id) => page.evaluate((id) => {
+      const g = [...document.querySelectorAll('#map g.note')].find((x) => x.id === id);
+      const r = g.querySelector('.lm-note-full').getBoundingClientRect();
+      const b = g.querySelector('.lm-note-icon').getBoundingClientRect();
+      const near = r.width > 0 && Math.min(Math.abs(r.left - b.right), Math.abs(b.left - r.right)) < 40 && r.top < b.bottom + 4 && r.bottom > b.top - 4;
+      return { cls: g.classList.contains('lm-open'), full: r.width > 0, icon: b.width > 0, near, last: g === g.parentNode.lastElementChild };
+    }, id);
+    await page.mouse.click(icon.x, icon.y);
+    await page.waitForTimeout(100);
+    const o = await open(icon.id);
+    check(o.cls && o.full && o.icon && o.near && o.last, 'click keeps the note open beside its badge, on top');
+    await page.waitForTimeout(200);
+    const openTip = await page.evaluate(() => document.getElementById('tooltip').hidden ? '' : document.getElementById('tooltip').innerText);
+    check(!/click to|fold|keep it open/i.test(openTip), `no click hint over the open note${openTip ? ` ("${openTip}")` : ''}`);
+    await page.mouse.move(5, 300);
+    await page.waitForTimeout(100);
+    check((await open(icon.id)).full, 'it stays open when the pointer leaves');
+    await rerun(page, () => page.keyboard.press('t'));
+    check((await open(icon.id)).full, 'and across a change of theme');
+    await page.mouse.click(icon.x, icon.y);
+    await page.waitForTimeout(100);
+    check(!(await open(icon.id)).full, 'a click on the badge closes it again');
+    await page.mouse.click(icon.x, icon.y);
+    await page.keyboard.press('Escape');
+    check(!(await open(icon.id)).full, 'Esc closes the notes kept open');
+  }
+  // the download is what the studio shows, without badges: hidden lines, theme, notes left out
+  await page.click('#legend li:first-child');
+  await page.waitForTimeout(500);
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#export')]);
+  const svgText = fs.readFileSync(await dl.path(), 'utf8');
+  const shownSvg = await page.evaluate(() => ({ theme: document.querySelector('#map svg').dataset.theme, edges: document.querySelectorAll('#map g.edge').length }));
+  check(!/class="(note|lm-note)/.test(svgText) && /class="legend"/.test(svgText), 'SVG export with notes off leaves them out, no badges');
+  check(svgText.includes(`data-theme="${shownSvg.theme}"`) && (svgText.match(/<g class="edge"/g) ?? []).length === shownSvg.edges && /opacity="0.35"/.test(svgText), 'SVG export has the theme and hidden lines on screen');
+  // remembered: a link without notes= opens with notes off; notes= in the link wins
+  await page.goto('about:blank'); // a page load, not a hash change in the page
+  await page.goto(`${base}#src=examples/postal.dot`);
+  await ready(page);
+  check(await page.evaluate(() => document.querySelectorAll('#map g.note.lm-note-folded').length) === notes && await page.getAttribute('#notes', 'aria-pressed') === 'false', 'reload without notes= in the address: notes off, as remembered');
+  await page.goto(`${base}?link=1#src=examples/postal.dot&notes=on`); // a new query: a full load
+  await ready(page);
+  check(await page.evaluate(() => document.querySelectorAll('#map g.note:not(.lm-note-folded)').length) === notes, 'notes=on in the address wins over the remembered value');
+  await rerun(page, () => page.keyboard.press('n'));
+  await rerun(page, () => page.keyboard.press('n'));
+  check(await page.evaluate(() => localStorage.getItem('linemap:notes')) === 'true' && await page.evaluate(() => document.querySelectorAll('#map g.note:not(.lm-note-folded)').length) === notes, 'N switches them, and the switch is remembered');
+  check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
+  await page.close();
+}
+{
+  const page = await newPage();
+  await page.goto(`${base}#src=examples/webshop.dot&notes=off`);
+  await ready(page);
+  check(await page.evaluate(() => document.querySelectorAll('#map g.note.lm-note-folded').length > 0), 'hash notes=off draws badges on load');
+  await page.close();
+}
+{
+  // storage that throws (privacy settings, some file:// pages): the toggle still works
+  const page = await newPage();
+  await page.addInitScript(() => {
+    for (const k of ['getItem', 'setItem']) Storage.prototype[k] = () => { throw new Error('denied'); };
+  });
+  await page.goto(`${base}#src=examples/webshop.dot`);
+  await ready(page);
+  await rerun(page, () => page.click('#notes'));
+  check(await page.evaluate(() => document.querySelectorAll('#map g.note.lm-note-folded').length > 0) && page.errors.length === 0, 'notes off works when storage throws');
+  await page.close();
+}
+
 console.log('errors keep the last map');
 {
   const page = await newPage();

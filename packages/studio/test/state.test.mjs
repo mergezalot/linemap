@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readHash, hashOf } from '../src/state.mjs';
 
-const settings = (hidden = [], mode = 'file', theme = null) => ({ hidden: new Set(hidden), mode, theme });
+const settings = (hidden = [], mode = 'file', theme = null, notes = true) => ({ hidden: new Set(hidden), mode, theme, notes });
 
 test('src is read from the hash, decoded', () => {
   assert.equal(readHash('#src=examples/postal.dot').src, 'examples/postal.dot');

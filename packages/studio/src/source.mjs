@@ -15,7 +15,7 @@ const MAX_WATCHED = 20;
 const WATCH_MS = 1000;
 
 // localStorage may be missing or throw (privacy settings, file:// in some browsers, quota).
-const store = {
+export const store = {
   get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
   set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* not kept */ } },
 };

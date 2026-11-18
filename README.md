@@ -114,7 +114,7 @@ Needs Node 22 or later.
 ```sh
 npx @linemap/cli export flow.dot                      # -> flow.svg
 npx @linemap/cli export flow.dot -o map.svg [--positions]
-            [--theme minimal|light|dark|neon|neond[-fancy]] [--css extra.css]
+            [--theme minimal|light|dark|neon|neond[-fancy]] [--css extra.css] [--notes show|hide]
 npx @linemap/cli export flow.dot -o flow.html         # the studio with the flow baked in
 npx @linemap/cli export a.dot b.dot -o flows.html     # several, picked on the start screen
 npx @linemap/cli export                               # the empty studio: linemap.html
@@ -124,7 +124,8 @@ npx @linemap/cli studio [dir] [--port 8000] [--open]  # serve the DOT files unde
 `export` writes what the output's extension says: `.svg` is the static map, `.html` is the
 [studio](#studio) as one self-contained file, which works offline, from `file://`, and as an
 embed in pages that cannot fetch files (e.g. Notion). `--positions` prints the computed positions as `name [pos="x,y"]`, ready to paste into the file.
-`--theme`, `--css` and `--positions` are for SVG. `linemap --help` lists the options. Exit codes: 0 done, 1 the file could not be drawn, 2 wrong
+`--notes hide` draws the map as if the notes were not there, so boxes and lines may take their
+room. `--theme`, `--css`, `--positions` and `--notes` are for SVG. `linemap --help` lists the options. Exit codes: 0 done, 1 the file could not be drawn, 2 wrong
 usage. Errors are one line; `LINEMAP_DEBUG=1` prints the stack instead.
 
 To get a PNG, convert the SVG, e.g. `resvg out.svg out.png` or `rsvg-convert`. The text uses
@@ -172,8 +173,12 @@ pnpm export a.dot b.dot -o flows.html   # bakes flows into the page, e.g. for No
 
 Open a file with the toolbar, by dropping it on the page, by pasting DOT text, or with `#src=` in the address, also in a page with flows baked in.
 **Watch** redraws on every save (for a file the studio serves, as under `linemap studio`). The legend hides and solos lines; the toolbar switches lines
-through nodes and the theme, without moving any box. The address keeps these
-settings and the view, so a link reopens the same map. Press `?` for keys.
+through nodes and the theme without moving any box. **Notes** off (or `N`) draws the map
+without the notes, like `--notes hide`, and puts a badge for each in its node: hover it to read
+the note, click it to keep the note open beside it, click again (or press `Esc`) to close it.
+The studio remembers notes on or off for your next visit. The SVG download is the map as shown:
+hidden lines, through, theme and notes left out. The address keeps these settings and the view,
+so a link reopens the same map (a `notes=` in it wins over the remembered one). Press `?` for keys.
 
 Smoke test (headless Chromium): `pnpm --filter @linemap/studio exec playwright install chromium`
 once, then `pnpm test:studio`.

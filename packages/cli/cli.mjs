@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { parseFlow, layout, crowding, render, positions, THEMES, THEME_NAMES } from '@linemap/core';
+import { parseFlow, layout, crowding, render, positions, THEMES, THEME_NAMES, NOTE_MODES } from '@linemap/core';
 import { studioHtml, serve, announce, openBrowser } from '@linemap/studio';
 
 const USAGE = `usage: linemap <command> [options]
@@ -18,6 +18,8 @@ linemap export [flow.dot ...] [-o <out.svg|out.html>] [options]
   --theme <name>     ${THEME_NAMES.join(', ')}
                      (default: the DOT file's \`theme\`, else minimal; SVG only)
   --css <file>       a CSS file added after the theme's, to restyle any lm-* class (SVG only)
+  --notes <mode>     ${NOTE_MODES.join(', ')}: hide draws the map as if the notes were not there,
+                     so boxes and lines may take their room (default: show; SVG only)
   --positions        also print the computed position of every unpinned node and note,
                      ready to paste into the DOT file as \`pos\` to pin it (SVG only)
 
@@ -46,6 +48,7 @@ const COMMANDS = {
     theme: { type: 'string' },
     css: { type: 'string' },
     positions: { type: 'boolean' },
+    notes: { type: 'string' },
   },
   studio: {
     port: { type: 'string' },
@@ -96,11 +99,12 @@ function load(file, text = read(file)) {
 }
 
 function exportSvg(input, output) {
-  const model = layout(load(input));
+  const model = layout(load(input), { notes: o.notes });
   for (const w of crowding(model)) console.error(`warning: ${w}`);
   const svg = render(model, { theme: o.theme, css: o.css !== undefined ? read(o.css) : '' });
   write(output, svg);
-  console.error(`wrote ${output}: ${model.nodes.length} nodes, ${model.notes.length} notes, ${model.edges.length} edges`);
+  const notes = model.hiddenNotes.length ? `${model.hiddenNotes.length} notes left out` : `${model.notes.length} notes`;
+  console.error(`wrote ${output}: ${model.nodes.length} nodes, ${notes}, ${model.edges.length} edges`);
 
   if (o.positions) {
     for (const { id, x, y } of positions(model)) console.log(`${id} [pos="${x},${y}"]`);
@@ -127,10 +131,11 @@ function exportCommand() {
   if (ext === '.svg') {
     if (inputs.length !== 1) usage(`an SVG is drawn from exactly one flow, got ${inputs.length}`);
     if (o.theme !== undefined && !THEMES[o.theme]) usage(`unknown theme "${o.theme}" (known: ${THEME_NAMES.join(', ')})`);
+    if (o.notes !== undefined && !NOTE_MODES.includes(o.notes)) usage(`unknown notes mode "${o.notes}" (known: ${NOTE_MODES.join(', ')})`);
     return exportSvg(inputs[0], output);
   }
   if (ext === '.html' || ext === '.htm') {
-    const svgOnly = ['theme', 'css', 'positions'].filter((k) => o[k] !== undefined);
+    const svgOnly = ['theme', 'css', 'positions', 'notes'].filter((k) => o[k] !== undefined);
     if (svgOnly.length) usage(`${svgOnly.map((k) => `--${k}`).join(', ')} only ${svgOnly.length === 1 ? 'applies' : 'apply'} to an SVG export`);
     return exportHtml(inputs, output);
   }

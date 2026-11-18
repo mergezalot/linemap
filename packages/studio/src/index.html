@@ -25,6 +25,7 @@
     <symbol id="i-chevron" viewBox="0 0 16 16"><path d="m4.5 6.2 3.5 3.5 3.5-3.5"/></symbol>
     <symbol id="i-menu" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></symbol>
     <symbol id="i-sparkles" viewBox="0 0 16 16"><path d="M6.5 4.6c.4 3 1.4 4 4.4 4.4-3 .4-4 1.4-4.4 4.4-.4-3-1.4-4-4.4-4.4 3-.4 4-1.4 4.4-4.4zM12.4 1.6c.2 1.2.6 1.6 1.8 1.8-1.2.2-1.6.6-1.8 1.8-.2-1.2-.6-1.6-1.8-1.8 1.2-.2 1.6-.6 1.8-1.8z"/></symbol>
+    <symbol id="i-note" viewBox="0 0 16 16"><path d="M3.2 2.6h6.6l3 3v7.8H3.2zM9.8 2.6v3h3M5.6 8.2h4.8M5.6 10.8h3.2"/></symbol>
     <symbol id="i-close" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></symbol>
   </defs>
 </svg>
@@ -68,6 +69,9 @@
         </div>
         <div id="theme" class="popover menu theme-menu" role="menu" aria-label="Theme" hidden></div>
       </div>
+    </div>
+    <div class="tb-group notes-group">
+      <button id="notes" class="btn" aria-pressed="true" hidden><svg class="icon"><use href="#i-note"/></svg><span class="lbl">Notes</span></button>
     </div>
     <div class="tb-group out-group">
       <button id="export" class="btn" title="Download the map as SVG"><svg class="icon"><use href="#i-download"/></svg><span class="lbl">SVG</span></button>
@@ -158,10 +162,11 @@
       <tr><th>Hide a line</th><td>click its legend row; <kbd>Alt</kbd>/<kbd>Shift</kbd>-click: only this line</td></tr>
       <tr><th>Search</th><td><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>F</kbd></td></tr>
       <tr><th>Next theme</th><td><kbd>T</kbd></td></tr>
+      <tr><th>Notes on / off</th><td><kbd>N</kbd>; off draws the map without them and puts a badge for each in its node: hover it to read the note, click it to keep the note open, click again to close it. Remembered for your next visit</td></tr>
       <tr><th>Reload</th><td><kbd>R</kbd></td></tr>
       <tr><th>Open / paste</th><td>drop a file, or paste DOT text anywhere</td></tr>
     </table>
-    <p class="hint">The address keeps hidden lines, through settings, the theme and the view, so a link shows the same map.</p>
+    <p class="hint">The address keeps hidden lines, through settings, the theme, notes off and the view, so a link shows the same map.</p>
     <p class="hint licenses">linemap is free software under the Mozilla Public License 2.0. It includes MSAGL (MIT, Microsoft). The license texts are in this page's source.</p>
     <p class="hint copyright">© 2026 Michael Karlen</p>
     <div class="dialog-actions"><button class="btn primary" value="ok">Close</button></div>

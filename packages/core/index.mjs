@@ -17,12 +17,23 @@ export { parseFlow, crowding, render, canThrough, STYLE, markColor, THEMES, THEM
 //   through      { mode: 'file' | 'all' | 'none', nodes: Map id -> bool } overrides `through`;
 //                `nodes` wins over `mode`, nodes whose shape cannot carry lines are left alone.
 //   fixed        Map id -> {x, y}: positions for unpinned items, so a rerun keeps them in place.
+//   notes        'show' (default) or 'hide': lay out and route the map as if the notes were not
+//                there, so boxes and lines may take their room. The notes left out move to
+//                `model.hiddenNotes`, unplaced; render draws none of them, unless asked for icons.
 // Routing (MSAGL) comes after placement, so it never moves a box.
-export function layout(model, { hiddenLines, through, fixed } = {}) {
+export const NOTE_MODES = ['show', 'hide'];
+export function layout(model, { hiddenLines, through, fixed, notes = 'show' } = {}) {
   // Stages write into the model (positions, paths, strands), so a second run would build on the
   // first one's results.
   if (model.laidOut) throw new Error('layout: this model is already laid out; parse the DOT text again');
   model.laidOut = true;
+  if (!NOTE_MODES.includes(notes)) throw new Error(`layout: notes must be ${NOTE_MODES.join(' or ')}, not "${notes}"`);
+  model.hiddenNotes = [];
+  if (notes === 'hide') {
+    model.hiddenNotes = model.notes;
+    model.notes = [];
+    for (const n of model.hiddenNotes) model.items.delete(n.id);
+  }
 
   if (through) {
     const { mode = 'file', nodes } = through;

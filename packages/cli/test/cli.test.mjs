@@ -59,8 +59,20 @@ test('an error from the model is one line', () => {
   assert.equal(r.err, 'linemap: line A: color: expected a colour like #1565c0, got "red"\n');
 });
 
+test('--notes hide leaves the notes out, --notes show draws them', () => {
+  const r = run('export', pipeline, '-o', out, '--notes', 'hide');
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.err, /1 notes left out,/);
+  const svg = fs.readFileSync(out, 'utf8');
+  assert.doesNotMatch(svg, /class="(note|lm-note)/);
+  assert.match(svg, /class="node/);
+  assert.match(run('export', pipeline, '-o', out, '--notes', 'show').err, /1 notes,/);
+  assert.match(fs.readFileSync(out, 'utf8'), /<g class="note"/);
+});
+
 test('an unknown flag is wrong usage', () => usageError(run('export', pipeline, '-o', out, '--bogus'), /Unknown option '--bogus'/));
 test('--theme without a value is wrong usage', () => usageError(run('export', pipeline, '-o', out, '--theme'), /argument missing/));
+test('an unknown notes mode is wrong usage', () => usageError(run('export', pipeline, '-o', out, '--notes', 'icon'), /unknown notes mode "icon" \(known: show, hide\)/));
 test('an unknown theme is wrong usage', () => usageError(run('export', pipeline, '-o', out, '--theme', 'sepia'), /unknown theme "sepia"/));
 test('--png is gone', () => usageError(run('export', pipeline, '-o', out, '--png'), /Unknown option '--png'/));
 test('no command is wrong usage', () => usageError(run(), /no command/));
@@ -72,6 +84,7 @@ test('an unknown output type is wrong usage', () => usageError(run('export', pip
 test('SVG options on an HTML export are wrong usage', () => {
   usageError(run('export', pipeline, '-o', html, '--theme', 'dark'), /--theme only applies to an SVG export/);
   usageError(run('export', pipeline, '-o', html, '--css', 'a.css', '--positions'), /--css, --positions only apply to an SVG export/);
+  usageError(run('export', pipeline, '-o', html, '--notes', 'hide'), /--notes only applies to an SVG export/);
 });
 
 test('export without -o writes <flow>.svg beside the flow', () => {

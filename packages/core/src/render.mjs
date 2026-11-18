@@ -2,7 +2,8 @@
 import { STYLE, groupRects, textWidth, edgeLabelSize } from './model.mjs';
 import { markColor } from './bundle.mjs';
 import { f } from './geom.mjs';
-import { getTheme, DEFAULT_THEME, themeCss, accentStyle, shadowFilters, paintLines, tabText } from './theme.mjs';
+import { badgeAt, BADGE } from './badges.mjs';
+import { getTheme, DEFAULT_THEME, themeCss, noteIconCss, accentStyle, shadowFilters, paintLines, tabText } from './theme.mjs';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 // For attribute values: also keep newlines and tabs, which a parser would turn into spaces.
@@ -143,6 +144,29 @@ function note(n, ctx = FLAT) {
     `<text font-size="${t.size}" ${t.attrs} dominant-baseline="central">${rows.join('')}</text>`;
 }
 
+// A note left out by layout (`notes: 'hide'`) as a badge (render's `noteIcons`): a small sheet
+// with a turned corner and three rows of text, centred on c (a fixed spot on the note's node,
+// see badges.mjs), with the text as its <title>.
+function noteIcon(n, c) {
+  const s = BADGE, k = 6, r = 3;
+  const x0 = c.x - s / 2, y0 = c.y - s / 2;
+  const sheet = `M${f(x0)},${f(y0 + r)} Q${f(x0)},${f(y0)} ${f(x0 + r)},${f(y0)} H${f(x0 + s - k)} L${f(x0 + s)},${f(y0 + k)} V${f(y0 + s - r)} Q${f(x0 + s)},${f(y0 + s)} ${f(x0 + s - r)},${f(y0 + s)} H${f(x0 + r)} Q${f(x0)},${f(y0 + s)} ${f(x0)},${f(y0 + s - r)} Z`;
+  const rows = [8, 11.5, 15].map((dy, i) => `M${f(x0 + 5)},${f(y0 + dy)} H${f(x0 + (i === 2 ? 12 : 16))}`).join(' ');
+  return `<g class="lm-note-icon"><path d="${sheet}" class="lm-note-icon-box"/>` +
+    `<path d="M${f(x0 + s - k)},${f(y0)} V${f(y0 + k)} H${f(x0 + s)}" class="lm-note-icon-fold"/>` +
+    `<path d="${rows}" class="lm-note-icon-rows"/><title>${esc(n.label)}</title></g>`;
+}
+
+// Where a badge's note opens: beside the badge, right of it and level with its top, else left of
+// it, and moved up as far as needed to stay inside `box`.
+function noteBeside(n, c, box) {
+  const gap = BADGE / 2 + 6;
+  let x0 = c.x + gap;
+  if (x0 + n.w > box.x1 && c.x - gap - n.w >= box.x0) x0 = c.x - gap - n.w;
+  const y0 = Math.max(box.y0, Math.min(c.y - BADGE / 2, box.y1 - n.h));
+  return { ...n, x: x0 + n.w / 2, y: y0 + n.h / 2 };
+}
+
 function legend(model, box, ctx = FLAT) {
   const rowH = 28, pad = 18;
   const w = 96 + Math.max(...model.lines.map((l) => textWidth(l.label ?? l.id, 14))) + pad;
@@ -165,12 +189,17 @@ function legend(model, box, ctx = FLAT) {
 
 // Options:
 //   legend  false leaves out the legend and the room for it
+//   noteIcons  true draws each note that layout left out (its `notes: 'hide'`) as a
+//           half-transparent badge at a fixed spot on the node it belongs to, with the text as a tooltip (for the studio; a static picture has
+//           no use for them). Each g.note.lm-note-folded also holds the whole note, hidden, beside
+//           its badge: the class lm-open shows it. Without it, notes left out are not drawn at all.
 //   theme   a theme name (theme.mjs); default: the DOT file's `theme`, else minimal
 //   css     more CSS, after the theme's: restyle any lm-* class
 // Elements carry data-* attributes (line ids, labels, shapes) for scripts; they change nothing drawn.
-export function render(model, { legend: withLegend = true, theme, css = '' } = {}) {
+export function render(model, { legend: withLegend = true, theme, css = '', noteIcons = false } = {}) {
   // the CSS goes inside <style>, so it must not be able to end that element
   if (/<\/style/i.test(css)) throw new Error('css: must not contain "</style"');
+  const folded = noteIcons ? model.hiddenNotes ?? [] : [];
   const themeName = theme ?? model.theme ?? DEFAULT_THEME;
   const T = getTheme(themeName);
   paintLines(model.lines, T);
@@ -186,7 +215,7 @@ export function render(model, { legend: withLegend = true, theme, css = '' } = {
   const paint = { radius: { ...FLAT.radius, ...T.radius }, fx, sheen, line: T.line };
   const groups = groupRects(model);
   const personAt = new Map(model.nodes.filter((n) => n.shape === 'person').map((n) => [n.id, personLabel(n, model)]));
-  const rects = [...model.items.values()].map((n) => ({ x0: n.x - n.w / 2, y0: n.y - n.h / 2, x1: n.x + n.w / 2, y1: n.y + n.h / 2 }));
+  const rects = [...model.nodes, ...model.notes].map((n) => ({ x0: n.x - n.w / 2, y0: n.y - n.h / 2, x1: n.x + n.w / 2, y1: n.y + n.h / 2 }));
   for (const p of personAt.values()) rects.push(p.box);
   for (const e of model.edges) for (const p of e.path) rects.push({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
   rects.push(...groups.values());
@@ -194,6 +223,7 @@ export function render(model, { legend: withLegend = true, theme, css = '' } = {
     x0: Math.min(...rects.map((r) => r.x0)), y0: Math.min(...rects.map((r) => r.y0)),
     x1: Math.max(...rects.map((r) => r.x1)), y1: Math.max(...rects.map((r) => r.y1)),
   };
+  const map = { ...box }; // the map without the legend: a note with no container has its badge in its corner
   const leg = withLegend ? legend(model, box, paint) : null;
   if (leg) {
     for (const k of ['x0', 'y0']) box[k] = Math.min(box[k], leg.rect[k]);
@@ -204,7 +234,7 @@ export function render(model, { legend: withLegend = true, theme, css = '' } = {
 
   const out = [];
   out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.join(' ')}" width="${vb[2]}" height="${vb[3]}" class="linemap lm-root lm-theme-${attr(themeName)}" data-theme="${attr(themeName)}" font-family="${esc(T.font)}" fill="${T.ink}">`);
-  out.push(`<style>\n${themeCss(T)}${css ? `\n${css}` : ''}\n</style>`);
+  out.push(`<style>\n${themeCss(T)}${folded.length ? `\n${noteIconCss(T)}` : ''}${css ? `\n${css}` : ''}\n</style>`);
   if (fx.defs) out.push(fx.defs);
   const sheenAt = out.length; // the gradients go here once the boxes have asked for them
   out.push('');
@@ -313,6 +343,14 @@ export function render(model, { legend: withLegend = true, theme, css = '' } = {
     const { x: cx, y: cy } = e.labelAt;
     out.push(`<g class="lm-edge-label-group"><rect x="${f(cx - w / 2)}" y="${f(cy - h / 2)}" width="${f(w)}" height="${h}" rx="${f(Math.min(h / 2, paint.radius.label))}" class="lm-edge-label-box"${fx.filter('small')}/>`);
     out.push(multilineText(e.label, cx, cy, { size: 12, lh: 15, attrs: 'class="lm-edge-label"' }) + '</g>');
+  }
+
+  // badges last, so they and the notes they open lie on top of everything else
+  for (const n of folded) {
+    const c = badgeAt(n, model, groups, map);
+    const attach = n.attach ? ` data-attach="${attr(n.attach)}"` : '';
+    out.push(`<g class="${cls('note lm-note-folded', n)}" ${data(n)}${attach}>${noteIcon(n, c)}` +
+      `<g class="lm-note-full">${link(n, note(noteBeside(n, c, box), paint))}</g></g>`);
   }
 
   if (leg) out.push(leg.svg);

@@ -294,6 +294,20 @@ export function themeCss(t) {
   return r.join('\n');
 }
 
+// The rules for note badges (render's `noteIcons`): the badge in the note's colours, half
+// transparent over what it covers until pointed at or open; the whole note hidden until its
+// group has the class lm-open.
+export function noteIconCss(t) {
+  return [
+    `.lm-note-icon-box{fill:${t.note.fill};stroke:${t.note.ink};stroke-width:1.3;stroke-linejoin:round}`,
+    `.lm-note-icon-fold{fill:none;stroke:${t.note.ink};stroke-width:1.3;stroke-linejoin:round}`,
+    `.lm-note-icon-rows{fill:none;stroke:${t.note.ink};stroke-width:1.6;stroke-linecap:round}`,
+    '.lm-note-folded:not(.lm-open)>.lm-note-full{display:none}',
+    '.lm-note-icon{opacity:.55;transition:opacity .15s}',
+    '.lm-note-folded:hover>.lm-note-icon,.lm-note-folded.lm-open>.lm-note-icon{opacity:1}',
+  ].join('\n');
+}
+
 // SVG filters for the theme's shadows: { defs, filter(kind) -> ' filter="url(#...)"' or '' }.
 // Ids carry the theme name, so two maps in one page never pick up each other's filters.
 export function shadowFilters(t, name) {

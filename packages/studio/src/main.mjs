@@ -3,7 +3,7 @@
 import { markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE } from '@linemap/core';
 import { createState, readHash, hashWriter } from './state.mjs';
 import { createPipeline } from './pipeline.mjs';
-import { createSource, isHttp } from './source.mjs';
+import { createSource, isHttp, store } from './source.mjs';
 import { createViewport } from './viewport.mjs';
 import { createTooltip, esc } from './tooltip.mjs';
 import { createHighlight } from './highlight.mjs';
@@ -17,7 +17,7 @@ const $ = (id) => document.getElementById(id);
 const el = {
   toolbar: document.querySelector('.toolbar'),
   fileName: $('file-name'), recent: $('recent'), open: $('open'), paste: $('paste'), reload: $('reload'), watch: $('watch'),
-  through: $('through'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
+  through: $('through'), notes: $('notes'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
   search: $('search'), results: $('results'), export: $('export'), positions: $('positions'), helpBtn: $('help-btn'),
   menuBtn: $('menu-btn'), more: $('tb-more'),
   banner: $('banner'), stage: $('stage'), map: $('map'), empty: $('empty'), busy: $('busy'), legend: $('legend'),
@@ -43,6 +43,9 @@ const THEME_KEY = 'linemap.theme';
 if (!initial.settings.theme) {
   try { const t = localStorage.getItem(THEME_KEY); if (THEME_NAMES.includes(t)) initial.settings.theme = t; } catch { /* no storage */ }
 }
+// notes on or off as last switched here, unless the link says
+const NOTES_KEY = 'linemap:notes';
+if (!initial.given.has('notes') && typeof store.get(NOTES_KEY) === 'boolean') initial.settings.notes = store.get(NOTES_KEY);
 const state = createState(initial.settings);
 let pendingView = initial.view;  // applied to the first map
 let pendingPin = null;           // line to pin once the next map is shown (search on a hidden line)
@@ -144,6 +147,15 @@ el.through.addEventListener('click', (e) => {
   const b = e.target.closest('button[data-mode]');
   if (b && b.dataset.mode !== state.get().mode) state.set({ mode: b.dataset.mode });
 });
+// notes on, or off: the map without them, a badge for each (hover one to read it, click to keep
+// it open); remembered for the next visit
+const toggleNotes = () => {
+  const notes = !state.get().notes;
+  store.set(NOTES_KEY, notes);
+  state.set({ notes });
+};
+el.notes.addEventListener('click', toggleNotes);
+const hasNotes = () => !!(shown?.model.notes.length || shown?.model.hiddenNotes.length);
 // theme menu: a swatch of each theme (background, a node outline, a line) and its name
 const swatch = (n) => {
   const t = THEMES[n], pal = t.palette ?? PALETTE;
@@ -212,6 +224,10 @@ function updateToolbar() {
   el.fancy.hidden = !THEMES[base + FANCY];
   el.fancy.setAttribute('aria-pressed', String(isFancy(theme)));
   el.fancy.title = isFancy(theme) ? 'Fancy: on (shadows, glows, moving arrows; uses more CPU). Click for plain' : 'Fancy: off. Click for shadows, glows and moving arrows (uses more CPU)';
+  const { notes } = state.get();
+  el.notes.hidden = !hasNotes();
+  el.notes.setAttribute('aria-pressed', String(notes));
+  el.notes.title = notes ? 'Notes: shown. Click to draw the map without them, with a badge for each (N)' : 'Notes: off, a badge for each; hover one to read it, click to keep it open. Click to show them all (N)';
   const cur = source.current();
   el.fileName.querySelector('.name').textContent = cur?.name ?? 'No file';
   el.fileName.title = cur?.src ? `${cur.src} · recent files` : 'Recent files';
@@ -432,12 +448,13 @@ window.addEventListener('keydown', (e) => {
     ArrowLeft: () => viewport.panBy(-pan, 0), ArrowRight: () => viewport.panBy(pan, 0),
     ArrowUp: () => viewport.panBy(0, -pan), ArrowDown: () => viewport.panBy(0, pan),
     r: () => source.reload(),
+    n: () => { if (hasNotes()) toggleNotes(); },
     // the next theme, fancy or not as now
     t: () => {
       const cur = effectiveTheme(), next = BASES[(BASES.indexOf(baseOf(cur)) + 1) % BASES.length];
       setTheme(isFancy(cur) && THEMES[next + FANCY] ? next + FANCY : next);
     },
-    Escape: () => { el.recent.hidden = true; showThemes(false); setMenu(false); highlight.clearPins(); hideBanner(); },
+    Escape: () => { el.recent.hidden = true; showThemes(false); setMenu(false); highlight.clearPins(); highlight.foldNotes(); hideBanner(); },
   };
   const fn = keys[e.key];
   if (!fn || (!shown && !['/', '?', 'Escape'].includes(e.key))) return;

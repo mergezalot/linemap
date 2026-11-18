@@ -1,6 +1,7 @@
 // Hover and click on the map: focus lines (dim the rest), pin them (click a line or a node), open
-// node links (ctrl- or cmd-click), tooltips for lines, nodes, linked notes, bundles and container
-// titles. Indexes are built once per render; pointer events are delegated to the map host and only
+// node links (ctrl- or cmd-click), tooltips for lines, nodes, notes, bundles and container
+// titles. With notes off each note is a badge in its node: hovering it shows the text, a click
+// keeps the note open beside the badge, a click on the badge or the open note folds it again. Indexes are built once per render; pointer events are delegated to the map host and only
 // touch the DOM when what is under the pointer changes.
 import { esc } from './tooltip.mjs';
 
@@ -12,6 +13,7 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
   let hover = new Set();   // lines focused by the pointer (map or legend)
   let hoverNode = null;    // node id under the pointer
   let pinned = new Set();  // lines focused by a click
+  let opened = new Set();  // folded notes kept open by a click
   let lit = new Set();     // elements that have .on now
   let last = { target: null, key: null, html: null };
 
@@ -49,14 +51,21 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
     for (const n of model.nodes) for (let g = n.group; g; g = groups.get(g)?.parent) members.get(g).nodes++;
     for (const c of model.groups) for (let g = c.parent; g; g = groups.get(g)?.parent) members.get(g).groups++;
 
+    // notes as badges (notes off)
+    const noteEls = new Map();
+    for (const g of svg.querySelectorAll('g.note.lm-note-folded')) noteEls.set(g.id, g);
+
     ix = {
-      byLine, nodeEls, nodes, io, lineNodes, groups, members,
-      notes: new Map(model.notes.map((n) => [n.id, n])),
+      byLine, nodeEls, nodes, io, lineNodes, groups, members, noteEls,
+      notes: new Map([...model.notes, ...model.hiddenNotes].map((n) => [n.id, n])),
       lines: new Map(model.lines.map((l) => [l.id, l])),
       label: (id) => nodes.get(id)?.label ?? model.items.get(id)?.label ?? groups.get(id)?.label ?? id,
     };
     // pinned lines that are still drawn stay pinned
     pinned = new Set([...pinned].filter((id) => byLine.has(id)));
+    // notes kept open stay open while notes are off; showing every note forgets them
+    opened = new Set([...opened].filter((id) => noteEls.has(id)));
+    for (const id of opened) open(noteEls.get(id), true);
     hover = new Set();
     hoverNode = null;
     last = { target: null, key: null, html: null };
@@ -130,10 +139,25 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
       row('In', ins) + row('Out', out) + (all ? `<div class="tt-hint">${all}</div>` : '');
   }
 
-  // only notes with a link have a tooltip
+  // a shown note has a tooltip only for its link; a folded one shows its text, until kept open
   function noteTip(g) {
     const n = ix.notes.get(g.id);
-    return n?.url ? linkRow(n.url) + `<div class="tt-hint">${linkHint(n.url)}</div>` : null;
+    if (!n) return null;
+    if (!ix.noteEls.has(n.id)) return n.url ? linkRow(n.url) + `<div class="tt-hint">${linkHint(n.url)}</div>` : null;
+    const text = opened.has(n.id) ? '' : `<div class="tt-note">${esc(n.label)}</div>`;
+    const link = n.url ? linkRow(n.url) + `<div class="tt-hint">${linkHint(n.url)}</div>` : '';
+    return text + link || null;
+  }
+
+  // an open note goes on top of everything, other badges and open notes included
+  function open(g, on) {
+    g.classList.toggle('lm-open', on);
+    if (on) g.parentNode.appendChild(g);
+  }
+  function toggleNote(id) {
+    const on = !opened.has(id);
+    on ? opened.add(id) : opened.delete(id);
+    open(ix.noteEls.get(id), on);
   }
 
   function nodeLines(id) {
@@ -176,8 +200,8 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
     }
     const node = target.closest('g.node');
     if (node) return { key: `node ${node.id}`, lines: nodeLines(node.id), node: node.id, html: () => nodeTip(node) };
-    const note = target.closest('g.note[data-url]');
-    if (note) return { key: `note ${note.id}`, lines: [], html: () => noteTip(note) };
+    const note = target.closest('g.note.lm-note-folded, g.note[data-url]');
+    if (note) return { key: `note ${note.id}${opened.has(note.id) ? ' open' : ''}`, lines: [], html: () => noteTip(note) };
     // a container's title: inside its box, or on a tab (themes with tabs draw those above the lines)
     const tab = target.closest('g.group-tab');
     const title = tab ? { id: tab.getAttribute('data-group') } : target.closest('g.group > text')?.parentNode;
@@ -217,6 +241,19 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
       e.preventDefault();
       if (e.ctrlKey || e.metaKey) { window.open(a.getAttribute('href'), '_blank', 'noopener'); return; }
     }
+    const note = e.target.closest('g.note.lm-note-folded');
+    if (note && ix.noteEls.has(note.id)) {
+      toggleNote(note.id);
+      // the tooltip changes with it (the text while folded, the hint), and the element under the
+      // pointer changes from the icon to the note or back
+      last = { target: null, key: null, html: null };
+      if (e.pointerType !== 'touch') {
+        last.key = `note ${note.id}${opened.has(note.id) ? ' open' : ''}`;
+        last.html = noteTip(note);
+        tooltip.show(last.html, e.clientX, e.clientY);
+      }
+      return;
+    }
     const lineEl = e.target.closest('[data-line]');
     if (lineEl) {
       const id = lineEl.getAttribute('data-line');
@@ -250,6 +287,9 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
     hoverLines: (ids) => { if (!last.key) setHover(ids); },
     pin: (ids) => setPinned(new Set(ids.filter((id) => ix?.byLine.has(id)))),
     clearPins: () => { if (pinned.size) setPinned(new Set()); },
+    // folds every note kept open
+    foldNotes: () => { for (const id of [...opened]) toggleNote(id); },
+    openNotes: () => [...opened],
     pinned: () => [...pinned],
     leave,
     // map rectangle covered by a line's drawn elements

@@ -172,7 +172,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .tsw i:first-child { top: 3px; }
 .tsw i:last-child { top: 7px; }
 #map [data-line], #map g.node, #map g.note, #map g.group > text, #map g.group-tab { transition: opacity .14s ease; }
-#map [data-line], #map g.node, #map g.note a, #map g.group > text, #map g.group-tab { cursor: pointer; }
+#map [data-line], #map g.node, #map g.note a, #map g.note.lm-note-folded, #map g.group > text, #map g.group-tab { cursor: pointer; }
 #map svg.focus [data-line]:not(.on) { opacity: .12; }
 #map svg.focus g.edge > path:not([data-line]) { opacity: .5; }
 #map svg.focus g.node:not(.on), #map svg.focus g.note { opacity: .45; }
@@ -250,6 +250,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 }
 .tooltip .tt-title { font-weight: 600; font-size: 13px; color: #fff; white-space: pre-line; }
 .tooltip .tt-sub { color: #aab3bd; }
+.tooltip .tt-note { max-width: 320px; color: #fff; font-style: italic; white-space: pre-line; }
 .tooltip .tt-url { color: #8ab4f8; word-break: break-all; margin-top: 2px; }
 .tooltip .tt-row { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; }
 .tooltip .tt-row > .k { color: #8f99a4; flex: none; min-width: 34px; }
@@ -303,7 +304,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .help .copyright { margin-top: 6px; }
 
 /* before the first map: only the ways to load one */
-body.nomap .through-group, body.nomap .theme-group, body.nomap .search, body.nomap #export, body.nomap #positions, body.nomap .tb-sep, body.nomap .zoom { display: none; }
+body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .search, body.nomap #export, body.nomap #positions, body.nomap .tb-sep, body.nomap .zoom { display: none; }
 
 /* ---------- narrow screens ---------- */
 /* Labels go before the toolbar would wrap (width measured with a short file name; a longer one
