@@ -344,7 +344,9 @@ console.log('watch');
   const file = path.join(here, '..', 'dist', 'watch-test.dot');
   const text = fs.readFileSync(path.join(here, '../../../examples/webshop.dot'), 'utf8');
   fs.writeFileSync(file, text);
-  const page = await newPage();
+  // a context of its own, so a second tab can share its localStorage
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 860 } });
+  const page = await ctx.newPage();
   await page.goto(`${base}?src=${rel}`);
   await ready(page);
   check(await page.isVisible('#watch'), 'watch button shown for ?src over http');
@@ -354,6 +356,65 @@ console.log('watch');
   await page.waitForFunction(() => [...document.querySelectorAll('#legend .lb')].some((e) => e.textContent === 'Orders (edited)'), null, { timeout: 5000 })
     .then(() => check(true, 'edit to the file shows up within the poll interval'), () => check(false, 'edit to the file shows up'));
   check(await viewBox(page) === vb, 'view kept across the reload');
+  // watch is remembered for this URL: on after a reload of the page, and it still follows saves
+  await page.reload();
+  await ready(page);
+  check(await page.getAttribute('#watch', 'aria-pressed') === 'true', 'watch is on again after a page reload (localStorage)');
+  fs.writeFileSync(file, text.replace('label="Order",', 'label="Orders (again)",'));
+  await page.waitForFunction(() => [...document.querySelectorAll('#legend .lb')].some((e) => e.textContent === 'Orders (again)'), null, { timeout: 5000 })
+    .then(() => check(true, 'and follows the next save'), () => check(false, 'and follows the next save'));
+  // only a page load looks up the saved value: in the page, opening another file follows the
+  // plain rule (a pasted or dropped file is not watched, a URL keeps the current state)
+  await page.click('#paste');
+  await page.fill('#paste-dialog textarea', fs.readFileSync(path.join(here, '../../../examples/platform.dot'), 'utf8'));
+  await rerun(page, () => page.click('#paste-dialog button[value="ok"]'));
+  check(await page.getAttribute('#watch', 'aria-pressed') === 'false' && !(await page.isVisible('#watch')), 'pasted text: no Watch (nothing to fetch)');
+  await page.click('#file-name');
+  await rerun(page, () => page.click('#recent .item[data-i]:has-text("watch-test.dot")'));
+  check(await page.isVisible('#watch') && await page.getAttribute('#watch', 'aria-pressed') === 'false', 'reopened from Recent in the page: not watched, the saved value is not looked up');
+  await page.reload();
+  await ready(page);
+  check(await page.getAttribute('#watch', 'aria-pressed') === 'true', 'a page reload watches it again');
+  // the saved value is the browser's: another tab loading the URL watches it too
+  const tab = await ctx.newPage();
+  await tab.goto(`${base}?src=${rel}`);
+  await ready(tab);
+  check(await tab.getAttribute('#watch', 'aria-pressed') === 'true', 'another tab loading the URL watches it');
+  await tab.goto(`${base}?src=examples/postal.dot`);
+  await ready(tab);
+  check(await tab.getAttribute('#watch', 'aria-pressed') === 'false', 'a URL never watched loads unwatched');
+  await tab.close();
+  // switched off: stays off after a reload
+  await page.click('#watch');
+  await page.reload();
+  await ready(page);
+  check(await page.getAttribute('#watch', 'aria-pressed') === 'false', 'watch switched off stays off after a reload');
+  fs.unlinkSync(file);
+  await ctx.close();
+}
+
+console.log('watch without localStorage');
+{
+  const rel = 'packages/studio/dist/watch-test-2.dot';
+  const file = path.join(here, '..', 'dist', 'watch-test-2.dot');
+  const text = fs.readFileSync(path.join(here, '../../../examples/webshop.dot'), 'utf8');
+  fs.writeFileSync(file, text);
+  const page = await newPage();
+  // every storage access throws, as with storage blocked
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } });
+  });
+  await page.goto(`${base}?src=${rel}`);
+  await ready(page);
+  await page.click('#watch');
+  check(await page.getAttribute('#watch', 'aria-pressed') === 'true', 'watch switches on with storage blocked');
+  fs.writeFileSync(file, text.replace('label="Order",', 'label="Orders (blocked)",'));
+  await page.waitForFunction(() => [...document.querySelectorAll('#legend .lb')].some((e) => e.textContent === 'Orders (blocked)'), null, { timeout: 5000 })
+    .then(() => check(true, 'and follows saves'), () => check(false, 'and follows saves'));
+  await page.reload();
+  await ready(page);
+  check(await page.getAttribute('#watch', 'aria-pressed') === 'false', 'after a reload it is off (nothing could be kept)');
+  check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
   fs.unlinkSync(file);
   await page.close();
 }

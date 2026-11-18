@@ -171,7 +171,7 @@ pnpm export a.dot b.dot -o flows.html   # bakes flows into the page, e.g. for No
 ```
 
 Open a file with the toolbar, by dropping it on the page, by pasting DOT text, or with `?src=`.
-**Watch** redraws on every save. The legend hides and solos lines; the toolbar switches lines
+**Watch** redraws on every save (for a file the studio serves, as under `linemap studio`). The legend hides and solos lines; the toolbar switches lines
 through nodes and the theme, without moving any box. The address keeps these
 settings and the view, so a link reopens the same map. Press `?` for keys.
 

@@ -263,7 +263,7 @@ el.paste.addEventListener('click', pasteDialog);
 el.reload.addEventListener('click', () => source.reload());
 el.watch.addEventListener('click', () => {
   const on = !source.watching();
-  source.setWatch(on);
+  source.setWatch(on, { remember: true });
   toast(on ? 'Watching the file: the map follows every save' : 'Stopped watching');
 });
 
@@ -465,8 +465,8 @@ if (embedded.length === 1) {
 } else if (embedded.length) {
   setEmpty(true);
 } else if (src) {
-  source.loadUrl(src);
+  source.loadUrl(src).then(() => source.restoreWatch());
 } else {
   const last = source.last();
-  if (last?.text) source.loadText(last.text, last.name, last.src); else setEmpty(true);
+  if (last?.text) { source.loadText(last.text, last.name, last.src); source.restoreWatch(); } else setEmpty(true);
 }

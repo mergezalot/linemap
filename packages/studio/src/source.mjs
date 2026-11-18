@@ -1,10 +1,17 @@
 // Where the DOT text comes from: flows baked into the page (build --embed), ?src= URL, file
 // picker, drag-and-drop, paste. Remembers the last file and a short recent list in localStorage
 // (not the baked-in flows: several embeds of one site share it), and can watch a ?src URL.
+// Watch only works for a file the studio fetches over http (?src=, e.g. under `linemap studio`);
+// a file opened, dropped or pasted cannot be watched. Switching Watch keeps the URL's state in
+// localStorage, which only a page load reads (restoreWatch): reloading the page, in any tab of
+// this browser, keeps watching a URL that was watched. Opening another file in the page does
+// not look it up. A list, not one value, so tabs watching different files each get theirs back.
 
 const LAST = 'linemap:last';
 const RECENT = 'linemap:recent';
 const MAX_RECENT = 8;
+const WATCHED = 'linemap:watched';
+const MAX_WATCHED = 20;
 const WATCH_MS = 1000;
 
 // localStorage may be missing or throw (privacy settings, file:// in some browsers, quota).
@@ -30,6 +37,15 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
     current = { text, name, src };
     if (changed && keep) remember(text, name, src);
     onText({ text, name, src, fresh });
+  }
+
+  // URLs with Watch on, most recent first, as absolute URLs (the same file under ./x and x).
+  const watchKey = (src) => { try { return new URL(src, location.href).href; } catch { return String(src); } };
+  const watched = () => (store.get(WATCHED) ?? []).filter((s) => typeof s === 'string');
+  function rememberWatch(src, on) {
+    const key = watchKey(src);
+    const rest = watched().filter((s) => s !== key);
+    store.set(WATCHED, (on ? [key, ...rest] : rest).slice(0, MAX_WATCHED));
   }
 
   function remember(text, name, src) {
@@ -82,8 +98,10 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
   }
 
   // Watching polls the ?src URL and re-runs when its text changed (only over http).
-  function setWatch(on) {
+  // remember: the user switched it, so a page reload on this URL watches it (or not).
+  function setWatch(on, { remember: keepIt = false } = {}) {
     on = !!(on && current?.src && isHttp());
+    if (keepIt && current?.src) rememberWatch(current.src, on);
     clearInterval(watchTimer);
     watchTimer = 0;
     if (on) {
@@ -146,6 +164,8 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
   return {
     loadUrl, loadFile, loadText, loadEmbedded, reload,
     embedded: () => embedded, setWatch, bindDrop, bindPaste,
+    // on page load only: watch the file just loaded if it was watched when the page was left
+    restoreWatch: () => { if (current?.src && watched().includes(watchKey(current.src))) setWatch(true); },
     current: () => current,
     watching: () => !!watchTimer,
     canWatch: () => !!(current?.src && isHttp()),
