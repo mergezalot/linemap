@@ -37,6 +37,9 @@ const CASES = [
   ['bad fillcolor', `digraph g { ${L} subgraph cluster_x { fillcolor=blue; a } }`, /cluster cluster_x: fillcolor: expected a colour/],
   ['javascript URL', `digraph g { ${L} a [URL="javascript:alert(1)"] }`, /node a: URL must be http\(s\), mailto or relative, got "javascript:alert\(1\)"/],
   ['data href', `digraph g { ${L} a [href="data:text/html,x"] }`, /node a: URL must be http\(s\), mailto or relative/],
+  ['unknown legend anchor', `digraph g { legend=middle; ${L} a }`, /graph: unknown legend "middle" \(known: bottom-left, bottom,/],
+  ['bad legendpos', `digraph g { legendpos="1,2,3"; ${L} a }`, /graph: legendpos: expected "x,y", got "1,2,3"/],
+  ['the legend\'s id', `digraph g { legendpos="0,0"; ${L} "(legend)" }`, /node \(legend\): this id is taken by the legend/],
   ['container without members', `digraph g { ${L} subgraph cluster_x { label=X } a -> cluster_x [lines=A] }`, /container cluster_x has no members/],
 ];
 

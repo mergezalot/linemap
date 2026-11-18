@@ -85,6 +85,7 @@ test('SVG options on an HTML export are wrong usage', () => {
   usageError(run('export', pipeline, '-o', html, '--theme', 'dark'), /--theme only applies to an SVG export/);
   usageError(run('export', pipeline, '-o', html, '--css', 'a.css', '--positions'), /--css, --positions only apply to an SVG export/);
   usageError(run('export', pipeline, '-o', html, '--notes', 'hide'), /--notes only applies to an SVG export/);
+  usageError(run('export', pipeline, '-o', html, '--legend', 'hide'), /--legend only applies to an SVG export/);
 });
 
 test('export without -o writes <flow>.svg beside the flow', () => {
@@ -173,7 +174,7 @@ test('--help prints the usage with every option', () => {
     const r = run(flag);
     assert.equal(r.code, 0);
     assert.equal(r.err, '');
-    for (const o of ['export', 'studio', '--out', '--theme', '--css', '--positions', '--port', '--open', '--help', '--version']) assert.match(r.out, new RegExp(o));
+    for (const o of ['export', 'studio', '--out', '--theme', '--css', '--legend', '--positions', '--notes', '--port', '--open', '--help', '--version']) assert.match(r.out, new RegExp(o));
   }
 });
 
@@ -186,10 +187,34 @@ test('--version prints the package version', () => {
   }
 });
 
-test('--positions prints a pos line per unpinned item', () => {
+test('--positions prints a pos line per unpinned item, then the legend\'s legendpos', () => {
   const r = run('export', pipeline, '-o', out, '--positions');
   assert.equal(r.code, 0, r.err);
   const rows = r.out.trim().split('\n');
-  assert.ok(rows.length > 0);
+  assert.ok(rows.length > 1);
+  assert.match(rows.pop(), /^legendpos="-?\d+,-?\d+"$/);
   for (const row of rows) assert.match(row, /^\S+ \[pos="-?\d+(\.\d+)?,-?\d+(\.\d+)?"\]$/);
 });
+
+test('the printed legendpos, pasted back, draws the same map', () => {
+  const r = run('export', pipeline, '-o', out, '--positions');
+  const svg = fs.readFileSync(out, 'utf8');
+  const dot = path.join(tmp, 'pinned-legend.dot');
+  fs.writeFileSync(dot, fs.readFileSync(pipeline, 'utf8').replace(/digraph (\S+) \{/, `digraph $1 { ${r.out.trim().split('\n').pop()}`));
+  const again = run('export', dot, '-o', out, '--positions');
+  assert.equal(again.code, 0, again.err);
+  assert.doesNotMatch(again.out, /legendpos/);
+  // the same drawing; the legend (and so the frame) may move by the rounding, under a px
+  const drawing = (text) => text.split('\n').filter((l) => !/^<svg |class="lm-bg"|class="legend"/.test(l)).join('\n');
+  assert.equal(drawing(fs.readFileSync(out, 'utf8')), drawing(svg));
+});
+
+test('--legend hide leaves the legend out; no legendpos printed', () => {
+  const r = run('export', pipeline, '-o', out, '--legend', 'hide', '--positions');
+  assert.equal(r.code, 0, r.err);
+  assert.doesNotMatch(fs.readFileSync(out, 'utf8'), /class="legend"/);
+  assert.doesNotMatch(r.out, /legendpos/);
+  assert.equal(run('export', pipeline, '-o', out, '--legend', 'show').code, 0);
+  assert.match(fs.readFileSync(out, 'utf8'), /class="legend"/);
+});
+test('--legend takes show or hide only', () => usageError(run('export', pipeline, '-o', out, '--legend', 'off'), /--legend must be show or hide, got "off"/));

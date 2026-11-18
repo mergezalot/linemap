@@ -160,3 +160,82 @@ test('noteIcons: a note with no node has its badge in the top right corner of th
   const right = Math.max(...model.nodes.map((n) => n.x + n.w / 2)), top = Math.min(...model.nodes.map((n) => n.y - n.h / 2));
   assert.ok(Math.abs(loose.x1 - (right - 7)) < 0.11 && Math.abs(loose.y0 - (top + 7)) < 0.11, JSON.stringify(loose));
 });
+
+// The legend: anchors outside the map, or a point the layout keeps clear like a pinned node.
+const LEGEND_FLOW = (attrs = '') => `digraph g { ${attrs}
+  subgraph lines { A; B }
+  a [pos="0,0"]; b [pos="800,0"]; c [pos="800,600"]
+  a -> b -> c [lines="A B"]
+  a -> c [lines=A]
+}`;
+const legendRect = (svg) => {
+  const m = /<g class="legend"><rect x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)"/.exec(svg);
+  const [x, y, w, h] = m.slice(1).map(Number);
+  return { x0: x, y0: y, x1: x + w, y1: y + h };
+};
+const frameOf = (model) => {
+  const r = [...model.items.values()].filter((n) => n.kind !== 'legend').map((n) => ({ x0: n.x - n.w / 2, y0: n.y - n.h / 2, x1: n.x + n.w / 2, y1: n.y + n.h / 2 }));
+  for (const e of model.edges) for (const p of e.path) r.push({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
+  return { x0: Math.min(...r.map((q) => q.x0)), y0: Math.min(...r.map((q) => q.y0)), x1: Math.max(...r.map((q) => q.x1)), y1: Math.max(...r.map((q) => q.y1)) };
+};
+
+test('legend anchors put the legend outside the map, on their side', () => {
+  const near = (a, b) => Math.abs(a - b) < 1;
+  const sides = {
+    'bottom-left': (l, f) => l.y0 >= f.y1 && near(l.x0, f.x0),
+    bottom: (l, f) => l.y0 >= f.y1 && near(l.x0 + l.x1, f.x0 + f.x1),
+    'bottom-right': (l, f) => l.y0 >= f.y1 && near(l.x1, f.x1),
+    'top-left': (l, f) => l.y1 <= f.y0 && near(l.x0, f.x0),
+    top: (l, f) => l.y1 <= f.y0 && near(l.x0 + l.x1, f.x0 + f.x1),
+    'top-right': (l, f) => l.y1 <= f.y0 && near(l.x1, f.x1),
+    'left-top': (l, f) => l.x1 <= f.x0 && near(l.y0, f.y0),
+    left: (l, f) => l.x1 <= f.x0 && near(l.y0 + l.y1, f.y0 + f.y1),
+    'left-bottom': (l, f) => l.x1 <= f.x0 && near(l.y1, f.y1),
+    'right-top': (l, f) => l.x0 >= f.x1 && near(l.y0, f.y0),
+    right: (l, f) => l.x0 >= f.x1 && near(l.y0 + l.y1, f.y0 + f.y1),
+    'right-bottom': (l, f) => l.x0 >= f.x1 && near(l.y1, f.y1),
+  };
+  const plain = layout(parseFlow(LEGEND_FLOW()));
+  const f = frameOf(plain);
+  for (const [anchor, ok] of Object.entries(sides)) {
+    const model = layout(parseFlow(LEGEND_FLOW(`legend="${anchor}"`)));
+    // the layout does not change
+    assert.deepEqual(model.edges.map((e) => e.path), plain.edges.map((e) => e.path), anchor);
+    assert.ok(ok(legendRect(render(model)), f), anchor);
+  }
+  // the default is bottom-left
+  assert.equal(render(plain), render(layout(parseFlow(LEGEND_FLOW('legend="bottom-left"')))));
+});
+
+test('legendpos centres the legend there, and lines and boxes keep clear of it', () => {
+  // pinned nodes: right on the straight way from a to c; the position wins over the anchor.
+  // Nothing pinned: where the layout puts b (389,-433) without the legend.
+  for (const flow of [LEGEND_FLOW('legendpos="400,300"; legend=top'), LEGEND_FLOW('legendpos="389,-433"').replace(/ \[pos="[^"]*"\]/g, '')]) {
+    const model = layout(parseFlow(flow));
+    const svg = render(model);
+    const l = legendRect(svg);
+    const at = /legendpos="(-?\d+),(-?\d+)"/.exec(flow).slice(1).map(Number);
+    assert.deepEqual([(l.x0 + l.x1) / 2, (l.y0 + l.y1) / 2], at);
+    for (const e of model.edges) {
+      for (let i = 1; i < e.path.length; i++) {
+        const [p, q] = [e.path[i - 1], e.path[i]];
+        const hit = Math.max(p.x, q.x) > l.x0 && Math.min(p.x, q.x) < l.x1 && Math.max(p.y, q.y) > l.y0 && Math.min(p.y, q.y) < l.y1;
+        assert.ok(!hit, `edge ${e.id} runs through the legend`);
+      }
+    }
+    for (const n of [...model.nodes, ...model.notes]) {
+      const hit = n.x + n.w / 2 > l.x0 && n.x - n.w / 2 < l.x1 && n.y + n.h / 2 > l.y0 && n.y - n.h / 2 < l.y1;
+      assert.ok(!hit, `${n.id} overlaps the legend`);
+    }
+  }
+});
+
+test('layout without the legend keeps nothing clear for it', () => {
+  const model = layout(parseFlow(LEGEND_FLOW('legendpos="400,300"')), { legend: false });
+  assert.ok(![...model.items.values()].some((n) => n.kind === 'legend'));
+  assert.doesNotMatch(render(model, { legend: false }), /class="legend"/);
+  // the same layout as without legendpos; a legend rendered anyway goes outside, by its anchor
+  const plain = layout(parseFlow(LEGEND_FLOW()));
+  assert.deepEqual(model.edges.map((e) => e.path), plain.edges.map((e) => e.path));
+  assert.equal(render(model), render(plain));
+});

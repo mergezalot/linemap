@@ -1,5 +1,5 @@
 // Draws the placed, routed and bundled model as one standalone SVG.
-import { STYLE, groupRects, textWidth, edgeLabelSize } from './model.mjs';
+import { STYLE, groupRects, textWidth, edgeLabelSize, LEGEND_ID } from './model.mjs';
 import { markColor } from './bundle.mjs';
 import { f } from './geom.mjs';
 import { badgeAt, BADGE } from './badges.mjs';
@@ -167,11 +167,37 @@ function noteBeside(n, c, box) {
   return { ...n, x: x0 + n.w / 2, y: y0 + n.h / 2 };
 }
 
+// The legend's centre: its `legendpos`, or outside the map's frame `box` on its anchor's side,
+// GAP px off it. The first word is the side, the second where along it (none: the middle).
+const GAP = 60;
+export function legendCentre(legend, box) {
+  if (legend.at) return legend.at;
+  const { w, h } = legend;
+  const [side, end] = legend.anchor.split('-');
+  const along = (lo, hi, size, start, finish) => (end === start ? lo + size / 2 : end === finish ? hi - size / 2 : (lo + hi) / 2);
+  if (side === 'top' || side === 'bottom') {
+    return [along(box.x0, box.x1, w, 'left', 'right'), side === 'top' ? box.y0 - GAP - h / 2 : box.y1 + GAP + h / 2];
+  }
+  return [side === 'left' ? box.x0 - GAP - w / 2 : box.x1 + GAP + w / 2, along(box.y0, box.y1, h, 'top', 'bottom')];
+}
+
+// The frame of everything drawn but the legend: boxes, person labels, lines and containers.
+export function frame(model, groups = groupRects(model), personAt = personLabels(model)) {
+  const rects = [...model.items.values()].filter((n) => n.id !== LEGEND_ID).map((n) => ({ x0: n.x - n.w / 2, y0: n.y - n.h / 2, x1: n.x + n.w / 2, y1: n.y + n.h / 2 }));
+  for (const p of personAt.values()) rects.push(p.box);
+  for (const e of model.edges) for (const p of e.path) rects.push({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
+  rects.push(...groups.values());
+  return {
+    x0: Math.min(...rects.map((r) => r.x0)), y0: Math.min(...rects.map((r) => r.y0)),
+    x1: Math.max(...rects.map((r) => r.x1)), y1: Math.max(...rects.map((r) => r.y1)),
+  };
+}
+const personLabels = (model) => new Map(model.nodes.filter((n) => n.shape === 'person').map((n) => [n.id, personLabel(n, model)]));
+
 function legend(model, box, ctx = FLAT) {
   const rowH = 28, pad = 18;
-  const w = 96 + Math.max(...model.lines.map((l) => textWidth(l.label ?? l.id, 14))) + pad;
-  const h = model.lines.length * rowH + 2 * pad + 22;
-  const at = model.legend.at ?? [box.x0 + w / 2, box.y1 + 60 + h / 2];
+  const { w, h } = model.legend;
+  const at = legendCentre(model.legend, box);
   const x0 = at[0] - w / 2, y0 = at[1] - h / 2;
   const rows = model.lines.map((l, i) => {
     const y = y0 + pad + 32 + i * rowH;
@@ -214,17 +240,10 @@ export function render(model, { legend: withLegend = true, theme, css = '', note
   } : null;
   const paint = { radius: { ...FLAT.radius, ...T.radius }, fx, sheen, line: T.line };
   const groups = groupRects(model);
-  const personAt = new Map(model.nodes.filter((n) => n.shape === 'person').map((n) => [n.id, personLabel(n, model)]));
-  const rects = [...model.nodes, ...model.notes].map((n) => ({ x0: n.x - n.w / 2, y0: n.y - n.h / 2, x1: n.x + n.w / 2, y1: n.y + n.h / 2 }));
-  for (const p of personAt.values()) rects.push(p.box);
-  for (const e of model.edges) for (const p of e.path) rects.push({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
-  rects.push(...groups.values());
-  const box = {
-    x0: Math.min(...rects.map((r) => r.x0)), y0: Math.min(...rects.map((r) => r.y0)),
-    x1: Math.max(...rects.map((r) => r.x1)), y1: Math.max(...rects.map((r) => r.y1)),
-  };
+  const personAt = personLabels(model);
+  const box = frame(model, groups, personAt);
   const map = { ...box }; // the map without the legend: a note with no container has its badge in its corner
-  const leg = withLegend ? legend(model, box, paint) : null;
+  const leg = withLegend && model.lines.length ? legend(model, box, paint) : null;
   if (leg) {
     for (const k of ['x0', 'y0']) box[k] = Math.min(box[k], leg.rect[k]);
     for (const k of ['x1', 'y1']) box[k] = Math.max(box[k], leg.rect[k]);

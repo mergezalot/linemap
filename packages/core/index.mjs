@@ -1,14 +1,14 @@
 // The public API of @linemap/core: DOT text in, SVG string out. Other packages import only this
 // file; the stage modules under src/ are internal.
-import { parseFlow, STYLE, canThrough } from './src/model.mjs';
+import { parseFlow, STYLE, canThrough, LEGEND_ID, LEGEND_ANCHORS } from './src/model.mjs';
 import { place, crowding } from './src/place.mjs';
 import { route } from './src/route.mjs';
 import { bundle, markColor } from './src/bundle.mjs';
 import { inside } from './src/inside.mjs';
-import { render } from './src/render.mjs';
+import { render, frame, legendCentre } from './src/render.mjs';
 import { THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE, themeCss, paintLines } from './src/theme.mjs';
 
-export { parseFlow, crowding, render, canThrough, STYLE, markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE, themeCss, paintLines };
+export { parseFlow, crowding, render, canThrough, LEGEND_ANCHORS, STYLE, markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE, themeCss, paintLines };
 
 // Every stage between parsing and rendering, in order. Mutates and returns the model.
 // Route, bundle and inside do not move items, so `crowding` gives the same answer after this.
@@ -20,9 +20,12 @@ export { parseFlow, crowding, render, canThrough, STYLE, markColor, THEMES, THEM
 //   notes        'show' (default) or 'hide': lay out and route the map as if the notes were not
 //                there, so boxes and lines may take their room. The notes left out move to
 //                `model.hiddenNotes`, unplaced; render draws none of them, unless asked for icons.
+//   legend       false: `legendpos` is ignored, so nothing keeps clear of it; for an SVG without
+//                a legend (render with { legend: false }), or one whose legend is drawn elsewhere.
+//                A legend rendered anyway goes outside the map, by its `legend` anchor.
 // Routing (MSAGL) comes after placement, so it never moves a box.
 export const NOTE_MODES = ['show', 'hide'];
-export function layout(model, { hiddenLines, through, fixed, notes = 'show' } = {}) {
+export function layout(model, { hiddenLines, through, fixed, notes = 'show', legend = true } = {}) {
   // Stages write into the model (positions, paths, strands), so a second run would build on the
   // first one's results.
   if (model.laidOut) throw new Error('layout: this model is already laid out; parse the DOT text again');
@@ -42,6 +45,10 @@ export function layout(model, { hiddenLines, through, fixed, notes = 'show' } = 
       if (!canThrough(n)) continue;
       n.through = nodes?.get(n.id) ?? (mode === 'all' ? true : mode === 'none' ? false : n.through);
     }
+  }
+  if (!legend) {
+    model.items.delete(LEGEND_ID);
+    model.legend.at = null;
   }
   for (const [id, p] of fixed ?? []) {
     const n = model.items.get(id);
@@ -64,3 +71,11 @@ export function layout(model, { hiddenLines, through, fixed, notes = 'show' } = 
 // Computed positions of unpinned nodes and notes, for pinning them in the DOT file.
 export const positions = (model) =>
   [...model.items.values()].filter((n) => !n.pinned).map(({ id, x, y }) => ({ id, x, y }));
+
+// Where render puts the legend's centre, rounded, for pinning it with `legendpos`; null when it
+// has one already, or when there are no lines (and so no legend).
+export function legendPosition(model) {
+  if (model.legend.at || !model.lines.length) return null;
+  const [x, y] = legendCentre(model.legend, frame(model));
+  return { x: Math.round(x), y: Math.round(y) };
+}

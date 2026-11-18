@@ -37,7 +37,7 @@ const CONTAINER = { 'font-size': 18, bold: true };
 // Style attributes, with Graphviz's names and units (fontsize in points = px).
 const STYLE_ATTRS = ['color', 'fillcolor', 'fontcolor', 'fontsize'];
 const DOT_ATTRS = {
-  graph: ['label', 'theme'],
+  graph: ['label', 'theme', 'legend', 'legendpos'],
   cluster: ['label', 'class', ...STYLE_ATTRS],
   line: ['label', 'color'],
   node: ['label', 'class', 'shape', 'pos', 'width', 'height', 'through', 'URL', 'href', ...STYLE_ATTRS],
@@ -105,6 +105,22 @@ export const edgeLabelSize = (label) => {
   return { w: Math.max(...rows.map((r) => textWidth(r, 12))) + 18, h: rows.length * 15 + 8 };
 };
 
+// Where the legend goes: outside the map on one side (`legend`), or at a point (`legendpos`).
+// `bottom-left` is below the map, at its left end; `left-bottom` left of it, at its lower end.
+export const LEGEND_ANCHORS = ['bottom-left', 'bottom', 'bottom-right', 'top-left', 'top', 'top-right',
+  'left-top', 'left', 'left-bottom', 'right-top', 'right', 'right-bottom'];
+// A legend at a point is an item like a pinned node (placement and routing keep clear of it),
+// under this id, which no DOT file can use.
+export const LEGEND_ID = '(legend)';
+// The legend's size, from its lines (hidden lines stay in it, greyed).
+export function legendSize(lines) {
+  const rowH = 28, pad = 18;
+  return {
+    w: 96 + Math.max(...lines.map((l) => textWidth(l.label ?? l.id, 14))) + pad,
+    h: lines.length * rowH + 2 * pad + 22,
+  };
+}
+
 // fill, stroke and fontColor: only when the DOT file sets them, otherwise the theme's.
 const pickStyle = (p) => ({
   fill: p.fill, stroke: p.stroke, fontColor: p['font-color'],
@@ -117,6 +133,9 @@ export function parseFlow(text) {
   check('graph', dot.id, dot.attrs);
   const theme = dot.attrs.theme ?? null;
   if (theme && !THEMES[theme]) throw new Error(`graph: unknown theme "${theme}" (known: ${Object.keys(THEMES).join(', ')})`);
+  const anchor = dot.attrs.legend ?? 'bottom-left';
+  if (!LEGEND_ANCHORS.includes(anchor)) throw new Error(`graph: unknown legend "${anchor}" (known: ${LEGEND_ANCHORS.join(', ')})`);
+  const legendAt = dot.attrs.legendpos !== undefined ? point(dot.attrs.legendpos, 'graph: legendpos') : null;
 
   const lines = dot.lines.map((l, index) => {
     check('line', l.id, l.attrs);
@@ -182,6 +201,12 @@ export function parseFlow(text) {
   }
   if (!nodes.length && !notes.length) throw new Error('the graph has no nodes');
   const items = new Map([...nodes, ...notes].map((n) => [n.id, n]));
+  // a legend at a point: a pinned item (no lines, nothing drawn for it but the legend)
+  const legend = { anchor, at: legendAt, ...legendSize(lines) };
+  if (legendAt && lines.length) {
+    if (items.has(LEGEND_ID)) throw new Error(`node ${LEGEND_ID}: this id is taken by the legend`);
+    items.set(LEGEND_ID, { id: LEGEND_ID, kind: 'legend', shape: 'box', label: 'legend', group: null, pinned: true, x: legendAt[0], y: legendAt[1], w: legend.w, h: legend.h });
+  }
   const groupById = new Map(groups.map((g) => [g.id, g]));
   const inGroup = (item, gid) => {
     for (let g = item.group; g; g = groupById.get(g).parent) if (g === gid) return true;
@@ -232,7 +257,7 @@ export function parseFlow(text) {
   for (const e of edgeById.values()) e.lines.sort((a, b) => a.index - b.index);
   const edges = [...edgeById.values()];
 
-  return { theme, lines, groups, groupById, nodes, notes, items, edges, legend: {} };
+  return { theme, lines, groups, groupById, nodes, notes, items, edges, legend };
 }
 
 // The containers an item is in, innermost first.

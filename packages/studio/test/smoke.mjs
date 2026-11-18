@@ -454,6 +454,27 @@ console.log('notes off: the map without them, a badge for each');
   await page.close();
 }
 
+console.log('legendpos is ignored (the legend is a panel)');
+{
+  const page = await newPage();
+  await page.goto(`${base}#src=examples/webshop.dot`);
+  await ready(page);
+  const text = fs.readFileSync(path.join(here, '../../../examples/webshop.dot'), 'utf8');
+  // on the Fulfilment -> Data platform line, which an SVG export routes round it
+  const withPos = text.replace(/^digraph webshop \{/m, 'digraph webshop { legendpos="2160,800"');
+  check(withPos !== text, 'flow with legendpos made');
+  const drawn = async (dot) => {
+    await page.click('#paste');
+    await page.fill('#paste-dialog textarea', dot);
+    await rerun(page, () => page.click('#paste-dialog button[value="ok"]'));
+    return page.evaluate(() => [...document.querySelectorAll('#map svg g.node, #map svg g.note, #map svg g.edge')].map((g) => g.outerHTML).join('\n'));
+  };
+  const a = await drawn(withPos), b = await drawn(text);
+  check(a.length > 0 && a === b, 'a legendpos flow is laid out as without it: no gap in the map');
+  check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
+  await page.close();
+}
+
 console.log('errors keep the last map');
 {
   const page = await newPage();

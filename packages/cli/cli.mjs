@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { parseFlow, layout, crowding, render, positions, THEMES, THEME_NAMES, NOTE_MODES } from '@linemap/core';
+import { parseFlow, layout, crowding, render, positions, legendPosition, THEMES, THEME_NAMES, NOTE_MODES } from '@linemap/core';
 import { studioHtml, serve, announce, openBrowser } from '@linemap/studio';
 
 const USAGE = `usage: linemap <command> [options]
@@ -18,10 +18,14 @@ linemap export [flow.dot ...] [-o <out.svg|out.html>] [options]
   --theme <name>     ${THEME_NAMES.join(', ')}
                      (default: the DOT file's \`theme\`, else minimal; SVG only)
   --css <file>       a CSS file added after the theme's, to restyle any lm-* class (SVG only)
+  --legend show|hide draw the legend of the lines or not (default: show; SVG only); place it
+                     in the DOT file with \`legend\` (bottom-left, top, right-bottom, ...)
+                     or \`legendpos="x,y"\`
   --notes <mode>     ${NOTE_MODES.join(', ')}: hide draws the map as if the notes were not there,
                      so boxes and lines may take their room (default: show; SVG only)
   --positions        also print the computed position of every unpinned node and note,
-                     ready to paste into the DOT file as \`pos\` to pin it (SVG only)
+                     ready to paste into the DOT file as \`pos\` to pin it, and the legend's
+                     as \`legendpos\` (SVG only)
 
 linemap studio [dir] [options]
   serves the studio and the DOT files under dir (default: here) on this machine;
@@ -47,6 +51,7 @@ const COMMANDS = {
     out: { type: 'string', short: 'o' },
     theme: { type: 'string' },
     css: { type: 'string' },
+    legend: { type: 'string' },
     positions: { type: 'boolean' },
     notes: { type: 'string' },
   },
@@ -99,15 +104,18 @@ function load(file, text = read(file)) {
 }
 
 function exportSvg(input, output) {
-  const model = layout(load(input), { notes: o.notes });
+  const legend = o.legend !== 'hide';
+  const model = layout(load(input), { notes: o.notes, legend });
   for (const w of crowding(model)) console.error(`warning: ${w}`);
-  const svg = render(model, { theme: o.theme, css: o.css !== undefined ? read(o.css) : '' });
+  const svg = render(model, { legend, theme: o.theme, css: o.css !== undefined ? read(o.css) : '' });
   write(output, svg);
   const notes = model.hiddenNotes.length ? `${model.hiddenNotes.length} notes left out` : `${model.notes.length} notes`;
   console.error(`wrote ${output}: ${model.nodes.length} nodes, ${notes}, ${model.edges.length} edges`);
 
   if (o.positions) {
     for (const { id, x, y } of positions(model)) console.log(`${id} [pos="${x},${y}"]`);
+    const at = legend && legendPosition(model);
+    if (at) console.log(`legendpos="${at.x},${at.y}"`);
   }
 }
 
@@ -130,12 +138,13 @@ function exportCommand() {
   const ext = path.extname(output).toLowerCase();
   if (ext === '.svg') {
     if (inputs.length !== 1) usage(`an SVG is drawn from exactly one flow, got ${inputs.length}`);
+    if (o.legend !== undefined && !['show', 'hide'].includes(o.legend)) usage(`--legend must be show or hide, got "${o.legend}"`);
     if (o.theme !== undefined && !THEMES[o.theme]) usage(`unknown theme "${o.theme}" (known: ${THEME_NAMES.join(', ')})`);
     if (o.notes !== undefined && !NOTE_MODES.includes(o.notes)) usage(`unknown notes mode "${o.notes}" (known: ${NOTE_MODES.join(', ')})`);
     return exportSvg(inputs[0], output);
   }
   if (ext === '.html' || ext === '.htm') {
-    const svgOnly = ['theme', 'css', 'positions', 'notes'].filter((k) => o[k] !== undefined);
+    const svgOnly = ['theme', 'css', 'legend', 'positions', 'notes'].filter((k) => o[k] !== undefined);
     if (svgOnly.length) usage(`${svgOnly.map((k) => `--${k}`).join(', ')} only ${svgOnly.length === 1 ? 'applies' : 'apply'} to an SVG export`);
     return exportHtml(inputs, output);
   }

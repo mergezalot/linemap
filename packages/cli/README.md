@@ -10,7 +10,7 @@ drawn as transit-map bundles.
 
 ```sh
 npx @linemap/cli export flow.dot                      # -> flow.svg
-npx @linemap/cli export flow.dot -o map.svg [--positions]
+npx @linemap/cli export flow.dot -o map.svg [--positions] [--legend show|hide]
             [--theme minimal|light|dark|neon|neond[-fancy]] [--css extra.css] [--notes show|hide]
 npx @linemap/cli export flow.dot -o flow.html         # the studio with the flow baked in
 npx @linemap/cli export a.dot b.dot -o flows.html     # several, picked on the start screen
@@ -22,12 +22,13 @@ Or install it once with `npm install -g @linemap/cli` and run `linemap` with the
 
 - `export` writes what the output's extension says: `.svg` is the static map, `.html` the
   studio as one self-contained file (works offline, from `file://`, and as an embed, e.g. in
-  Notion). `--theme`, `--css`, `--positions` and `--notes` are for SVG.
+  Notion). `--theme`, `--css`, `--legend`, `--positions` and `--notes` are for SVG.
 - `studio` serves the studio and the DOT files under a folder on this machine; open one with
   `#src=<file>`, and **Watch** redraws it on every save.
 - `--positions` prints the computed positions as `name [pos="x,y"]`, ready to paste into the file.
 - `--css` adds a CSS file after the theme's, to restyle any `lm-*` class.
 - `--notes hide` draws the map as if the notes were not there, so boxes and lines may take their room.
+- `linemap --help` lists every option.
 - Exit codes: 0 done, 1 the file could not be drawn, 2 wrong usage. `LINEMAP_DEBUG=1` prints
   stacks instead of one-line errors.
 

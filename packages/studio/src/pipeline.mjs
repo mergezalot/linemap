@@ -4,8 +4,9 @@
 // same text and notes setting, so hiding a line or switching `through` never moves a box. Notes
 // off lays the map out without the notes (as `linemap export --notes hide` does), so lines and
 // boxes may take their room; each note is then drawn as a badge in its node. The theme only
-// paints: a change of theme alone renders the last model again. Errors come back as results,
-// never thrown.
+// paints: a change of theme alone renders the last model again. The legend is an HTML panel, so
+// `legendpos` is ignored: nothing keeps clear of it, and the exported SVG puts the legend outside
+// the map. Errors come back as results, never thrown.
 import { parseFlow, layout, render, positions, paintLines, THEMES, DEFAULT_THEME } from '@linemap/core';
 
 export function createPipeline({ onResult }) {
@@ -20,7 +21,7 @@ export function createPipeline({ onResult }) {
     const noteMode = notes ? 'show' : 'hide';
     if (bases?.text !== text) bases = { text };
     if (!bases[noteMode]) {
-      const model = layout(parseFlow(text), { notes: noteMode });
+      const model = layout(parseFlow(text), { notes: noteMode, legend: false });
       bases[noteMode] = { model, fixed: new Map(positions(model).map(({ id, x, y }) => [id, { x, y }])) };
     }
     const base = bases[noteMode];
@@ -30,7 +31,7 @@ export function createPipeline({ onResult }) {
     let model = base.model;
     if (last?.base === base && last.key === key) model = last.model;
     else if (hiddenLines.size || mode !== 'file') {
-      model = layout(parseFlow(text), { hiddenLines, through: { mode }, fixed: base.fixed, notes: noteMode });
+      model = layout(parseFlow(text), { hiddenLines, through: { mode }, fixed: base.fixed, notes: noteMode, legend: false });
     }
     last = { base, key, model };
     const used = theme ?? model.theme ?? DEFAULT_THEME;

@@ -28,7 +28,8 @@ function around(target) {
 // Where MSAGL's layered layout would put each node (Map id -> {x, y}), fitted onto the nodes that
 // already have a position: the scale and shift that bring them closest (least squares).
 function targets(model) {
-  const nodes = [...model.items.values()].filter((n) => !(n.kind === 'note' && n.attach));
+  // (a legend at a point is pinned, but has no place in the layered layout: it fits nothing)
+  const nodes = [...model.items.values()].filter((n) => !(n.kind === 'note' && n.attach) && n.kind !== 'legend');
   const ids = new Set([...nodes.map((n) => n.id), ...model.groups.map((g) => g.id)]);
   const layout = layeredLayout({
     items: nodes.map((n) => ({ id: n.id, w: n.w + 2 * HALO, h: n.h + 2 * HALO, group: n.group })),
@@ -83,9 +84,14 @@ export function place(model) {
 
   const target = todo.length ? targets(model) : new Map();
   // Nothing pinned: MSAGL's layout is the placement (it has no overlaps). Only notes beside their
-  // node are left to the search below.
-  if (![...model.items.values()].some((n) => n.x !== undefined)) {
-    for (const n of todo.filter((t) => target.has(t.id))) [n.x, n.y] = [Math.round(target.get(n.id).x), Math.round(target.get(n.id).y)];
+  // node, and nodes the legend (at a point, like a pinned node) would cover, are left to the
+  // search below.
+  if (![...model.items.values()].some((n) => n.x !== undefined && n.kind !== 'legend')) {
+    const legend = [...model.items.values()].filter((n) => n.kind === 'legend').map((n) => rectOf(n, GAP));
+    for (const n of todo.filter((t) => target.has(t.id))) {
+      const [x, y] = [Math.round(target.get(n.id).x), Math.round(target.get(n.id).y)];
+      if (!legend.some((r) => overlaps(r, rectOf({ ...n, x, y })))) [n.x, n.y] = [x, y];
+    }
     todo.splice(0, todo.length, ...todo.filter((t) => t.x === undefined));
   }
 
@@ -149,7 +155,7 @@ export function crowding(model) {
       const r = rectOf(n);
       const gap = Math.max(r.x0 - g.x1, g.x0 - r.x1, r.y0 - g.y1, g.y0 - r.y1);
       if (gap < CLEAR && !contains(g, rectOf(n, CLEAR))) {
-        out.push(`${n.id} is ${gap < 0 ? `${-Math.round(gap)} px into` : `${Math.round(gap)} px from`} container ${gid}`);
+        out.push(`${n.kind === 'legend' ? 'the legend' : n.id} is ${gap < 0 ? `${-Math.round(gap)} px into` : `${Math.round(gap)} px from`} container ${gid}`);
       }
     }
   }

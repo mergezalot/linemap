@@ -89,10 +89,11 @@ digraph example {
 - Shapes: `box` (default), `diamond`, `person`, `cylinder`, `queue`, `note`.
 - `through=true` on a box, queue or cylinder joins the lines inside it, so they can merge,
   split and cross there. A line that only arrives or only leaves ends in a bar.
-- Attributes. Graph: `label`, `theme`. Node: `label`, `shape`, `pos`, `width`, `height`,
-  `through`, `class`, `URL`/`href`, `color`, `fillcolor`, `fontcolor`, `fontsize`. Cluster:
-  `label`, `class`, `color`, `fillcolor`, `fontcolor`, `fontsize`. Line: `label`, `color`.
-  Edge: `label`, `lines`, `via`. Graphviz-only attributes are ignored; unknown ones are errors.
+- Attributes. Graph: `label`, `theme`, `legend`/`legendpos` (where the legend goes). Node:
+  `label`, `shape`, `pos`, `width`, `height`, `through`, `class`, `URL`/`href`, `color`,
+  `fillcolor`, `fontcolor`, `fontsize`. Cluster: `label`, `class`, `color`, `fillcolor`,
+  `fontcolor`, `fontsize`. Line: `label`, `color`. Edge: `label`, `lines`, `via`.
+  Graphviz-only attributes are ignored; unknown ones are errors.
 - Units follow Graphviz (inches, points) except `pos`, which is px with y down.
 - Colours are hex, `#rgb` or `#rrggbb`; named colours like `red` are errors.
 - `URL`/`href` must be `http://`, `https://`, `mailto:` or relative.
@@ -113,7 +114,7 @@ Needs Node 22 or later.
 
 ```sh
 npx @linemap/cli export flow.dot                      # -> flow.svg
-npx @linemap/cli export flow.dot -o map.svg [--positions]
+npx @linemap/cli export flow.dot -o map.svg [--positions] [--legend show|hide]
             [--theme minimal|light|dark|neon|neond[-fancy]] [--css extra.css] [--notes show|hide]
 npx @linemap/cli export flow.dot -o flow.html         # the studio with the flow baked in
 npx @linemap/cli export a.dot b.dot -o flows.html     # several, picked on the start screen
@@ -125,7 +126,7 @@ npx @linemap/cli studio [dir] [--port 8000] [--open]  # serve the DOT files unde
 [studio](#studio) as one self-contained file, which works offline, from `file://`, and as an
 embed in pages that cannot fetch files (e.g. Notion). `--positions` prints the computed positions as `name [pos="x,y"]`, ready to paste into the file.
 `--notes hide` draws the map as if the notes were not there, so boxes and lines may take their
-room. `--theme`, `--css`, `--positions` and `--notes` are for SVG. `linemap --help` lists the options. Exit codes: 0 done, 1 the file could not be drawn, 2 wrong
+room. `--theme`, `--css`, `--legend`, `--positions` and `--notes` are for SVG. `linemap --help` lists the options. Exit codes: 0 done, 1 the file could not be drawn, 2 wrong
 usage. Errors are one line; `LINEMAP_DEBUG=1` prints the stack instead.
 
 To get a PNG, convert the SVG, e.g. `resvg out.svg out.png` or `rsvg-convert`. The text uses
