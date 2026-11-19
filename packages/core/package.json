@@ -1,6 +1,6 @@
 {
   "name": "@linemap/core",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Flow diagrams with pinned nodes and transit-map style line bundles: DOT text -> SVG. No I/O, runs in node and the browser.",
   "keywords": [
     "flowchart",
