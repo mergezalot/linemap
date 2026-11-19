@@ -11,7 +11,8 @@ const USAGE = `usage: linemap <command> [options]
 
 linemap export [flow.dot ...] [-o <out.svg|out.html>] [options]
   writes a file; its extension picks what:
-    .svg    the map as a static SVG; exactly one flow (default: <flow>.svg beside it)
+    .svg    the map as a static SVG of one flow; without -o, each flow given gets
+            its own <flow>.svg beside it
     .html   the studio as one self-contained HTML file, with the flows baked in;
             no flows gives the empty studio (default with no flows: linemap.html)
   -o, --out <file>   the file to write
@@ -103,7 +104,7 @@ function load(file, text = read(file)) {
   }
 }
 
-function exportSvg(input, output) {
+function exportSvg(input, output, heading = false) {
   const legend = o.legend !== 'hide';
   const model = layout(load(input), { notes: o.notes, legend });
   for (const w of crowding(model)) console.error(`warning: ${w}`);
@@ -113,6 +114,7 @@ function exportSvg(input, output) {
   console.error(`wrote ${output}: ${model.nodes.length} nodes, ${notes}, ${model.edges.length} edges`);
 
   if (o.positions) {
+    if (heading) console.log(`// ${input}`);
     for (const { id, x, y } of positions(model)) console.log(`${id} [pos="${x},${y}"]`);
     const at = legend && legendPosition(model);
     if (at) console.log(`legendpos="${at.x},${at.y}"`);
@@ -137,11 +139,15 @@ function exportCommand() {
   const output = o.out ?? (inputs.length ? inputs[0].replace(/(\.[^./\\]*)?$/, '.svg') : 'linemap.html');
   const ext = path.extname(output).toLowerCase();
   if (ext === '.svg') {
-    if (inputs.length !== 1) usage(`an SVG is drawn from exactly one flow, got ${inputs.length}`);
+    if (o.out !== undefined && inputs.length !== 1) {
+      usage(`an SVG is drawn from exactly one flow, got ${inputs.length}${inputs.length ? '; leave out -o to write one SVG beside each flow' : ''}`);
+    }
     if (o.legend !== undefined && !['show', 'hide'].includes(o.legend)) usage(`--legend must be show or hide, got "${o.legend}"`);
     if (o.theme !== undefined && !THEMES[o.theme]) usage(`unknown theme "${o.theme}" (known: ${THEME_NAMES.join(', ')})`);
     if (o.notes !== undefined && !NOTE_MODES.includes(o.notes)) usage(`unknown notes mode "${o.notes}" (known: ${NOTE_MODES.join(', ')})`);
-    return exportSvg(inputs[0], output);
+    if (o.out !== undefined) return exportSvg(inputs[0], output);
+    for (const input of inputs) exportSvg(input, input.replace(/(\.[^./\\]*)?$/, '.svg'), inputs.length > 1);
+    return;
   }
   if (ext === '.html' || ext === '.htm') {
     const svgOnly = ['theme', 'css', 'legend', 'positions', 'notes'].filter((k) => o[k] !== undefined);

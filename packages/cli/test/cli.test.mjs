@@ -78,7 +78,20 @@ test('--png is gone', () => usageError(run('export', pipeline, '-o', out, '--png
 test('no command is wrong usage', () => usageError(run(), /no command/));
 test('the old form without a command is wrong usage', () => usageError(run(pipeline, out), /unknown command ".*pipeline\.dot" \(known: export, studio\)/));
 test('studio flags on export are wrong usage', () => usageError(run('export', pipeline, '--port', '1'), /Unknown option '--port'/));
-test('an SVG from two flows is wrong usage', () => usageError(run('export', pipeline, pipeline, '-o', out), /exactly one flow, got 2/));
+test('an SVG from two flows is wrong usage', () => usageError(run('export', pipeline, pipeline, '-o', out), /exactly one flow, got 2; leave out -o to write one SVG beside each flow/));
+
+test('without -o, each flow gets its own SVG beside it, and --positions heads each with its file', () => {
+  const dir = fs.mkdtempSync(path.join(tmp, 'many-'));
+  const dots = ['a.dot', 'b.dot'].map((n) => path.join(dir, n));
+  for (const d of dots) fs.copyFileSync(pipeline, d);
+  const r = run('export', ...dots, '--positions');
+  assert.equal(r.code, 0, r.err);
+  for (const d of dots) {
+    assert.match(fs.readFileSync(d.replace(/\.dot$/, '.svg'), 'utf8'), /^<svg /);
+    assert.match(r.out, new RegExp(`^// ${d.replace(/[.\\/]/g, '\\$&')}$`, 'm'));
+  }
+  assert.equal(r.err.match(/^wrote /gm).length, 2);
+});
 test('an SVG from no flow is wrong usage', () => usageError(run('export', '-o', out), /exactly one flow, got 0/));
 test('an unknown output type is wrong usage', () => usageError(run('export', pipeline, '-o', 'x.png'), /must end in \.svg or \.html, got "x\.png"/));
 test('SVG options on an HTML export are wrong usage', () => {
