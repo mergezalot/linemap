@@ -21,7 +21,7 @@ const run = (...args) => {
 const usageError = (r, problem) => {
   assert.equal(r.code, 2);
   assert.match(r.err, problem);
-  assert.match(r.err, /usage: linemap <command>/);
+  assert.equal(r.err.trim().split('\n').length, 1, 'one line, no usage');
 };
 
 const html = path.join(tmp, 'out.html');

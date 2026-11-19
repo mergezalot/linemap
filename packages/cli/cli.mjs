@@ -39,7 +39,7 @@ linemap studio [dir] [options]
 
 // Wrong usage: the problem, then the usage, and exit 2.
 function usage(problem) {
-  console.error(`linemap: ${problem}\n\n${USAGE}`);
+  console.error(`linemap: ${problem}`);
   process.exit(2);
 }
 
@@ -80,7 +80,7 @@ if (o.version) {
   console.log(pkg.version);
   process.exit(0);
 }
-if (!command) usage(positionals.length ? `unknown command "${positionals[0]}" (known: ${Object.keys(COMMANDS).join(', ')})` : 'no command');
+if (!command) usage(positionals.length ? `unknown command "${positionals[0]}" (known: ${Object.keys(COMMANDS).join(', ')})` : 'no command; linemap --help lists them');
 
 // File errors carry the path, so the one line says which file.
 const read = (file) => {
