@@ -133,8 +133,8 @@
 </g>
 </g>
 <g class="edge" data-from="render" data-to="view" data-lines="V">
-<path d="M1800,155 L1800,12 Q1800,-20 1832,-20 L1990,-20" class="lm-casing" stroke-width="14"/>
-<path d="M1800,155 L1800,12 Q1800,-20 1832,-20 L1990,-20" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="V"><title>Studio</title></path>
+<path d="M1800,155 L1800,12 A32,32 0 0 1 1832,-20 L1990,-20" class="lm-casing" stroke-width="14"/>
+<path d="M1800,155 L1800,12 A32,32 0 0 1 1832,-20 L1990,-20" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="V"><title>Studio</title></path>
 <g class="lm-marks" data-line="V">
 <polygon points="1984,-20 1973.7,-22.7 1973.7,-17.3" fill="#ffffff"/>
 </g>

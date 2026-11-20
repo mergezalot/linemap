@@ -5,7 +5,7 @@ import { STYLE, groupRects, rectOf, textWidth, edgeLabelSize } from './model.mjs
 import { placeLabels } from './msagl.mjs';
 import { f, sub, len, unit } from './geom.mjs';
 
-const CORNER = 32;   // corner radius of the bundle centre line
+const CORNER = 32;   // corner radius of the bundle centre line (wide bundles get more, see cornerRadius)
 // Direction triangles are drawn inside the line, so their size follows the line width.
 const MARK_LEN = STYLE.lineWidth * 1.15;
 const MARK_HALF = STYLE.lineWidth * 0.3;
@@ -29,21 +29,60 @@ function offset(pts, d) {
   return out;
 }
 
-// SVG path with rounded corners. Inner lanes get tighter corners than outer ones,
-// so the bundle bends like a set of rails.
-function roundedPath(pts, d) {
+// Corner radii of the bundle centre line, one per inner point of `pts`. A bundle of n lanes bends
+// round one centre: lane k's corner is an arc of radius R +- its offset, so neighbouring lanes stay
+// exactly one pitch apart through the bend. R is CORNER, or more for a wide bundle, so that even
+// the inner lane bends round rather than folding over itself. A short segment caps R: half of it
+// for each corner at its ends (all of it at the route's first and last segment), and the lanes'
+// arcs then fit too, a lane's segment being longer by as much as its arcs are larger.
+const cornerRadius = (lanes) => Math.max(CORNER, (lanes * STYLE.linePitch) / 2);
+function cornerRadii(pts, lanes) {
+  const want = cornerRadius(lanes);
+  const last = pts.length - 1;
+  const radii = [];
+  for (let i = 1; i < last; i++) {
+    const lin = len(sub(pts[i], pts[i - 1])), lout = len(sub(pts[i + 1], pts[i]));
+    radii[i] = Math.min(want, i - 1 === 0 ? lin : lin / 2, i + 1 === last ? lout : lout / 2);
+  }
+  return radii;
+}
+
+// SVG path with circular corners, `radii` being those of the centre line (cornerRadii) and d the
+// lane's offset (positive = left of travel): the outer lanes of a bend get the larger arcs. Where
+// the centre line's corners are too tight for the inner lanes (a wide bundle in a narrow gap),
+// those fold to a sharp corner and the outer lanes' arcs shrink to fit their segments.
+function roundedPath(pts, radii, d) {
   if (pts.length < 2) return '';
-  let s = `M${f(pts[0].x)},${f(pts[0].y)}`;
-  for (let i = 1; i < pts.length - 1; i++) {
+  const last = pts.length - 1;
+  const corners = [];
+  for (let i = 1; i < last; i++) {
     const a = pts[i - 1], b = pts[i], c = pts[i + 1];
     const u1 = unit(sub(b, a)), u2 = unit(sub(c, b));
     const cross = u1.x * u2.y - u1.y * u2.x; // > 0: right turn on screen
-    const r = Math.max(2, Math.min(CORNER + Math.sign(cross) * d, len(sub(b, a)) / 2, len(sub(c, b)) / 2));
-    const p = { x: b.x - u1.x * r, y: b.y - u1.y * r };
-    const q = { x: b.x + u2.x * r, y: b.y + u2.y * r };
-    s += ` L${f(p.x)},${f(p.y)} Q${f(b.x)},${f(b.y)} ${f(q.x)},${f(q.y)}`;
+    const turn = Math.acos(Math.max(-1, Math.min(1, u1.x * u2.x + u1.y * u2.y)));
+    const r = turn < 0.01 || turn > Math.PI - 0.01 ? 0 : Math.max(0, radii[i] + Math.sign(cross) * d);
+    corners[i] = { b, u1, u2, cross, k: Math.tan(turn / 2), r };
   }
-  const z = pts[pts.length - 1];
+  // the arcs at either end of a segment must fit on it
+  for (let i = 1; i <= last; i++) {
+    const p = corners[i - 1], q = corners[i];
+    const need = (p ? p.r * p.k : 0) + (q ? q.r * q.k : 0);
+    const have = len(sub(pts[i], pts[i - 1]));
+    if (need > have) for (const c of [p, q]) if (c) c.r *= have / need;
+  }
+  let s = `M${f(pts[0].x)},${f(pts[0].y)}`;
+  for (let i = 1; i < last; i++) {
+    const { b, u1, u2, cross, k, r } = corners[i];
+    if (r < 0.5) {
+      s += ` L${f(b.x)},${f(b.y)}`;
+      continue;
+    }
+    const t = r * k;
+    const p = { x: b.x - u1.x * t, y: b.y - u1.y * t };
+    const q = { x: b.x + u2.x * t, y: b.y + u2.y * t };
+    s += ` L${f(p.x)},${f(p.y)} A${f(r)},${f(r)} 0 0 ${cross > 0 ? 1 : 0} ${f(q.x)},${f(q.y)}`;
+  }
+  const z = pts[last];
   return s + ` L${f(z.x)},${f(z.y)}`;
 }
 
@@ -60,6 +99,7 @@ export function bundle(model) {
     // At a diamond corner the lanes run on under the diamond, which is drawn on top and
     // cuts them along its slanted edges.
     const drawn = extendEnds(pts, startIn ? startIn + 2 : 0, endIn ? endIn + 2 : 0);
+    const radii = cornerRadii(drawn, n);
     e.strands = lines.map((line, i) => {
       const d = (i - (n - 1) / 2) * STYLE.linePitch;
       const o = offset(drawn, -d); // first line on the left of travel
@@ -71,9 +111,9 @@ export function bundle(model) {
       const k = o.length - 1;
       const start = { p: o[0], u: unit(sub(o[1], o[0])) };
       const end = { p: o[k], u: unit(sub(o[k], o[k - 1])) };
-      return { line, d: roundedPath(o, -d), marks, start, end };
+      return { line, d: roundedPath(o, radii, -d), marks, start, end };
     });
-    e.casing = roundedPath(drawn, 0);
+    e.casing = roundedPath(drawn, radii, 0);
   }
   labels(model);
   return model;
@@ -170,7 +210,7 @@ function triangle(p, u) {
 // markerSpacing px on straight stretches, away from corners (the outer lane of an n-lane bundle
 // curves furthest, so the clearance grows with n).
 function markerSpots(pts, n, startIn = 0, endIn = 0) {
-  const clear = CORNER + ((n + 1) / 2) * STYLE.linePitch;
+  const clear = cornerRadius(n) + ((n + 1) / 2) * STYLE.linePitch;
   const tri = (p, u) => ({ p, u });
   const out = [];
   const last = pts.length - 2;

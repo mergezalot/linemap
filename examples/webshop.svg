@@ -50,9 +50,9 @@
 <path d="M1820,1319.5 L1820,1200.5" class="lm-note-link"/>
 <path d="M2480,754 L2480,690" class="lm-note-link"/>
 <g class="edge" data-from="customer" data-to="web" data-lines="O P">
-<path d="M126.8,390 L126.8,332 Q126.8,300 158.8,300 L295,300" class="lm-casing" stroke-width="23"/>
-<path d="M122.3,390 L122.3,332 Q122.3,295.5 158.8,295.5 L295,295.5" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
-<path d="M131.3,390 L131.3,332 Q131.3,304.5 158.8,304.5 L295,304.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<path d="M126.8,390 L126.8,332 A32,32 0 0 1 158.8,300 L295,300" class="lm-casing" stroke-width="23"/>
+<path d="M122.3,390 L122.3,332 A36.5,36.5 0 0 1 158.8,295.5 L295,295.5" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
+<path d="M131.3,390 L131.3,332 A27.5,27.5 0 0 1 158.8,304.5 L295,304.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
 <g class="lm-marks" data-line="O">
 <polygon points="289,295.5 278.7,292.8 278.7,298.2" fill="#ffffff"/>
 </g>
@@ -61,9 +61,9 @@
 </g>
 </g>
 <g class="edge" data-from="customer" data-to="app" data-lines="O P">
-<path d="M80,530 L80,588 Q80,620 112,620 L295,620" class="lm-casing" stroke-width="23"/>
-<path d="M84.5,530 L84.5,588 Q84.5,615.5 112,615.5 L295,615.5" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
-<path d="M75.5,530 L75.5,588 Q75.5,624.5 112,624.5 L295,624.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<path d="M80,530 L80,588 A32,32 0 0 0 112,620 L295,620" class="lm-casing" stroke-width="23"/>
+<path d="M84.5,530 L84.5,588 A27.5,27.5 0 0 0 112,615.5 L295,615.5" class="lm-strand" stroke="#2563eb" stroke-width="9" data-line="O"><title>Order</title></path>
+<path d="M75.5,530 L75.5,588 A36.5,36.5 0 0 0 112,624.5 L295,624.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
 <g class="lm-marks" data-line="O">
 <polygon points="289,615.5 278.7,612.8 278.7,618.2" fill="#ffffff"/>
 </g>
@@ -130,8 +130,8 @@
 </g>
 </g>
 <g class="edge" data-from="paid" data-to="orders_q" data-lines="P" data-label="Yes">
-<path d="M1640,573.5 L1640,479.5 Q1640,447.5 1608,447.5 L1332,447.5 Q1300,447.5 1300,415.5 L1300,350.5" class="lm-casing" stroke-width="14"/>
-<path d="M1640,573.5 L1640,479.5 Q1640,447.5 1608,447.5 L1332,447.5 Q1300,447.5 1300,415.5 L1300,350.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
+<path d="M1640,573.5 L1640,479.5 A32,32 0 0 0 1608,447.5 L1332,447.5 A32,32 0 0 1 1300,415.5 L1300,350.5" class="lm-casing" stroke-width="14"/>
+<path d="M1640,573.5 L1640,479.5 A32,32 0 0 0 1608,447.5 L1332,447.5 A32,32 0 0 1 1300,415.5 L1300,350.5" class="lm-strand" stroke="#16a34a" stroke-width="9" data-line="P"><title>Payment</title></path>
 <g class="lm-marks" data-line="P">
 <polygon points="1464.8,447.5 1475.2,450.2 1475.2,444.8" fill="#ffffff"/>
 <polygon points="1300,356.5 1297.3,366.9 1302.7,366.9" fill="#ffffff"/>
@@ -145,8 +145,8 @@
 </g>
 </g>
 <g class="edge" data-from="courier" data-to="customer" data-lines="S" data-label="Delivered">
-<path d="M2480,249.5 L2480,-118 Q2480,-150 2448,-150 L112,-150 Q80,-150 80,-118 L80,390" class="lm-casing" stroke-width="14"/>
-<path d="M2480,249.5 L2480,-118 Q2480,-150 2448,-150 L112,-150 Q80,-150 80,-118 L80,390" class="lm-strand" stroke="#f97316" stroke-width="9" data-line="S"><title>Shipment</title></path>
+<path d="M2480,249.5 L2480,-118 A32,32 0 0 0 2448,-150 L112,-150 A32,32 0 0 0 80,-118 L80,390" class="lm-casing" stroke-width="14"/>
+<path d="M2480,249.5 L2480,-118 A32,32 0 0 0 2448,-150 L112,-150 A32,32 0 0 0 80,-118 L80,390" class="lm-strand" stroke="#f97316" stroke-width="9" data-line="S"><title>Shipment</title></path>
 <g class="lm-marks" data-line="S">
 <polygon points="2480,63.1 2477.3,73.4 2482.7,73.4" fill="#ffffff"/>
 <polygon points="2202,-150 2212.4,-147.3 2212.4,-152.7" fill="#ffffff"/>
@@ -163,8 +163,8 @@
 </g>
 </g>
 <g class="edge" data-from="check" data-to="psp" data-lines="R" data-label="No">
-<path d="M1640,346.5 L1640,440.5 Q1640,472.5 1608,472.5 L1332,472.5 Q1300,472.5 1300,504.5 L1300,569.5" class="lm-casing" stroke-width="14"/>
-<path d="M1640,346.5 L1640,440.5 Q1640,472.5 1608,472.5 L1332,472.5 Q1300,472.5 1300,504.5 L1300,569.5" class="lm-strand" stroke="#dc2626" stroke-width="9" data-line="R"><title>Refund</title></path>
+<path d="M1640,346.5 L1640,440.5 A32,32 0 0 1 1608,472.5 L1332,472.5 A32,32 0 0 0 1300,504.5 L1300,569.5" class="lm-casing" stroke-width="14"/>
+<path d="M1640,346.5 L1640,440.5 A32,32 0 0 1 1608,472.5 L1332,472.5 A32,32 0 0 0 1300,504.5 L1300,569.5" class="lm-strand" stroke="#dc2626" stroke-width="9" data-line="R"><title>Refund</title></path>
 <g class="lm-marks" data-line="R">
 <polygon points="1464.8,472.5 1475.2,475.2 1475.2,469.8" fill="#ffffff"/>
 <polygon points="1300,563.5 1302.7,553.2 1297.3,553.2" fill="#ffffff"/>
@@ -180,8 +180,8 @@
 </g>
 </g>
 <g class="edge" data-from="psp" data-to="customer" data-lines="R" data-label="Money back">
-<path d="M1300,670.5 L1300,928 Q1300,960 1268,960 L-28,960 Q-60,960 -60,928 L-60,492 Q-60,460 -28,460 L10,460" class="lm-casing" stroke-width="14"/>
-<path d="M1300,670.5 L1300,928 Q1300,960 1268,960 L-28,960 Q-60,960 -60,928 L-60,492 Q-60,460 -28,460 L10,460" class="lm-strand" stroke="#dc2626" stroke-width="9" data-line="R"><title>Refund</title></path>
+<path d="M1300,670.5 L1300,928 A32,32 0 0 1 1268,960 L-28,960 A32,32 0 0 1 -60,928 L-60,492 A32,32 0 0 1 -28,460 L10,460" class="lm-casing" stroke-width="14"/>
+<path d="M1300,670.5 L1300,928 A32,32 0 0 1 1268,960 L-28,960 A32,32 0 0 1 -60,928 L-60,492 A32,32 0 0 1 -28,460 L10,460" class="lm-strand" stroke="#dc2626" stroke-width="9" data-line="R"><title>Refund</title></path>
 <g class="lm-marks" data-line="R">
 <polygon points="1300,801.9 1302.7,791.6 1297.3,791.6" fill="#ffffff"/>
 <polygon points="1040.8,960 1051.2,962.7 1051.2,957.3" fill="#ffffff"/>
@@ -201,8 +201,8 @@
 </g>
 </g>
 <g class="edge" data-from="mailer" data-to="customer" data-lines="M">
-<path d="M1225,40 L135.2,40 Q103.2,40 103.2,72 L103.2,390" class="lm-casing" stroke-width="14"/>
-<path d="M1225,40 L135.2,40 Q103.2,40 103.2,72 L103.2,390" class="lm-strand" stroke="#8b5cf6" stroke-width="9" data-line="M"><title>Email</title></path>
+<path d="M1225,40 L135.2,40 A32,32 0 0 0 103.2,72 L103.2,390" class="lm-casing" stroke-width="14"/>
+<path d="M1225,40 L135.2,40 A32,32 0 0 0 103.2,72 L103.2,390" class="lm-strand" stroke="#8b5cf6" stroke-width="9" data-line="M"><title>Email</title></path>
 <g class="lm-marks" data-line="M">
 <polygon points="1000.5,40 1010.8,42.7 1010.8,37.3" fill="#ffffff"/>
 <polygon points="785.1,40 795.4,42.7 795.4,37.3" fill="#ffffff"/>
@@ -221,8 +221,8 @@
 </g>
 </g>
 <g class="edge" data-from="cluster_storefront" data-to="bus" data-lines="E" data-label="Clicks">
-<path d="M520,730.5 L520,1118 Q520,1150 552,1150 L1345,1150" class="lm-casing" stroke-width="14"/>
-<path d="M520,730.5 L520,1118 Q520,1150 552,1150 L1345,1150" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
+<path d="M520,730.5 L520,1118 A32,32 0 0 0 552,1150 L1345,1150" class="lm-casing" stroke-width="14"/>
+<path d="M520,730.5 L520,1118 A32,32 0 0 0 552,1150 L1345,1150" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
 <g class="lm-marks" data-line="E">
 <polygon points="520,926.9 522.7,916.6 517.3,916.6" fill="#ffffff"/>
 <polygon points="1339,1150 1328.7,1147.3 1328.7,1152.7" fill="#ffffff"/>
@@ -255,8 +255,8 @@
 </g>
 </g>
 <g class="edge" data-from="cluster_data" data-to="cluster_storefront" data-lines="E" data-label="Recommendations">
-<path d="M1285,1120 L362,1120 Q330,1120 330,1088 L330,730.5" class="lm-casing" stroke-width="14"/>
-<path d="M1285,1120 L362,1120 Q330,1120 330,1088 L330,730.5" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
+<path d="M1285,1120 L362,1120 A32,32 0 0 1 330,1088 L330,730.5" class="lm-casing" stroke-width="14"/>
+<path d="M1285,1120 L362,1120 A32,32 0 0 1 330,1088 L330,730.5" class="lm-strand" stroke="#0ea5b7" stroke-width="9" data-line="E"><title>Event</title></path>
 <g class="lm-marks" data-line="E">
 <polygon points="1048.3,1120 1058.7,1122.7 1058.7,1117.3" fill="#ffffff"/>
 <polygon points="820.8,1120 831.2,1122.7 831.2,1117.3" fill="#ffffff"/>

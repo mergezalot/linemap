@@ -99,8 +99,8 @@
 </g>
 </g>
 <g class="edge" data-from="shop" data-to="counter" data-lines="C">
-<path d="M185,583.1 L213.5,583.1 Q242,583.1 242,554.6 L242,428.9 Q242,396.9 274,396.9 L335,396.9" class="lm-casing" stroke-width="14"/>
-<path d="M185,583.1 L213.5,583.1 Q242,583.1 242,554.6 L242,428.9 Q242,396.9 274,396.9 L335,396.9" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M185,583.1 L210,583.1 A32,32 0 0 0 242,551.1 L242,428.9 A32,32 0 0 1 274,396.9 L335,396.9" class="lm-casing" stroke-width="14"/>
+<path d="M185,583.1 L210,583.1 A32,32 0 0 0 242,551.1 L242,428.9 A32,32 0 0 1 274,396.9 L335,396.9" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
 <g class="lm-marks" data-line="C">
 <polygon points="329,396.9 318.6,394.2 318.6,399.6" fill="#ffffff"/>
 </g>
@@ -113,8 +113,8 @@
 </g>
 </g>
 <g class="edge" data-from="postbox" data-to="truck" data-lines="A">
-<path d="M585,160 L738,160 Q770,160 770,192 L770,329.5" class="lm-casing" stroke-width="14"/>
-<path d="M585,160 L738,160 Q770,160 770,192 L770,329.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M585,160 L738,160 A32,32 0 0 1 770,192 L770,329.5" class="lm-casing" stroke-width="14"/>
+<path d="M585,160 L738,160 A32,32 0 0 1 770,192 L770,329.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
 <g class="lm-marks" data-line="A">
 <polygon points="770,323.5 772.7,313.2 767.3,313.2" fill="#ffffff"/>
 </g>
@@ -135,8 +135,8 @@
 </g>
 </g>
 <g class="edge" data-from="pickup" data-to="truck" data-lines="E">
-<path d="M585,600 L738,600 Q770,600 770,568 L770,430.5" class="lm-casing" stroke-width="14"/>
-<path d="M585,600 L738,600 Q770,600 770,568 L770,430.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<path d="M585,600 L738,600 A32,32 0 0 0 770,568 L770,430.5" class="lm-casing" stroke-width="14"/>
+<path d="M585,600 L738,600 A32,32 0 0 0 770,568 L770,430.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
 <g class="lm-marks" data-line="E">
 <polygon points="770,436.5 767.3,446.9 772.7,446.9" fill="#ffffff"/>
 </g>
@@ -247,9 +247,9 @@
 </g>
 </g>
 <g class="edge" data-from="human" data-to="letter_sorter" data-lines="A B">
-<path d="M2075,380 L2228,380 Q2260,380 2260,412 L2260,549.5" class="lm-casing" stroke-width="23"/>
-<path d="M2075,375.5 L2228,375.5 Q2264.5,375.5 2264.5,412 L2264.5,549.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
-<path d="M2075,384.5 L2228,384.5 Q2255.5,384.5 2255.5,412 L2255.5,549.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M2075,380 L2228,380 A32,32 0 0 1 2260,412 L2260,549.5" class="lm-casing" stroke-width="23"/>
+<path d="M2075,375.5 L2228,375.5 A36.5,36.5 0 0 1 2264.5,412 L2264.5,549.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M2075,384.5 L2228,384.5 A27.5,27.5 0 0 1 2255.5,412 L2255.5,549.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
 <g class="lm-marks" data-line="A">
 <polygon points="2264.5,543.5 2267.2,533.2 2261.8,533.2" fill="#ffffff"/>
 </g>
@@ -279,8 +279,8 @@
 </g>
 </g>
 <g class="edge" data-from="held" data-to="airport" data-lines="D" data-label="Paid up">
-<path d="M645,1130 L492,1130 Q460,1130 460,1098 L460,960.5" class="lm-casing" stroke-width="14"/>
-<path d="M645,1130 L492,1130 Q460,1130 460,1098 L460,960.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<path d="M645,1130 L492,1130 A32,32 0 0 1 460,1098 L460,960.5" class="lm-casing" stroke-width="14"/>
+<path d="M645,1130 L492,1130 A32,32 0 0 1 460,1098 L460,960.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
 <g class="lm-marks" data-line="D">
 <polygon points="460,966.5 457.3,976.9 462.7,976.9" fill="#ffffff"/>
 </g>
@@ -365,11 +365,11 @@
 </g>
 </g>
 <g class="edge" data-from="forklift" data-to="parcel_sorter" data-lines="C H D E">
-<path d="M1765,1130 L2202,1130 Q2234,1130 2234,1098 L2234,960.5" class="lm-casing" stroke-width="41"/>
-<path d="M1765,1116.5 L2202,1116.5 Q2220.5,1116.5 2220.5,1098 L2220.5,960.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
-<path d="M1765,1125.5 L2202,1125.5 Q2229.5,1125.5 2229.5,1098 L2229.5,960.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
-<path d="M1765,1134.5 L2202,1134.5 Q2238.5,1134.5 2238.5,1098 L2238.5,960.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
-<path d="M1765,1143.5 L2202,1143.5 Q2247.5,1143.5 2247.5,1098 L2247.5,960.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<path d="M1765,1130 L2202,1130 A32,32 0 0 0 2234,1098 L2234,960.5" class="lm-casing" stroke-width="41"/>
+<path d="M1765,1116.5 L2202,1116.5 A18.5,18.5 0 0 0 2220.5,1098 L2220.5,960.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M1765,1125.5 L2202,1125.5 A27.5,27.5 0 0 0 2229.5,1098 L2229.5,960.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M1765,1134.5 L2202,1134.5 A36.5,36.5 0 0 0 2238.5,1098 L2238.5,960.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<path d="M1765,1143.5 L2202,1143.5 A45.5,45.5 0 0 0 2247.5,1098 L2247.5,960.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
 <g class="lm-marks" data-line="C">
 <polygon points="1979.4,1116.5 1969.1,1113.8 1969.1,1119.2" fill="#ffffff"/>
 <polygon points="2220.5,966.5 2217.8,976.9 2223.2,976.9" fill="#ffffff"/>
@@ -403,10 +403,10 @@
 </g>
 </g>
 <g class="edge" data-from="parcel_sorter" data-to="planner" data-lines="C H D">
-<path d="M2385,907.8 L2708,907.8 Q2740,907.8 2740,875.8 L2740,650.5" class="lm-casing" stroke-width="32"/>
-<path d="M2385,898.8 L2708,898.8 Q2731,898.8 2731,875.8 L2731,650.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
-<path d="M2385,907.8 L2708,907.8 Q2740,907.8 2740,875.8 L2740,650.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
-<path d="M2385,916.8 L2708,916.8 Q2749,916.8 2749,875.8 L2749,650.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<path d="M2385,907.8 L2708,907.8 A32,32 0 0 0 2740,875.8 L2740,650.5" class="lm-casing" stroke-width="32"/>
+<path d="M2385,898.8 L2708,898.8 A23,23 0 0 0 2731,875.8 L2731,650.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M2385,907.8 L2708,907.8 A32,32 0 0 0 2740,875.8 L2740,650.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M2385,916.8 L2708,916.8 A41,41 0 0 0 2749,875.8 L2749,650.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
 <g class="lm-marks" data-line="C">
 <polygon points="2544.7,898.8 2534.3,896.1 2534.3,901.5" fill="#ffffff"/>
 <polygon points="2731,656.5 2728.3,666.8 2733.7,666.8" fill="#ffffff"/>
@@ -421,18 +421,18 @@
 </g>
 </g>
 <g class="edge" data-from="parcel_sorter" data-to="express" data-lines="E">
-<path d="M2286,960.5 L2286,1098 Q2286,1130 2318,1130 L2615,1130" class="lm-casing" stroke-width="14"/>
-<path d="M2286,960.5 L2286,1098 Q2286,1130 2318,1130 L2615,1130" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<path d="M2286,960.5 L2286,1098 A32,32 0 0 0 2318,1130 L2615,1130" class="lm-casing" stroke-width="14"/>
+<path d="M2286,960.5 L2286,1098 A32,32 0 0 0 2318,1130 L2615,1130" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
 <g class="lm-marks" data-line="E">
 <polygon points="2609,1130 2598.6,1127.3 2598.6,1132.7" fill="#ffffff"/>
 <polygon points="2369,1130 2358.6,1127.3 2358.6,1132.7" fill="#ffffff"/>
 </g>
 </g>
 <g class="edge" data-from="planner" data-to="postie" data-lines="A B G">
-<path d="M2740,549.5 L2740,412 Q2740,380 2772,380 L2925,380" class="lm-casing" stroke-width="32"/>
-<path d="M2731,549.5 L2731,412 Q2731,371 2772,371 L2925,371" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
-<path d="M2740,549.5 L2740,412 Q2740,380 2772,380 L2925,380" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
-<path d="M2749,549.5 L2749,412 Q2749,389 2772,389 L2925,389" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<path d="M2740,549.5 L2740,412 A32,32 0 0 1 2772,380 L2925,380" class="lm-casing" stroke-width="32"/>
+<path d="M2731,549.5 L2731,412 A41,41 0 0 1 2772,371 L2925,371" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M2740,549.5 L2740,412 A32,32 0 0 1 2772,380 L2925,380" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M2749,549.5 L2749,412 A23,23 0 0 1 2772,389 L2925,389" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
 <g class="lm-marks" data-line="A">
 <polygon points="2919,371 2908.6,368.3 2908.6,373.7" fill="#ffffff"/>
 </g>
@@ -474,9 +474,9 @@
 </g>
 </g>
 <g class="edge" data-from="letterbox" data-to="recipient" data-lines="A G">
-<path d="M3615,380 L3858,380 Q3890,380 3890,412 L3890,549.5" class="lm-casing" stroke-width="23"/>
-<path d="M3615,375.5 L3858,375.5 Q3894.5,375.5 3894.5,412 L3894.5,549.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
-<path d="M3615,384.5 L3858,384.5 Q3885.5,384.5 3885.5,412 L3885.5,549.5" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
+<path d="M3615,380 L3858,380 A32,32 0 0 1 3890,412 L3890,549.5" class="lm-casing" stroke-width="23"/>
+<path d="M3615,375.5 L3858,375.5 A36.5,36.5 0 0 1 3894.5,412 L3894.5,549.5" class="lm-strand" stroke="#1565c0" stroke-width="9" data-line="A"><title>Letter</title></path>
+<path d="M3615,384.5 L3858,384.5 A27.5,27.5 0 0 1 3885.5,412 L3885.5,549.5" class="lm-strand" stroke="#2e7d32" stroke-width="9" data-line="G"><title>Bulk mail</title></path>
 <g class="lm-marks" data-line="A">
 <polygon points="3894.5,543.5 3897.2,533.2 3891.8,533.2" fill="#ffffff"/>
 </g>
@@ -485,8 +485,8 @@
 </g>
 </g>
 <g class="edge" data-from="postie" data-to="home" data-lines="B">
-<path d="M3050,430.5 L3050,459.8 Q3050,489.1 3079.3,489.1 L3458,489.1 Q3490,489.1 3490,521.1 L3490,553.3" class="lm-casing" stroke-width="14"/>
-<path d="M3050,430.5 L3050,459.8 Q3050,489.1 3079.3,489.1 L3458,489.1 Q3490,489.1 3490,521.1 L3490,553.3" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3050,430.5 L3050,457.1 A32,32 0 0 0 3082,489.1 L3458,489.1 A32,32 0 0 1 3490,521.1 L3490,553.3" class="lm-casing" stroke-width="14"/>
+<path d="M3050,430.5 L3050,457.1 A32,32 0 0 0 3082,489.1 L3458,489.1 A32,32 0 0 1 3490,521.1 L3490,553.3" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
 <g class="lm-marks" data-line="B">
 <polygon points="3275.2,489.1 3264.8,486.4 3264.8,491.8" fill="#ffffff"/>
 <polygon points="3490,541.7 3492.7,531.4 3487.3,531.4" fill="#ffffff"/>
@@ -512,8 +512,8 @@
 </g>
 </g>
 <g class="edge" data-from="express" data-to="recipient" data-lines="E">
-<path d="M2865,1113.1 L3253.8,1113.1 Q3285.8,1113.1 3285.8,1081.1 L3285.8,814.2 Q3285.8,782.2 3317.8,782.2 L3832,782.2 Q3864,782.2 3864,750.2 L3864,650.5" class="lm-casing" stroke-width="14"/>
-<path d="M2865,1113.1 L3253.8,1113.1 Q3285.8,1113.1 3285.8,1081.1 L3285.8,814.2 Q3285.8,782.2 3317.8,782.2 L3832,782.2 Q3864,782.2 3864,750.2 L3864,650.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
+<path d="M2865,1113.1 L3253.8,1113.1 A32,32 0 0 0 3285.8,1081.1 L3285.8,814.2 A32,32 0 0 1 3317.8,782.2 L3832,782.2 A32,32 0 0 0 3864,750.2 L3864,650.5" class="lm-casing" stroke-width="14"/>
+<path d="M2865,1113.1 L3253.8,1113.1 A32,32 0 0 0 3285.8,1081.1 L3285.8,814.2 A32,32 0 0 1 3317.8,782.2 L3832,782.2 A32,32 0 0 0 3864,750.2 L3864,650.5" class="lm-strand" stroke="#c62828" stroke-width="9" data-line="E"><title>Express</title></path>
 <g class="lm-marks" data-line="E">
 <polygon points="3062.1,1113.1 3051.7,1110.4 3051.7,1115.8" fill="#ffffff"/>
 <polygon points="3285.8,942.5 3283.1,952.8 3288.5,952.8" fill="#ffffff"/>
@@ -637,11 +637,11 @@
 </g>
 </g>
 <g class="edge" data-from="collected" data-to="recipient" data-lines="B C H D" data-label="Yes">
-<path d="M3571.3,1350 L3660.3,1350 Q3692.3,1350 3692.3,1318 L3692.3,648.9 Q3692.3,616.9 3724.3,616.9 L3765,616.9" class="lm-casing" stroke-width="41"/>
-<path d="M3571.3,1336.5 L3660.3,1336.5 Q3678.8,1336.5 3678.8,1318 L3678.8,646.6 Q3678.8,603.4 3721.9,603.4 L3765,603.4" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
-<path d="M3571.3,1345.5 L3660.3,1345.5 Q3687.8,1345.5 3687.8,1318 L3687.8,648.9 Q3687.8,612.4 3724.3,612.4 L3765,612.4" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
-<path d="M3571.3,1354.5 L3660.3,1354.5 Q3696.8,1354.5 3696.8,1318 L3696.8,648.9 Q3696.8,621.4 3724.3,621.4 L3765,621.4" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
-<path d="M3571.3,1363.5 L3660.3,1363.5 Q3705.8,1363.5 3705.8,1318 L3705.8,648.9 Q3705.8,630.4 3724.3,630.4 L3765,630.4" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<path d="M3571.3,1350 L3660.3,1350 A32,32 0 0 0 3692.3,1318 L3692.3,648.9 A32,32 0 0 1 3724.3,616.9 L3765,616.9" class="lm-casing" stroke-width="41"/>
+<path d="M3571.3,1336.5 L3660.3,1336.5 A18.5,18.5 0 0 0 3678.8,1318 L3678.8,648.9 A45.5,45.5 0 0 1 3724.3,603.4 L3765,603.4" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3571.3,1345.5 L3660.3,1345.5 A27.5,27.5 0 0 0 3687.8,1318 L3687.8,648.9 A36.5,36.5 0 0 1 3724.3,612.4 L3765,612.4" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3571.3,1354.5 L3660.3,1354.5 A36.5,36.5 0 0 0 3696.8,1318 L3696.8,648.9 A27.5,27.5 0 0 1 3724.3,621.4 L3765,621.4" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3571.3,1363.5 L3660.3,1363.5 A45.5,45.5 0 0 0 3705.8,1318 L3705.8,648.9 A18.5,18.5 0 0 1 3724.3,630.4 L3765,630.4" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
 <g class="lm-marks" data-line="B">
 <polygon points="3678.8,1082.3 3676.1,1092.7 3681.5,1092.7" fill="#ffffff"/>
 <polygon points="3678.8,874.3 3676.1,884.6 3681.5,884.6" fill="#ffffff"/>
@@ -673,8 +673,8 @@
 </g>
 </g>
 <g class="edge" data-from="locker" data-to="scan" data-lines="H" data-label="Nightly run">
-<path d="M3365,1146.9 L3299.3,1146.9 Q3267.3,1146.9 3267.3,1178.9 L3267.3,1633.3 Q3267.3,1665.3 3235.3,1665.3 L2412.5,1665.3 Q2380.5,1665.3 2380.5,1633.3 L2380.5,1298.3 Q2380.5,1266.3 2348.5,1266.3 L1474.8,1266.3 Q1442.8,1266.3 1442.8,1234.3 L1442.8,955.3 Q1442.8,923.3 1410.8,923.3 L1375,923.3" class="lm-casing" stroke-width="14"/>
-<path d="M3365,1146.9 L3299.3,1146.9 Q3267.3,1146.9 3267.3,1178.9 L3267.3,1633.3 Q3267.3,1665.3 3235.3,1665.3 L2412.5,1665.3 Q2380.5,1665.3 2380.5,1633.3 L2380.5,1298.3 Q2380.5,1266.3 2348.5,1266.3 L1474.8,1266.3 Q1442.8,1266.3 1442.8,1234.3 L1442.8,955.3 Q1442.8,923.3 1410.8,923.3 L1375,923.3" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3365,1146.9 L3299.3,1146.9 A32,32 0 0 0 3267.3,1178.9 L3267.3,1633.3 A32,32 0 0 1 3235.3,1665.3 L2412.5,1665.3 A32,32 0 0 1 2380.5,1633.3 L2380.5,1298.3 A32,32 0 0 0 2348.5,1266.3 L1474.8,1266.3 A32,32 0 0 1 1442.8,1234.3 L1442.8,955.3 A32,32 0 0 0 1410.8,923.3 L1375,923.3" class="lm-casing" stroke-width="14"/>
+<path d="M3365,1146.9 L3299.3,1146.9 A32,32 0 0 0 3267.3,1178.9 L3267.3,1633.3 A32,32 0 0 1 3235.3,1665.3 L2412.5,1665.3 A32,32 0 0 1 2380.5,1633.3 L2380.5,1298.3 A32,32 0 0 0 2348.5,1266.3 L1474.8,1266.3 A32,32 0 0 1 1442.8,1234.3 L1442.8,955.3 A32,32 0 0 0 1410.8,923.3 L1375,923.3" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
 <g class="lm-marks" data-line="H">
 <polygon points="3267.3,1411.3 3270,1400.9 3264.6,1400.9" fill="#ffffff"/>
 <polygon points="3019.9,1665.3 3030.3,1668 3030.3,1662.6" fill="#ffffff"/>
@@ -689,15 +689,15 @@
 </g>
 </g>
 <g class="edge" data-from="collected" data-to="returns" data-lines="F" data-label="No">
-<path d="M3374,1350 L3144.8,1350 Q3112.8,1350 3112.8,1382 L3112.8,1488 Q3112.8,1520 3080.8,1520 L2865,1520" class="lm-casing" stroke-width="14"/>
-<path d="M3374,1350 L3144.8,1350 Q3112.8,1350 3112.8,1382 L3112.8,1488 Q3112.8,1520 3080.8,1520 L2865,1520" class="lm-strand" stroke="#5d4037" stroke-width="9" data-line="F"><title>Return to sender</title></path>
+<path d="M3374,1350 L3144.8,1350 A32,32 0 0 0 3112.8,1382 L3112.8,1488 A32,32 0 0 1 3080.8,1520 L2865,1520" class="lm-casing" stroke-width="14"/>
+<path d="M3374,1350 L3144.8,1350 A32,32 0 0 0 3112.8,1382 L3112.8,1488 A32,32 0 0 1 3080.8,1520 L2865,1520" class="lm-strand" stroke="#5d4037" stroke-width="9" data-line="F"><title>Return to sender</title></path>
 <g class="lm-marks" data-line="F">
 <polygon points="2871,1520 2881.4,1522.7 2881.4,1517.3" fill="#ffffff"/>
 </g>
 </g>
 <g class="edge" data-from="forklift" data-to="returns" data-lines="F" data-label="Crushed">
-<path d="M1640,1180.5 L1640,1488 Q1640,1520 1672,1520 L2615,1520" class="lm-casing" stroke-width="14"/>
-<path d="M1640,1180.5 L1640,1488 Q1640,1520 1672,1520 L2615,1520" class="lm-strand" stroke="#5d4037" stroke-width="9" data-line="F"><title>Return to sender</title></path>
+<path d="M1640,1180.5 L1640,1488 A32,32 0 0 0 1672,1520 L2615,1520" class="lm-casing" stroke-width="14"/>
+<path d="M1640,1180.5 L1640,1488 A32,32 0 0 0 1672,1520 L2615,1520" class="lm-strand" stroke="#5d4037" stroke-width="9" data-line="F"><title>Return to sender</title></path>
 <g class="lm-marks" data-line="F">
 <polygon points="1640,1336.9 1642.7,1326.6 1637.3,1326.6" fill="#ffffff"/>
 <polygon points="2609,1520 2598.6,1517.3 2598.6,1522.7" fill="#ffffff"/>
@@ -707,8 +707,8 @@
 </g>
 </g>
 <g class="edge" data-from="returns" data-to="shop" data-lines="F">
-<path d="M2740,1570.5 L2740,1668 Q2740,1700 2708,1700 L-128,1700 Q-160,1700 -160,1668 L-160,632 Q-160,600 -128,600 L-65,600" class="lm-casing" stroke-width="14"/>
-<path d="M2740,1570.5 L2740,1668 Q2740,1700 2708,1700 L-128,1700 Q-160,1700 -160,1668 L-160,632 Q-160,600 -128,600 L-65,600" class="lm-strand" stroke="#5d4037" stroke-width="9" data-line="F"><title>Return to sender</title></path>
+<path d="M2740,1570.5 L2740,1668 A32,32 0 0 1 2708,1700 L-128,1700 A32,32 0 0 1 -160,1668 L-160,632 A32,32 0 0 1 -128,600 L-65,600" class="lm-casing" stroke-width="14"/>
+<path d="M2740,1570.5 L2740,1668 A32,32 0 0 1 2708,1700 L-128,1700 A32,32 0 0 1 -160,1668 L-160,632 A32,32 0 0 1 -128,600 L-65,600" class="lm-strand" stroke="#5d4037" stroke-width="9" data-line="F"><title>Return to sender</title></path>
 <g class="lm-marks" data-line="F">
 <polygon points="2459,1700 2469.3,1702.7 2469.3,1697.3" fill="#ffffff"/>
 <polygon points="2224.2,1700 2234.5,1702.7 2234.5,1697.3" fill="#ffffff"/>
@@ -743,8 +743,8 @@
 </g>
 </g>
 <g class="edge" data-from="cluster_office" data-to="cluster_it" data-lines="T" data-label="Counter scans">
-<path d="M880,49.5 L880,-118 Q880,-150 912,-150 L1778,-150 Q1810,-150 1810,-182 L1810,-309.5" class="lm-casing" stroke-width="14"/>
-<path d="M880,49.5 L880,-118 Q880,-150 912,-150 L1778,-150 Q1810,-150 1810,-182 L1810,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
+<path d="M880,49.5 L880,-118 A32,32 0 0 1 912,-150 L1778,-150 A32,32 0 0 0 1810,-182 L1810,-309.5" class="lm-casing" stroke-width="14"/>
+<path d="M880,49.5 L880,-118 A32,32 0 0 1 912,-150 L1778,-150 A32,32 0 0 0 1810,-182 L1810,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
 <g class="lm-marks" data-line="T">
 <polygon points="1138.2,-150 1127.8,-152.7 1127.8,-147.3" fill="rgba(0,0,0,0.6)"/>
 <polygon points="1350.2,-150 1339.8,-152.7 1339.8,-147.3" fill="rgba(0,0,0,0.6)"/>
@@ -753,15 +753,15 @@
 </g>
 </g>
 <g class="edge" data-from="cluster_sorting" data-to="cluster_it" data-lines="T" data-label="Sorter scans">
-<path d="M2105,239.5 L2105,222.1 Q2105,204.8 2122.4,204.8 L2140.5,204.8 Q2172.5,204.8 2172.5,172.8 L2172.5,-49.7 Q2172.5,-81.7 2140.5,-81.7 L2137,-81.7 Q2105,-81.7 2105,-113.7 L2105,-309.5" class="lm-casing" stroke-width="14"/>
-<path d="M2105,239.5 L2105,222.1 Q2105,204.8 2122.4,204.8 L2140.5,204.8 Q2172.5,204.8 2172.5,172.8 L2172.5,-49.7 Q2172.5,-81.7 2140.5,-81.7 L2137,-81.7 Q2105,-81.7 2105,-113.7 L2105,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
+<path d="M2105,239.5 L2105,236.8 A32,32 0 0 1 2137,204.8 L2140.5,204.8 A32,32 0 0 0 2172.5,172.8 L2172.5,-49.7 A32,32 0 0 0 2140.5,-81.7 L2137,-81.7 A32,32 0 0 1 2105,-113.7 L2105,-309.5" class="lm-casing" stroke-width="14"/>
+<path d="M2105,239.5 L2105,236.8 A32,32 0 0 1 2137,204.8 L2140.5,204.8 A32,32 0 0 0 2172.5,172.8 L2172.5,-49.7 A32,32 0 0 0 2140.5,-81.7 L2137,-81.7 A32,32 0 0 1 2105,-113.7 L2105,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
 <g class="lm-marks" data-line="T">
 <polygon points="2105,-303.5 2102.3,-293.1 2107.7,-293.1" fill="rgba(0,0,0,0.6)"/>
 </g>
 </g>
 <g class="edge" data-from="cluster_depot" data-to="cluster_it" data-lines="T" data-label="Van scans">
-<path d="M2869,269.5 L2869,-388 Q2869,-420 2837,-420 L2445,-420" class="lm-casing" stroke-width="14"/>
-<path d="M2869,269.5 L2869,-388 Q2869,-420 2837,-420 L2445,-420" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
+<path d="M2869,269.5 L2869,-388 A32,32 0 0 0 2837,-420 L2445,-420" class="lm-casing" stroke-width="14"/>
+<path d="M2869,269.5 L2869,-388 A32,32 0 0 0 2837,-420 L2445,-420" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
 <g class="lm-marks" data-line="T">
 <polygon points="2869,45.5 2866.3,55.8 2871.7,55.8" fill="rgba(0,0,0,0.6)"/>
 <polygon points="2869,-169.3 2866.3,-159 2871.7,-159" fill="rgba(0,0,0,0.6)"/>
@@ -785,8 +785,8 @@
 </g>
 </g>
 <g class="edge" data-from="cluster_warehouse" data-to="cluster_sorting" data-lines="S" data-label="Mailbags">
-<path d="M955,-420 L982.5,-420 Q1010,-420 1010,-392.5 L1010,742.5 Q1010,755 1022.5,755 L1035,755" class="lm-casing" stroke-width="14"/>
-<path d="M955,-420 L982.5,-420 Q1010,-420 1010,-392.5 L1010,742.5 Q1010,755 1022.5,755 L1035,755" class="lm-strand" stroke="#212121" stroke-width="9" data-line="S"><title>Supplies</title></path>
+<path d="M955,-420 L978,-420 A32,32 0 0 1 1010,-388 L1010,730 A25,25 0 0 0 1035,755 L1035,755" class="lm-casing" stroke-width="14"/>
+<path d="M955,-420 L978,-420 A32,32 0 0 1 1010,-388 L1010,730 A25,25 0 0 0 1035,755 L1035,755" class="lm-strand" stroke="#212121" stroke-width="9" data-line="S"><title>Supplies</title></path>
 <g class="lm-marks" data-line="S">
 <polygon points="1010,-155.2 1012.7,-165.6 1007.3,-165.6" fill="#ffffff"/>
 <polygon points="1010,63.4 1012.7,53 1007.3,53" fill="#ffffff"/>
@@ -820,8 +820,8 @@
 </g>
 </g>
 <g class="edge" data-from="cluster_complaints" data-to="cluster_depot" data-lines="Q" data-label="A stern word">
-<path d="M3355,-420 L2953,-420 Q2921,-420 2921,-388 L2921,269.5" class="lm-casing" stroke-width="14"/>
-<path d="M3355,-420 L2953,-420 Q2921,-420 2921,-388 L2921,269.5" class="lm-strand" stroke="#f06292" stroke-width="9" data-line="Q"><title>Complaints</title></path>
+<path d="M3355,-420 L2953,-420 A32,32 0 0 0 2921,-388 L2921,269.5" class="lm-casing" stroke-width="14"/>
+<path d="M3355,-420 L2953,-420 A32,32 0 0 0 2921,-388 L2921,269.5" class="lm-strand" stroke="#f06292" stroke-width="9" data-line="Q"><title>Complaints</title></path>
 <g class="lm-marks" data-line="Q">
 <polygon points="3151.3,-420 3161.7,-417.3 3161.7,-422.7" fill="#ffffff"/>
 <polygon points="2921,263.5 2923.7,253.2 2918.3,253.2" fill="#ffffff"/>
