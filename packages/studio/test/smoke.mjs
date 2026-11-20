@@ -829,6 +829,208 @@ console.log('flows baked in (build --embed), under the same CSP');
   }
 }
 
+console.log('edit mode, saving to the file (linemap studio)');
+{
+  const os = await import('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'linemap-edit-'));
+  const file = path.join(dir, 't.dot');
+  const FLOW = `digraph t {
+  subgraph lines { A [label="Alpha"]; B [label="Beta"] }
+  // boxes
+  a [label="A", pos="0,0"]
+  b [label="B", pos="700,0"]
+  c [label="C", pos="700,500"]
+  subgraph cluster_x { label="X"; d [label="D", pos="0,500"] }
+  a -> b [lines="A B"]
+  b -> c [lines=A]
+  a -> d [lines=B]
+}
+`;
+  fs.writeFileSync(file, FLOW);
+  const read = () => fs.readFileSync(file, 'utf8');
+  const editServer = await serve({ dir, port: 0, quiet: true });
+  const page = await newPage();
+  await page.goto(`http://127.0.0.1:${editServer.address().port}/studio.html#src=t.dot`);
+  await ready(page);
+  const until = async (fn, what) => {
+    for (let i = 0; i < 100; i++) { if (await fn()) return true; await page.waitForTimeout(50); }
+    check(false, `timed out: ${what}`);
+    return false;
+  };
+  const changed = async (before, what) => { await until(() => read() !== before, what); await page.waitForTimeout(250); return read(); };
+  // screen point of a map point, and the middle of a node or of an edge's first lane
+  const scr = (x, y) => page.evaluate(([x, y]) => { const m = document.querySelector('#map svg').getScreenCTM(); return { x: x * m.a + m.e, y: y * m.d + m.f }; }, [x, y]);
+  const nodeAt = (id) => page.evaluate((id) => { const r = [...document.querySelectorAll('#map g.node')].find((g) => g.id === id).querySelector('rect, polygon, path').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, id);
+  const edgeAt = (from, to, f = 0.5) => page.evaluate(([from, to, f]) => {
+    const p = document.querySelector(`#map g.edge[data-from="${from}"][data-to="${to}"] path[data-line]`);
+    const pt = p.getPointAtLength(p.getTotalLength() * f), m = p.getScreenCTM();
+    return { x: pt.x * m.a + m.e, y: pt.y * m.d + m.f };
+  }, [from, to, f]);
+  const handle = (sel) => page.evaluate((sel) => { const r = document.querySelector(sel)?.getBoundingClientRect(); return r ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null; }, sel);
+  const drag = async (a, b) => {
+    await page.mouse.move(a.x, a.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) { await page.mouse.move(a.x + (b.x - a.x) * i / 8, a.y + (b.y - a.y) * i / 8); await page.waitForTimeout(30); }
+    await page.mouse.up();
+  };
+  const status = () => page.textContent('#edit-status');
+
+  await page.keyboard.press('e');
+  check(await page.evaluate(() => !document.getElementById('edit-bar').hidden && document.getElementById('map').classList.contains('editing')), 'E opens edit mode');
+  check(/save to t\.dot/.test(await status()), `says where edits go ("${await status()}")`);
+
+  // move a box: its pos changes, and nothing else in the file
+  let before = read();
+  const b0 = await nodeAt('b'), b1 = await scr(800, 0);
+  await drag(b0, { x: b1.x, y: b0.y });
+  let text = await changed(before, 'moving b');
+  check(text === FLOW.replace('pos="700,0"', 'pos="800,0"'), `dragging b pins it where it was dropped (${/b \[[^\]]*\]/.exec(text)?.[0]})`);
+  await until(async () => /Saved to t\.dot/.test(await status()), 'saved status');
+  await shot(page, 'edit-1-moved');
+
+  // a box dropped on another one: refused
+  before = read();
+  await drag(await nodeAt('c'), await nodeAt('b'));
+  await page.waitForTimeout(600);
+  check(read() === before && /cannot sit on another box/.test(await page.textContent('#toast')), 'a box dropped on another box is refused');
+
+  // bend an edge: a via point where it was pressed
+  before = read();
+  const mid = await edgeAt('b', 'c');
+  await drag(mid, { x: mid.x + 120, y: mid.y });
+  text = await changed(before, 'bending b -> c');
+  check(/b -> c \[lines=A, via="\d+,\d+"\]/.test(text), `dragging an edge adds a via (${/b -> c.*/.exec(text)?.[0]})`);
+  check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-via').length) === 1, 'the via point has a handle');
+  await shot(page, 'edit-2-bent');
+  // double-click the via handle: gone again
+  before = read();
+  await page.mouse.dblclick(...Object.values(await handle('#map .lm-edit-via')));
+  text = await changed(before, 'removing the via');
+  check(/b -> c \[lines=A\]/.test(text), 'double-clicking a via removes it');
+
+  // reattach: select the edge, drag its end onto another box
+  before = read();
+  await page.mouse.click(...Object.values(await edgeAt('b', 'c', 0.3)));
+  await page.waitForTimeout(150);
+  const end = await handle('#map .lm-edit-end[data-end="to"]');
+  check(!!end && /reattach/.test(await page.textContent('#edit-hint')), 'a selected edge shows handles on its ends');
+  await drag(end, await nodeAt('d'));
+  text = await changed(before, 'reattaching b -> c');
+  check(/b -> d \[lines=A\]/.test(text) && !/b -> c/.test(text) && /c \[label="C"/.test(text), 'dragging its end onto d reattaches b -> c to b -> d; c stays');
+
+  // connect: select a box, drag its + onto another, pick the lines
+  before = read();
+  await page.mouse.click(...Object.values(await nodeAt('a')));
+  await page.waitForTimeout(150);
+  await drag(await handle('#map .lm-edit-connect'), await nodeAt('c'));
+  await page.waitForSelector('#lines-dialog[open]');
+  const ticked = await page.evaluate(() => [...document.querySelectorAll('#lines-dialog input:checked')].map((b) => b.value).join());
+  check(ticked === 'A,B', `the new edge offers the lines of its box, ticked (${ticked})`);
+  await page.click('#lines-dialog input[value="B"]');
+  await page.click('#lines-dialog .btn.primary');
+  text = await changed(before, 'connecting a -> c');
+  check(/\n  a -> c \[lines="A"\]\n\}/.test(text), 'connecting a to c adds a -> c [lines="A"]');
+
+  // a new box: double-click the map, name it
+  before = read();
+  // a spot where the map shows only its background
+  const spot = await page.evaluate(() => {
+    const m = document.querySelector('#map svg').getScreenCTM();
+    for (const [x, y] of [[350, 250], [350, 150], [250, 300], [1000, 250], [350, 650], [-300, 250]]) {
+      const sx = x * m.a + m.e, sy = y * m.d + m.f;
+      if (document.elementFromPoint(sx, sy)?.matches('rect.lm-bg')) return { x, y, sx, sy };
+    }
+    return null;
+  });
+  await page.mouse.dblclick(spot.sx, spot.sy);
+  await page.waitForSelector('#label-dialog[open]');
+  await page.keyboard.type('New box');
+  await page.keyboard.press('Enter');
+  text = await changed(before, 'adding a node');
+  check(new RegExp(`new_box \\[label="New box", pos="${spot.x},${spot.y}"\\]`).test(text), `double-clicking the map adds a box there (${/new_box.*/.exec(text)?.[0]})`);
+  await shot(page, 'edit-3-added');
+
+  // delete it (it is selected), undo, redo
+  before = read();
+  await page.keyboard.press('Delete');
+  text = await changed(before, 'deleting');
+  check(!/new_box/.test(text), 'Delete removes the selected box');
+  before = read();
+  await page.keyboard.press('Control+z');
+  text = await changed(before, 'undo');
+  check(/new_box/.test(text), 'Ctrl+Z brings it back');
+  before = read();
+  await page.keyboard.press('Control+Shift+z');
+  text = await changed(before, 'redo');
+  check(!/new_box/.test(text), 'Ctrl+Shift+Z removes it again');
+
+  // delete an edge
+  before = read();
+  await page.mouse.click(...Object.values(await edgeAt('a', 'd')));
+  await page.keyboard.press('Delete');
+  text = await changed(before, 'deleting a -> d');
+  check(!/a -> d/.test(text) && /\n    d\n|cluster_x \{[^}]*d \[/.test(text), 'Delete removes the selected edge, d stays in X');
+
+  // the file changed on disk meanwhile: the edit is not saved over it
+  const disk = read().replace('label="A"', 'label="A on disk"');
+  fs.writeFileSync(file, disk);
+  await drag(await nodeAt('c'), { ...(await nodeAt('c')), x: (await nodeAt('c')).x + 60 });
+  await until(async () => /changed on disk/.test(await page.textContent('#toast')), 'conflict toast');
+  await page.waitForTimeout(600);
+  check(read() === disk, 'an edit is not saved over a file changed on disk');
+  check(await page.evaluate(() => [...document.querySelectorAll('#map g.node')].some((g) => g.getAttribute('data-label') === 'A on disk')), 'the map shows the file as it is on disk');
+  check(await page.isDisabled('#edit-undo'), 'and undo starts over');
+
+  // leaving edit mode: clicks pin lines again
+  await page.keyboard.press('e');
+  check(await page.evaluate(() => document.getElementById('edit-bar').hidden && !document.querySelector('#map .lm-edit')), 'E again leaves edit mode, no handles left');
+  // (the refused save shows as a failed request in the console)
+  const errors = page.errors.filter((e) => !/412/.test(e));
+  check(errors.length === 0, `no page errors${errors.length ? `: ${errors.join('; ')}` : ''}`);
+  await page.close();
+  editServer.close();
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
+console.log('edit mode, flows baked in: kept in the page, downloaded');
+{
+  const repo = path.join(here, '..', '..', '..');
+  const file = path.join(here, '..', 'dist', '_smoke-edit.html');
+  await build({ embed: ['webshop.dot', 'postal.dot'].map((n) => path.join(repo, 'examples', n)), out: file });
+  const page = await newPage();
+  await page.goto(pathToFileURL(file).href);
+  await page.click('#empty [data-flow="0"]');
+  await ready(page);
+  await page.click('#edit');
+  const box = await page.evaluate(() => { const g = [...document.querySelectorAll('#map g.node')].find((x) => x.id === 'web'); const r = g.querySelector('rect').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+  await rerun(page, async () => {
+    await page.mouse.move(box.x, box.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 6; i++) await page.mouse.move(box.x, box.y - i * 4);
+    await page.mouse.up();
+  });
+  await page.waitForTimeout(300);
+  check(/Only in this page/.test(await page.textContent('#edit-status')) && await page.isVisible('#edit-page'), `edits of a baked-in flow stay in the page ("${await page.textContent('#edit-status')}")`);
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#edit-dot')]);
+  const dot = fs.readFileSync(await dl.path(), 'utf8');
+  check(dl.suggestedFilename() === 'webshop.dot' && /web +\[label="Web shop", pos="\d+,\d+"\]/.test(dot) && dot !== fs.readFileSync(path.join(repo, 'examples', 'webshop.dot'), 'utf8'), `.dot downloads the edited flow (${dl.suggestedFilename()})`);
+  const [dp] = await Promise.all([page.waitForEvent('download'), page.click('#edit-page')]);
+  const html = fs.readFileSync(await dp.path(), 'utf8');
+  const flows = JSON.parse(/<script type="application\/json" id="linemap-flows">(.*?)<\/script>/s.exec(html)[1]);
+  check(flows.length === 2 && flows[0].text === dot && flows[1].name === 'postal.dot' && html.length > 500000, `Page downloads the studio with the edited flow baked in (${flows.map((f) => f.name).join(', ')})`);
+  // that page opens with the edit
+  fs.writeFileSync(file, html);
+  const again = await newPage();
+  await again.goto(pathToFileURL(file).href);
+  await again.click('#empty [data-flow="0"]');
+  await ready(again);
+  check(again.errors.length === 0 && await again.evaluate(() => !!document.querySelector('#map g.node#web')), 'the downloaded page draws the edited flow');
+  check(page.errors.length === 0, 'no page errors');
+  fs.rmSync(file);
+  await again.close();
+  await page.close();
+}
+
 await browser.close();
 server.close();
 console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');

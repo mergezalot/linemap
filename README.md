@@ -177,7 +177,10 @@ Open a file with the toolbar, by dropping it on the page, by pasting DOT text, o
 through nodes and the theme without moving any box. **Notes** off (or `N`) draws the map
 without the notes, like `--notes hide`, and puts a badge for each in its node: hover it to read
 the note, click it to keep the note open beside it, click again (or press `Esc`) to close it.
-The studio remembers notes on or off for your next visit. The SVG download is the map as shown:
+The studio remembers notes on or off for your next visit. **Edit** (or `E`) changes the map in
+place: drag boxes, bend lines, add, connect, reattach and delete boxes and edges, then undo with
+`Ctrl Z`. Under `linemap studio` each edit is saved to the DOT file, changing only the lines it
+must; elsewhere download or copy the edited DOT text, or the page with it baked in. The SVG download is the map as shown:
 hidden lines, through, theme and notes left out. The address keeps these settings and the view,
 so a link reopens the same map (a `notes=` in it wins over the remembered one). Press `?` for keys.
 
@@ -210,7 +213,6 @@ Limits:
 - Text widths are estimated (0.56 × font size per character), not measured.
 - Routing is orthogonal only.
 - Lines go through boxes, queues and cylinders only, not diamonds.
-- The studio does not edit yet; positions go back into the DOT file by hand.
 
 ## License
 

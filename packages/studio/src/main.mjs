@@ -9,7 +9,8 @@ import { createTooltip, esc } from './tooltip.mjs';
 import { createHighlight } from './highlight.mjs';
 import { createLegend } from './legend.mjs';
 import { createSearch } from './search.mjs';
-import { download, positionsText, copyOrShow, askText, toaster } from './actions.mjs';
+import { createEditor } from './editor.mjs';
+import { download, positionsText, copyOrShow, askText, askLabel, askLines, toaster } from './actions.mjs';
 
 const $ = (id) => document.getElementById(id);
 // All page elements are looked up now, before any map is inserted: ids from the DOT file end up
@@ -25,6 +26,10 @@ const el = {
   tooltip: $('tooltip'), toast: $('toast'), drop: $('drop'), fileInput: $('file-input'),
   pasteDialog: $('paste-dialog'), positionsDialog: $('positions-dialog'), help: $('help'),
   flows: $('linemap-flows'),
+  edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'),
+  editPin: $('edit-pin'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
+  editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'), editDone: $('edit-done'),
+  labelDialog: $('label-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'),
 };
 
 // The toolbar wraps on narrow screens; the stage starts below it.
@@ -34,6 +39,15 @@ const toast = toaster(el.toast);
 // flows baked into the page (build --embed)
 let embedded = [];
 try { embedded = JSON.parse(el.flows.textContent).filter((f) => typeof f?.text === 'string'); } catch { /* none */ }
+// A page with flows baked in can be saved again with its flows edited: the page as it came, with
+// an empty flows slot, kept before anything changes it (filled as `linemap export` fills it).
+const SLOT = '<script type="application/json" id="linemap-flows">[]</script>';
+let pageHtml = null;
+if (embedded.length) {
+  el.flows.textContent = '[]';
+  pageHtml = `<!doctype html>\n${document.documentElement.outerHTML}`;
+  if (!pageHtml.includes(SLOT)) pageHtml = null;
+}
 el.flows.remove();
 
 // ---------- state ----------
@@ -79,11 +93,12 @@ const viewport = createViewport({
     const r = el.legend.getBoundingClientRect(), st = el.stage.getBoundingClientRect();
     return { x0: r.left - st.left, y0: r.top - st.top, x1: r.right - st.left, y1: r.bottom - st.top };
   },
-  onChange: () => { highlight?.leave(); syncHash(); },
+  onChange: () => { highlight?.leave(); syncHash(); editor?.view(); },
 });
 const highlight = createHighlight({
   host: el.map, tooltip,
-  isPanning: () => viewport.isPanning(),
+  // no hover focus or tooltips while editing
+  isPanning: () => viewport.isPanning() || !!editor?.on(),
   onPinChange: (ids) => legend.setPinned(ids),
 });
 const legend = createLegend({
@@ -101,6 +116,19 @@ const legend = createLegend({
   onHover: (ids) => highlight.hoverLines(ids),
 });
 const search = createSearch({ input: el.search, list: el.results, onSelect: select });
+const editor = createEditor({
+  host: el.map,
+  getText: () => source.current()?.text ?? '',
+  commit: (text) => source.edit(text),
+  // a drag draws the map as it would be; the source keeps its text until the drop
+  preview: (text) => pipeline.request(text, state.get(), { carry: true, preview: true }),
+  check: (text) => pipeline.check(text, state.get()),
+  cancelPreview: () => run({ carry: true }),
+  toast: (msg) => toast(msg),
+  askLabel: () => askLabel(el.labelDialog),
+  askLines: (lines, checked, title) => askLines(el.linesDialog, lines, checked, title),
+  onChange: () => updateEditBar(),
+});
 
 const pipeline = createPipeline({ onResult: show });
 let busyTimer = 0;
@@ -111,13 +139,15 @@ function run(meta = {}) {
   if (freshNext) { meta = { ...meta, fresh: true }; freshNext = false; }
   clearTimeout(busyTimer);
   busyTimer = setTimeout(() => { el.busy.hidden = false; }, 150);
-  pipeline.request(cur.text, state.get(), meta);
+  pipeline.request(cur.text, state.get(), { preview: false, ...meta });
 }
 
 function show(result, meta) {
   // results only arrive when no newer request is waiting
   clearTimeout(busyTimer);
   el.busy.hidden = true;
+  // a map for a spot something is being dragged over that cannot be drawn: the last one stays
+  if (!result.ok && meta.preview) return;
   if (!result.ok) {
     banner('Could not draw the map', result.error + (shown ? '\n\nShowing the last map that worked.' : ''));
     if (!shown) setEmpty(true);
@@ -140,6 +170,7 @@ function show(result, meta) {
   viewport.setContent(svg, { x, y, w, h }, { keep });
   if (pendingView) { viewport.setView(pendingView); pendingView = null; }
   highlight.index(svg, result.model);
+  editor.index(svg, result.model);
   if (pendingPin) { highlight.pin([pendingPin]); zoomToLine(pendingPin); pendingPin = null; }
 
   search.index([
@@ -246,13 +277,94 @@ function updateToolbar() {
   document.title = cur ? `${cur.name} · linemap` : 'linemap studio';
   el.watch.hidden = !source.canWatch();
   el.watch.setAttribute('aria-pressed', String(source.watching()));
-  for (const b of [el.export, el.positions, el.reload, el.zoomIn, el.zoomOut, el.zoomFit]) b.disabled = !shown;
+  for (const b of [el.export, el.positions, el.reload, el.zoomIn, el.zoomOut, el.zoomFit, el.edit]) b.disabled = !shown;
   document.body.classList.toggle('nomap', !shown);
+  updateEditBar();
 }
+
+// ---------- edit mode ----------
+let saveState = { state: null, message: '' }; // of the last save to the server
+function setEditing(on) {
+  if (on && !shown) return;
+  if (on) { highlight.clearPins(); highlight.leave(); }
+  editor.setOn(on);
+  if (on && innerWidth < 860) setMenu(false);
+}
+const HINTS = {
+  none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box',
+  node: 'Drag to move · drag the + onto another box to connect them · Del removes the box and its edges',
+  edge: 'Drag an end onto another box to reattach · drag the line to bend it · Del removes the edge',
+  via: 'Drag to move the bend · double-click or Del removes it',
+  adding: 'Click where the new box goes · Esc cancels',
+};
+function updateEditBar() {
+  const on = editor.on();
+  el.edit.setAttribute('aria-pressed', String(on));
+  el.editBar.hidden = el.editHint.hidden = !on;
+  if (!on) return;
+  const sel = editor.selection();
+  el.editUndo.disabled = !editor.canUndo();
+  el.editRedo.disabled = !editor.canRedo();
+  el.editDelete.disabled = !sel;
+  el.editAdd.setAttribute('aria-pressed', String(editor.adding()));
+  el.editHint.textContent = HINTS[editor.adding() ? 'adding' : sel?.kind ?? 'none'];
+  const cur = source.current();
+  el.editPage.hidden = !(pageHtml && cur?.flow !== null && cur?.flow !== undefined);
+  // where the edits go: the file (served by linemap studio), or only this page
+  let status = '', error = false;
+  if (source.canSave()) {
+    const { state: st, message } = saveState;
+    status = st === 'saving' ? 'Saving…' : st === 'error' ? 'Not saved' : st === 'saved' ? `Saved to ${cur.name}` : `Edits save to ${cur.name}`;
+    error = st === 'error';
+    el.editStatus.title = error ? message : '';
+  } else {
+    status = source.dirty() ? 'Only in this page: download or copy it' : '';
+    el.editStatus.title = 'Edits here stay in this page (and in Recent) until you download or copy the DOT text';
+  }
+  el.editStatus.textContent = status;
+  el.editStatus.classList.toggle('error', error);
+  el.editStatus.hidden = !status;
+}
+el.edit.addEventListener('click', () => setEditing(!editor.on()));
+el.editDone.addEventListener('click', () => setEditing(false));
+el.editAdd.addEventListener('click', () => editor.startAdding());
+el.editDelete.addEventListener('click', () => editor.remove());
+el.editPin.addEventListener('click', () => editor.pinAll());
+el.editUndo.addEventListener('click', () => editor.undo());
+el.editRedo.addEventListener('click', () => editor.redo());
+const dotName = () => `${baseName()}.dot`;
+el.editDot.addEventListener('click', () => {
+  const cur = source.current();
+  if (!cur) return;
+  download(dotName(), cur.text, 'text/vnd.graphviz');
+  source.markClean();
+  updateEditBar();
+});
+el.editCopy.addEventListener('click', async () => {
+  const cur = source.current();
+  if (!cur) return;
+  if (await copyOrShow(cur.text, el.textDialog)) toast('Copied the DOT text');
+  source.markClean();
+  updateEditBar();
+});
+el.editPage.addEventListener('click', () => {
+  if (!pageHtml) return;
+  const json = JSON.stringify(source.embedded().map(({ name, text }) => ({ name, text }))).replace(/</g, '\\u003c');
+  const name = decodeURIComponent(location.pathname.split('/').pop() || '') || 'linemap.html';
+  download(/\.html?$/i.test(name) ? name : `${name}.html`, pageHtml.replace(SLOT, () => SLOT.replace('[]', json)), 'text/html');
+  source.markClean();
+  updateEditBar();
+});
+for (const b of document.querySelectorAll('dialog [data-close]')) b.addEventListener('click', () => b.closest('dialog').close('cancel'));
+// edits that are only in this page
+window.addEventListener('beforeunload', (e) => { if (source.dirty()) { e.preventDefault(); e.returnValue = ''; } });
 
 // ---------- source ----------
 const source = createSource({
-  onText({ src, flow, fresh }) {
+  onText({ src, flow, fresh, edited }) {
+    if (edited) { run({ carry: true }); updateToolbar(); return; }
+    editor.forget();
+    if (fresh) saveState = { state: null, message: '' };
     if (fresh && loadedOnce) {
       // a different file: its own settings (or the link's), fitted view, nothing pinned
       const link = src || flow != null ? linked : null;
@@ -270,6 +382,12 @@ const source = createSource({
   },
   onError: (title, msg) => { banner(title, msg); if (!shown) setEmpty(true); },
   onWatch: () => updateToolbar(),
+  onSave(st, message) {
+    saveState = { state: st, message };
+    if (st === 'error') toast(`Could not save: ${message}`);
+    if (st === 'conflict') toast('The file changed on disk, so the last edit was not saved; showing the file as it is now');
+    updateEditBar();
+  },
   embedded,
 });
 
@@ -449,6 +567,13 @@ window.addEventListener('keydown', (e) => {
   if (document.querySelector('dialog[open]')) return;
   const typing = e.target.closest?.('input, textarea, [contenteditable]');
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && shown) { e.preventDefault(); search.focus(); return; }
+  if (editor.on() && !typing) {
+    const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+    const act = mod && k === 'z' ? (e.shiftKey ? editor.redo : editor.undo) : mod && k === 'y' ? editor.redo
+      : !mod && !e.altKey && (e.key === 'Delete' || e.key === 'Backspace') ? editor.remove
+        : e.key === 'Escape' && editor.escape() ? () => {} : null;
+    if (act) { e.preventDefault(); act(); return; }
+  }
   if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
   const pan = e.shiftKey ? 400 : 120;
   const keys = {
@@ -460,6 +585,7 @@ window.addEventListener('keydown', (e) => {
     ArrowLeft: () => viewport.panBy(-pan, 0), ArrowRight: () => viewport.panBy(pan, 0),
     ArrowUp: () => viewport.panBy(0, -pan), ArrowDown: () => viewport.panBy(0, pan),
     r: () => source.reload(),
+    e: () => setEditing(!editor.on()),
     n: () => { if (hasNotes()) toggleNotes(); },
     // the next theme, fancy or not as now
     t: () => {

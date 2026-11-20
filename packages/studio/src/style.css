@@ -303,8 +303,43 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .help .about-tag a:hover { color: var(--ink); text-decoration-color: currentColor; }
 .help .copyright { margin-top: 6px; }
 
+/* ---------- edit mode ---------- */
+#map.editing g.node, #map.editing g.node *, #map.editing g.note:not(.lm-note-folded), #map.editing g.note:not(.lm-note-folded) * { cursor: move; }
+#map.editing g.edge, #map.editing g.edge * { cursor: crosshair; }
+#map.editing.adding, #map.editing.adding * { cursor: copy !important; }
+#map.dragging, #map.dragging * { cursor: grabbing !important; }
+#map .lm-edit { pointer-events: none; }
+#map .lm-edit .lm-edit-handle { pointer-events: all; cursor: grab; }
+#map .lm-edit-sel { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
+#map .lm-edit-handle:is(circle, rect), #map .lm-edit-handle circle { fill: #fff; stroke: var(--accent); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+#map .lm-edit-via { fill: #fff; }
+#map .lm-edit-via.on { fill: var(--accent); }
+#map .lm-edit-plus { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+#map .lm-edit-route { fill: none; stroke: var(--accent); stroke-opacity: .2; stroke-linejoin: round; stroke-linecap: round; }
+#map .lm-edit-ghost { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; }
+.edit-bar {
+  top: calc(var(--tb-h) + 10px); left: 50%; transform: translateX(-50%); max-width: calc(100vw - 24px);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; padding: 4px;
+}
+.edit-bar .btn.primary { padding: 0 12px; margin-left: 4px; }
+.edit-status { color: var(--muted); padding: 0 8px; white-space: nowrap; }
+.edit-status.error { color: var(--danger); }
+.edit-hint {
+  position: fixed; top: calc(var(--tb-h) + 58px); left: 50%; transform: translateX(-50%); z-index: 9; pointer-events: none;
+  max-width: calc(100vw - 24px); padding: 3px 10px; border-radius: 12px; background: var(--tb-bg); color: var(--muted); font-size: 12px; text-align: center;
+}
+.dialog.small { width: min(380px, calc(100vw - 32px)); }
+.dialog .field {
+  width: 100%; height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--field); color: inherit; outline: none;
+}
+.dialog .field:focus { border-color: #b9c8e6; box-shadow: 0 0 0 3px rgba(47, 100, 200, .12); }
+.dialog .lines { display: flex; flex-direction: column; gap: 2px; max-height: 50vh; overflow-y: auto; }
+.dialog .line-row { display: flex; align-items: center; gap: 10px; padding: 5px 6px; border-radius: 5px; cursor: pointer; }
+.dialog .line-row:hover { background: var(--hover); }
+.dialog .line-row .sw { width: 26px; height: 8px; border-radius: 4px; flex: none; }
+
 /* before the first map: only the ways to load one */
-body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .search, body.nomap #export, body.nomap #positions, body.nomap .tb-sep, body.nomap .zoom { display: none; }
+body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .edit-group, body.nomap .search, body.nomap #export, body.nomap #positions, body.nomap .tb-sep, body.nomap .zoom { display: none; }
 
 /* ---------- narrow screens ---------- */
 /* Labels go before the toolbar would wrap (width measured with a short file name; a longer one
@@ -382,3 +417,5 @@ body.ui-dark .results mark { background: #5b4a12; }
 body.ui-dark .btn.primary { color: #0b0e13; }
 body.ui-dark .btn.primary:hover { background: #8ab0f4; }
 body.ui-dark .search input:focus { border-color: #3d5a8a; box-shadow: 0 0 0 3px rgba(108, 156, 240, .18); }
+#map g.lm-edit-bad { opacity: .55; }
+#map g.lm-edit-bad :is(rect, path, polygon, circle) { stroke: var(--danger) !important; stroke-width: 3px; }
