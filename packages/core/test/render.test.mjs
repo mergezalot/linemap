@@ -239,3 +239,16 @@ test('layout without the legend keeps nothing clear for it', () => {
   assert.deepEqual(model.edges.map((e) => e.path), plain.edges.map((e) => e.path));
   assert.equal(render(model), render(plain));
 });
+
+test('a container with an empty or blank label has no title; one with no label is named by its id', () => {
+  const flow = (label) => `digraph { subgraph lines { A } subgraph cluster_post { ${label} a; b } a -> b [lines=A] }`;
+  for (const theme of ['minimal', 'light']) {
+    for (const label of ['label=""', 'label="  "']) {
+      const svg = draw(flow(label), { theme });
+      assert.doesNotMatch(svg, /class="(group-tab|lm-group-title)/, `${theme}, ${label}`);
+      assert.match(svg, /class="lm-group-box"/);
+    }
+    assert.match(draw(flow(''), { theme }), /class="lm-group-title[^>]*>post</);
+  }
+  assert.equal(parseFlow(flow('label=""')).groups[0].label, '');
+});

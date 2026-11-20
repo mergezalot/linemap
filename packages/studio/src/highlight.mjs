@@ -45,7 +45,8 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
         lineNodes.get(l.id).add(e.from).add(e.to);
       }
     }
-    const groups = new Map(model.groups.map((g) => [g.id, g]));
+    // (a container with an empty label goes by its id in tooltips)
+    const groups = new Map(model.groups.map((g) => [g.id, { ...g, label: g.label || g.id }]));
     // members of each container, nested ones included
     const members = new Map(model.groups.map((g) => [g.id, { nodes: 0, groups: 0 }]));
     for (const n of model.nodes) for (let g = n.group; g; g = groups.get(g)?.parent) members.get(g).nodes++;

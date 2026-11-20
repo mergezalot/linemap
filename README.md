@@ -91,7 +91,7 @@ digraph example {
   split and cross there. A line that only arrives or only leaves ends in a bar.
 - Attributes. Graph: `label`, `theme`, `legend`/`legendpos` (where the legend goes). Node:
   `label`, `shape`, `pos`, `width`, `height`, `through`, `class`, `URL`/`href`, `color`,
-  `fillcolor`, `fontcolor`, `fontsize`. Cluster: `label`, `class`, `color`, `fillcolor`,
+  `fillcolor`, `fontcolor`, `fontsize`. Cluster: `label` (`""`: no title), `class`, `color`, `fillcolor`,
   `fontcolor`, `fontsize`. Line: `label`, `color`. Edge: `label`, `lines`, `via`.
   Graphviz-only attributes are ignored; unknown ones are errors.
 - Units follow Graphviz (inches, points) except `pos`, which is px with y down.

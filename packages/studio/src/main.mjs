@@ -132,7 +132,7 @@ function show(result, meta) {
 
   search.index([
     ...result.model.nodes.map((n) => ({ kind: 'node', id: n.id, label: n.label })),
-    ...result.model.groups.map((g) => ({ kind: 'container', id: g.id, label: g.label })),
+    ...result.model.groups.map((g) => ({ kind: 'container', id: g.id, label: g.label || g.id })),
     ...result.base.lines.map((l) => ({ kind: 'line', id: l.id, label: l.label, color: l.color })),
   ]);
   updateToolbar();

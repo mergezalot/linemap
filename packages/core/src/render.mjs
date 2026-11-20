@@ -283,7 +283,9 @@ export function render(model, { legend: withLegend = true, theme, css = '', note
     out.push(`<g class="${esc(['group', g.classes].filter(Boolean).join(' '))}" id="${attr(g.id)}" data-label="${attr(g.label)}">`);
     out.push(`<rect x="${f(r.x0)}" y="${f(r.y0)}" width="${f(r.x1 - r.x0)}" height="${f(r.y1 - r.y0)}" rx="${paint.radius.group}" class="lm-group-box"${inline({ fill, stroke: a.stroke })}${fx.filter('group')}/>`);
     const italic = s.italic ? ' font-style="italic"' : '';
-    if (T.group.titles === 'tab') {
+    if (!g.label) {
+      // an empty label: no title
+    } else if (T.group.titles === 'tab') {
       // a tab on the top border, in the container's title colour, with the name in the background
       // colour; drawn after the lines (below), so a line along the border never hides it
       const size = Math.round(s.fontSize * 0.78);

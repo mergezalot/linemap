@@ -151,7 +151,8 @@ export function parseFlow(text) {
     const { stroke: accent, ...own } = styleProps(c.attrs, `cluster ${c.id}`);
     return {
       id: c.id,
-      label: c.attrs.label ?? c.id.replace(/^cluster_?/, ''),
+      // no label: the id less its cluster prefix; an empty or blank one: no title at all
+      label: c.attrs.label === undefined ? c.id.replace(/^cluster_?/, '') : c.attrs.label.trim() ? c.attrs.label : '',
       accent: accent ?? null,
       parent: c.parent?.id ?? null,
       classes: c.attrs.class ?? '',

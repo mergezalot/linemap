@@ -33,7 +33,7 @@ function targets(model) {
   const ids = new Set([...nodes.map((n) => n.id), ...model.groups.map((g) => g.id)]);
   const layout = layeredLayout({
     items: nodes.map((n) => ({ id: n.id, w: n.w + 2 * HALO, h: n.h + 2 * HALO, group: n.group })),
-    groups: model.groups.map((g) => ({ id: g.id, parent: g.parent, margin: STYLE.groupPad - HALO, title: g.style.fontSize + 26 })),
+    groups: model.groups.map((g) => ({ id: g.id, parent: g.parent, margin: STYLE.groupPad - HALO, title: g.label ? g.style.fontSize + 26 : 0 })),
     links: model.edges.filter((e) => ids.has(e.from) && ids.has(e.to) && e.from !== e.to).map((e) => [e.from, e.to]),
     sep: SEP,
   });

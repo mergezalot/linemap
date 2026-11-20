@@ -186,7 +186,7 @@ export function route(model) {
     const group = model.groupById.get(n.id);
     const m = (group ? CORNER_KEEP : 6) + width / 2;
     const r = { box, x0: box.x0 + m, x1: box.x1 - m, y0: box.y0 + m, y1: box.y1 - m, top: box.x0 + m };
-    if (group) {
+    if (group?.label) {
       r.y0 = Math.max(r.y0, box.y0 + 26 + group.style.fontSize + 24 + width / 2);
       r.top = Math.max(r.top, box.x0 + 20 + textWidth(group.label, group.style.fontSize) + 16 + width / 2);
     }
