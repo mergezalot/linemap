@@ -119,6 +119,39 @@ test('moveEdge keeps the attributes, in place or out of a chain', () => {
   assert.ok(parseFlow(c).edges.some((e) => e.id === 'b->c'));
 });
 
+test('size: width and height in inches, where the node is declared', () => {
+  assert.deepEqual(diff(FLOW, edit({ op: 'size', id: 'a', w: 180, h: 72 })), ['  a [label="Shop", pos="100,100"]', '  a [label="Shop", pos="100,100", width=2.5, height=1]']);
+  const once = edit({ op: 'size', id: 'a', w: 180, h: 72 });
+  assert.deepEqual(diff(once, edit({ op: 'size', id: 'a', w: 100, h: 50 }, once))[1], '  a [label="Shop", pos="100,100", width=1.39, height=0.69]');
+  assert.deepEqual(diff(FLOW, edit({ op: 'size', id: 'b', w: 144, h: 36 })), ['  b', '  b [width=2, height=0.5]']);
+  assert.deepEqual(diff(FLOW, edit({ op: 'size', id: 'e', w: 144, h: 36 })), ['', '  e [width=2, height=0.5]']);
+  const m = parseFlow(edit({ op: 'size', id: 'c', w: 144, h: 36 }));
+  assert.deepEqual([m.items.get('c').w, m.items.get('c').h], [144, 36]);
+  const t = 'digraph g { subgraph lines { A } a [height=2]; a -> b [lines=A] }';
+  assert.equal(edit({ op: 'size', id: 'a', w: 72, h: 72 }, t), 'digraph g { subgraph lines { A } a [height=1, width=1]; a -> b [lines=A] }');
+});
+
+test('lines: set on the edge, or split out of a chain with its other attributes', () => {
+  const ids = (t, id) => parseFlow(t).edges.find((e) => e.id === id).lines.map((l) => l.id);
+  const one = edit({ op: 'lines', from: 'a', to: 'c', lines: ['A', 'B'] });
+  assert.deepEqual(diff(FLOW, one), ['    a -> c [lines=A]', '    a -> c [lines="A B"]']);
+  const chain = edit({ op: 'lines', from: 'b', to: 'd', lines: ['B'] });
+  assert.deepEqual(diff(FLOW, chain), ['  a -> b -> d [lines="A B"]   // a chain', '  a -> b [lines="A B"]\n  b -> d [lines="B"]   // a chain']);
+  assert.deepEqual(ids(chain, 'b->d'), ['B']);
+  assert.deepEqual(ids(chain, 'a->b'), ['A', 'B']);
+  const group = edit({ op: 'lines', from: 'b', to: 'e', lines: ['A', 'B'] });
+  assert.deepEqual(diff(FLOW, group), ['  {b d} -> e [lines=B]', '  d -> e [lines=B]\n  b -> e [lines="A B"]']);
+  // a label written on a chain stays with the edge taken out of it
+  const lab = 'digraph g { subgraph lines { A; B } a -> b -> c [lines="A B", label="x"] }';
+  assert.equal(edit({ op: 'lines', from: 'a', to: 'b', lines: ['A'] }, lab), 'digraph g { subgraph lines { A; B } b -> c [lines="A B", label="x"]; a -> b [lines="A", label="x"] }');
+  // a single statement written twice: the last gets the lines, the other loses them
+  const twice = 'digraph g { subgraph lines { A; B } a -> b [lines=A]; a -> b [lines=B, via="1,2"] }';
+  const r = edit({ op: 'lines', from: 'a', to: 'b', lines: ['A'] }, twice);
+  assert.equal(r, 'digraph g { subgraph lines { A; B } a -> b; a -> b [lines="A", via="1,2"] }');
+  assert.deepEqual(ids(r, 'a->b'), ['A']);
+  assert.throws(() => editDot(FLOW, { op: 'lines', from: 'a', to: 'c', lines: [] }), /needs a line/);
+});
+
 test('every example takes a round of edits and stays valid', () => {
   for (const f of ['examples/webshop.dot', 'examples/platform.dot', 'examples/postal.dot', 'docs/pipeline.dot']) {
     const text = fs.readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');

@@ -9,6 +9,8 @@
 //   { op: 'addEdge', from, to, lines: [ids] }         lines [] or none: a note's attachment
 //   { op: 'removeEdge', from, to }
 //   { op: 'moveEdge', from, to, newFrom, newTo }      the same edge (lines, label, via), new ends
+//   { op: 'size', id, w, h }                          a node's or note's size, px (written in inches)
+//   { op: 'lines', from, to, lines: [ids] }           the lines the edge carries, at least one
 // editDot checks only what it needs to place a change; parseFlow on the result says whether the
 // flow is still valid (a loop, a label conflict, an unknown line).
 import { parse } from '@ts-graphviz/ast';
@@ -165,11 +167,25 @@ function attrsText(text, st) {
   return a.open < 0 ? '' : ` ${text.slice(a.open, a.close + 1)}`;
 }
 // Set an attribute: its value replaced where the statement sets it, else added to its last list.
+// (value: a string, quoted; or { raw }, written as it is)
+const valueText = (v) => (typeof v === 'object' ? v.raw : quote(v));
 function setAttr(text, st, key, value) {
-  const own = ownAttr(st, key);
-  if (own) return { at: own.value.location.start.offset, end: own.value.location.end.offset, text: quote(value) };
+  return setAttrs(text, st, [[key, value]])[0];
+}
+// Set several attributes: those the statement sets are replaced there, the others are added
+// together to its last list (or a new one).
+function setAttrs(text, st, pairs) {
+  const out = [], add = [];
+  for (const [key, value] of pairs) {
+    const own = ownAttr(st, key);
+    if (own) out.push({ at: own.value.location.start.offset, end: own.value.location.end.offset, text: valueText(value) });
+    else add.push(`${key}=${valueText(value)}`);
+  }
+  if (add.length) out.push(addAttrs(text, st, add.join(', ')));
+  return out;
+}
+function addAttrs(text, st, kv) {
   const a = attrSpan(text, st);
-  const kv = `${key}=${quote(value)}`;
   if (a.open < 0) {
     let at = a.end;
     while (/\s/.test(text[at - 1])) at--;
@@ -213,7 +229,7 @@ function rewriteEdges(doc, { dropPair = () => false, dropNode = () => false, ext
     if (st.kind !== 'edge') continue;
     const ends = st.ends.map((ids) => ids.filter((id) => !dropNode(id)));
     const pairs = pairsOf(st);
-    const keptPairs = pairsOf({ ends }).filter(([a, b]) => !dropPair(a, b));
+    const keptPairs = pairsOf({ ends }).filter(([a, b]) => !dropPair(a, b, st));
     if (keptPairs.length === pairs.length) continue;
     const attrs = attrsText(text, st);
     const tText = (i) => {
@@ -222,8 +238,8 @@ function rewriteEdges(doc, { dropPair = () => false, dropNode = () => false, ext
       return ends[i].length === 1 ? idText(ends[i][0]) : `{${ends[i].map(idText).join(' ')}}`;
     };
     const pieces = [];
-    const linkKept = (i) => ends[i].length && ends[i + 1].length && pairsOf({ ends: [ends[i], ends[i + 1]] }).every(([a, b]) => !dropPair(a, b));
-    const linkGone = (i) => pairsOf({ ends: [ends[i], ends[i + 1]] }).every(([a, b]) => dropPair(a, b));
+    const linkKept = (i) => ends[i].length && ends[i + 1].length && pairsOf({ ends: [ends[i], ends[i + 1]] }).every(([a, b]) => !dropPair(a, b, st));
+    const linkGone = (i) => pairsOf({ ends: [ends[i], ends[i + 1]] }).every(([a, b]) => dropPair(a, b, st));
     if (ends.every((_, i) => i === ends.length - 1 || linkKept(i) || linkGone(i))) {
       // whole links kept or dropped: the chain splits into runs of kept links
       let run = [];
@@ -268,6 +284,12 @@ function scanPiece(t) {
 
 // ---------- ops ----------
 
+// The attributes a statement sets, as written (`key=value`), less those named.
+const ownAttrsText = (doc, st, skip = []) => st.s.children
+  .filter((c) => c.type === 'Attribute' && !skip.includes(c.key.value))
+  .map((c) => doc.text.slice(c.location.start.offset, c.location.end.offset).replace(/[\s,;]+$/, ''));
+const inchText = (px) => String(Math.round((px / 72) * 100) / 100);
+
 const known = (doc, id) => doc.stmts.some((st) => mentions(st, id));
 // The clusters a node is in, outermost first: those around its deepest mention.
 const chainOf = (doc, id) => doc.stmts.filter((st) => mentions(st, id)).map((st) => st.body.chain)
@@ -306,6 +328,48 @@ const OPS = {
     if (own) return [setAttr(doc.text, own, 'via', value)];
     // written only as part of a chain or group: a statement of its own, which adds the via
     return [afterStmt(doc.text, list.at(-1).s, `${idText(from)} -> ${idText(to)} [via=${quote(value)}]`)];
+  },
+
+  size(doc, { id, w, h }) {
+    const pairs = [['width', { raw: inchText(w) }], ['height', { raw: inchText(h) }]];
+    const decl = doc.stmts.filter((st) => st.kind === 'node' && st.id === id);
+    const sized = decl.filter((st) => ownAttr(st, 'width') || ownAttr(st, 'height'));
+    if (sized.length) return setAttrs(doc.text, sized.at(-1), pairs);
+    if (decl.length) return setAttrs(doc.text, decl.find((st) => st.s.children.some((c) => c.type === 'Attribute')) ?? decl[0], pairs);
+    const first = doc.stmts.find((st) => mentions(st, id));
+    if (!first) throw new Error(`no node ${id}`);
+    return [appendTo(doc.text, first.body, `${idText(id)} [${pairs.map(([k, v]) => `${k}=${v.raw}`).join(', ')}]`)];
+  },
+
+  // The lines go on the last statement of the edge alone (or on one of its own, after the last
+  // statement); other statements of the edge lose theirs. A chain or group that set lines for it
+  // drops the edge, and gives it back on its own with its other attributes, if it had any.
+  lines(doc, { from, to, lines }) {
+    if (!lines?.length) throw new Error(`edge ${from}->${to} needs a line; remove the edge instead`);
+    const list = edgeStmts(doc, from, to);
+    if (!list.length) throw new Error(`no edge ${from}->${to}`);
+    const value = lines.join(' ');
+    const single = (st) => pairsOf(st).length === 1;
+    const target = list.filter(single).at(-1) ?? null;
+    const multi = list.filter((st) => !single(st) && ownAttr(st, 'lines'));
+    const pair = `${idText(from)} -> ${idText(to)}`;
+    const out = [];
+    for (const st of list) if (single(st) && st !== target && ownAttr(st, 'lines')) out.push(removeAttr(doc.text, st, 'lines'));
+    if (target) out.push(setAttr(doc.text, target, 'lines', value));
+    if (multi.length) {
+      out.push(...rewriteEdges(doc, {
+        dropPair: (a, b, st) => a === from && b === to && multi.includes(st),
+        extra: (st) => {
+          if (!multi.includes(st)) return [];
+          const attrs = ownAttrsText(doc, st, ['lines']);
+          if (!target && st === multi.at(-1)) attrs.unshift(`lines=${quote(value)}`);
+          return attrs.length ? [`${pair} [${attrs.join(', ')}]`] : [];
+        },
+      }));
+    } else if (!target) {
+      out.push(afterStmt(doc.text, list.at(-1).s, `${pair} [lines=${quote(value)}]`));
+    }
+    return out;
   },
 
   addNode(doc, { id, x, y, label, shape, group }) {
