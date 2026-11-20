@@ -26,7 +26,7 @@ const el = {
   tooltip: $('tooltip'), toast: $('toast'), drop: $('drop'), fileInput: $('file-input'),
   pasteDialog: $('paste-dialog'), positionsDialog: $('positions-dialog'), help: $('help'),
   flows: $('linemap-flows'),
-  edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'),
+  edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editLines: $('edit-lines'),
   editPin: $('edit-pin'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
   editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'), editDone: $('edit-done'),
   labelDialog: $('label-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'),
@@ -126,7 +126,7 @@ const editor = createEditor({
   cancelPreview: () => run({ carry: true }),
   toast: (msg) => toast(msg),
   askLabel: () => askLabel(el.labelDialog),
-  askLines: (lines, checked, title) => askLines(el.linesDialog, lines, checked, title),
+  askLines: (lines, checked, title, opts) => askLines(el.linesDialog, lines, checked, title, opts),
   onChange: () => updateEditBar(),
 });
 
@@ -292,8 +292,10 @@ function setEditing(on) {
 }
 const HINTS = {
   none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box',
-  node: 'Drag to move · drag the + onto another box to connect them · Del removes the box and its edges',
-  edge: 'Drag an end onto another box to reattach · drag the line to bend it · Del removes the edge',
+  node: 'Drag to move · click again to resize · drag the + onto another box to connect them · Del removes the box and its edges',
+  size: 'Drag a handle to resize · click again to move · Del removes the box and its edges',
+  edge: 'Drag an end onto another box to reattach · click again for the line under the pointer · Lines… picks its lines · Del removes the edge',
+  line: 'drag an end onto another box to move only this line · Del takes it off this edge · click again for the whole bundle',
   via: 'Drag to move the bend · double-click or Del removes it',
   adding: 'Click where the new box goes · Esc cancels',
 };
@@ -306,8 +308,10 @@ function updateEditBar() {
   el.editUndo.disabled = !editor.canUndo();
   el.editRedo.disabled = !editor.canRedo();
   el.editDelete.disabled = !sel;
+  el.editLines.hidden = !(sel?.kind === 'edge' || sel?.kind === 'via');
   el.editAdd.setAttribute('aria-pressed', String(editor.adding()));
-  el.editHint.textContent = HINTS[editor.adding() ? 'adding' : sel?.kind ?? 'none'];
+  const mode = sel?.mode === 'size' ? 'size' : sel?.line ? 'line' : sel?.kind ?? 'none';
+  el.editHint.textContent = (mode === 'line' ? `Line ${editor.lineLabel(sel.line)}: ` : '') + HINTS[editor.adding() ? 'adding' : mode];
   const cur = source.current();
   el.editPage.hidden = !(pageHtml && cur?.flow !== null && cur?.flow !== undefined);
   // where the edits go: the file (served by linemap studio), or only this page
@@ -329,6 +333,7 @@ el.edit.addEventListener('click', () => setEditing(!editor.on()));
 el.editDone.addEventListener('click', () => setEditing(false));
 el.editAdd.addEventListener('click', () => editor.startAdding());
 el.editDelete.addEventListener('click', () => editor.remove());
+el.editLines.addEventListener('click', () => editor.editLines());
 el.editPin.addEventListener('click', () => editor.pinAll());
 el.editUndo.addEventListener('click', () => editor.undo());
 el.editRedo.addEventListener('click', () => editor.redo());

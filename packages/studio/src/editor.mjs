@@ -3,6 +3,10 @@
 // (or select it and press Delete) to remove it; drag an end of a selected edge onto another node
 // or container to reattach it; drag the handle beside a selected node onto another to connect
 // them; double-click the background (or use Add node) to add a node; Delete removes the selection.
+// Clicking the selection again switches its mode: a node between moving and resizing (handles on
+// its corners and sides; the side across from the one dragged stays put, and the node is pinned),
+// an edge between its whole bundle and the one line clicked (whose ends move only that line to
+// another box, and Delete takes only it off the edge). Lines… picks the lines of the edge.
 // Every change is an editDot op on the flow's text, laid out by check(text) (an error refuses it)
 // and handed to commit(text); while something is dragged, preview(text) draws the map as it would
 // be, without keeping it. A box may not land on another box, nor on a container it is not in. Undo and redo step through the texts committed here; any other change of the text
@@ -15,11 +19,15 @@ const NS = 'http://www.w3.org/2000/svg';
 const SNAP = 10;        // positions snap to this grid (Alt: no snapping)
 const DRAG_START = 4;   // screen px before a press becomes a drag
 const HANDLE = 6;       // handle radius, screen px
+const MIN_SIZE = 20;    // a node resized is at least this wide and high, map px
+const SIZE_DIRS = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 
 export function createEditor({ host, getText, commit, check, preview, cancelPreview, toast, askLabel, askLines, onChange }) {
   let on = false;
   let svg = null, model = null;
-  let sel = null;    // { kind: 'node', id } | { kind: 'edge', from, to } | { kind: 'via', from, to, i }
+  // { kind: 'node', id, mode: 'move' | 'size' } | { kind: 'edge', from, to, line? } (line: that
+  // line alone, not the bundle) | { kind: 'via', from, to, i }
+  let sel = null;
   let drag = null;
   let adding = false; // Add node: the next click on the map places one
   let lastClick = null; // { key, t }: a second click on the same handle soon after is a double click
@@ -37,6 +45,24 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     : { x: Math.round(p.x / SNAP) * SNAP, y: Math.round(p.y / SNAP) * SNAP });
   const edgeOf = (from, to) => model?.edges.find((e) => e.from === from && e.to === to);
   const itemOf = (id) => model?.items.get(id);
+  const lineLabel = (id) => model?.lines.find((l) => l.id === id)?.label ?? id;
+
+  // the line of an edge's bundle under a pointer event: the strand hit, else the nearest one
+  function lineAt(edgeG, e) {
+    const hit = e.target.closest?.('[data-line]');
+    if (hit && edgeG.contains(hit)) return hit.getAttribute('data-line');
+    const p = toMap(e);
+    let best = { d: Infinity, id: null };
+    for (const path of edgeG.querySelectorAll(':scope > path.lm-strand[data-line]')) {
+      const len = path.getTotalLength();
+      for (let s = 0; s <= len; s += 4) {
+        const q = path.getPointAtLength(s);
+        const d = Math.hypot(q.x - p.x, q.y - p.y);
+        if (d < best.d) best = { d, id: path.getAttribute('data-line') };
+      }
+    }
+    return best.id;
+  }
 
   // distance along a polyline to the point on it nearest p
   function along(path, p) {
@@ -79,10 +105,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
 
   // Would item `id` at `at` sit on another box, or on a container it is not in? Its rectangle with
   // a margin, against the boxes and containers drawn now.
-  function blocked(id, at) {
+  function blocked(id, at, size = itemOf(id)) {
     const n = itemOf(id);
     const m = 8;
-    const r = { x0: at.x - n.w / 2 - m, y0: at.y - n.h / 2 - m, x1: at.x + n.w / 2 + m, y1: at.y + n.h / 2 + m };
+    const r = { x0: at.x - size.w / 2 - m, y0: at.y - size.h / 2 - m, x1: at.x + size.w / 2 + m, y1: at.y + size.h / 2 + m };
     const hit = (b) => r.x0 < b.x1 && b.x0 < r.x1 && r.y0 < b.y1 && b.y0 < r.y1;
     for (const o of model.items.values()) {
       if (o.id === id || o.kind === 'legend') continue;
@@ -101,12 +127,14 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   }
 
   // ---------- changes ----------
-  function apply(ops, { quiet = false } = {}) {
+  // expect(flow): an error message when the edited flow does not come out as the edit meant
+  function apply(ops, { quiet = false, expect } = {}) {
     const text = getText();
     let next;
     try {
       next = editDot(text, ops);
-      parseFlow(next);
+      const why = expect?.(parseFlow(next));
+      if (why) throw new Error(why);
     } catch (err) {
       if (!quiet) toast(`Not changed: ${err.message}`);
       return false;
@@ -135,10 +163,26 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     onChange?.();
   }
 
+  // the edge from -> to carries exactly `lines` afterwards (an edge default could add others)
+  const carries = (from, to, lines) => (flow) => {
+    const e = flow.edges.find((x) => x.from === from && x.to === to);
+    const got = e ? e.lines.map((l) => l.id).sort().join(' ') : '';
+    return got === [...lines].sort().join(' ') ? null : `the lines of ${from} -> ${to} are also set elsewhere (an edge default?); edit them in the file`;
+  };
+  // ops that take one line off an edge (the edge goes with its last line)
+  function lineOff(e, line) {
+    const rest = e.lines.map((l) => l.id).filter((id) => id !== line);
+    return rest.length ? { op: 'lines', from: e.from, to: e.to, lines: rest } : { op: 'removeEdge', from: e.from, to: e.to };
+  }
+
   function remove() {
     if (!sel) return;
     if (sel.kind === 'node') apply({ op: 'removeNode', id: sel.id });
-    else if (sel.kind === 'edge') apply({ op: 'removeEdge', from: sel.from, to: sel.to });
+    else if (sel.kind === 'edge' && sel.line) {
+      const e = edgeOf(sel.from, sel.to);
+      const op = e && lineOff(e, sel.line);
+      if (op) apply(op, op.op === 'lines' ? { expect: carries(e.from, e.to, op.lines) } : {});
+    } else if (sel.kind === 'edge') apply({ op: 'removeEdge', from: sel.from, to: sel.to });
     else if (sel.kind === 'via') {
       const e = edgeOf(sel.from, sel.to);
       if (e) apply({ op: 'via', from: e.from, to: e.to, points: e.via.filter((_, i) => i !== sel.i) });
@@ -165,7 +209,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (!label) return;
     const id = newId(label);
     const at = snap(p, {});
-    if (apply({ op: 'addNode', id, label, x: at.x, y: at.y, group: containerAt(p) ?? undefined })) sel = { kind: 'node', id };
+    if (apply({ op: 'addNode', id, label, x: at.x, y: at.y, group: containerAt(p) ?? undefined })) sel = { kind: 'node', id, mode: 'move' };
   }
   async function connect(from, to) {
     const a = itemOf(from), b = itemOf(to);
@@ -178,6 +222,21 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     }
     if (apply({ op: 'addEdge', from, to, lines })) sel = { kind: 'edge', from, to };
   }
+  // pick the lines of the selected edge
+  async function editLines() {
+    if (sel?.kind !== 'edge' && sel?.kind !== 'via') return;
+    const e = edgeOf(sel.from, sel.to);
+    if (!e) return;
+    const label = (id) => itemOf(id)?.label ?? model.groups.find((g) => g.id === id)?.label ?? id;
+    const lines = await askLines(model.lines, new Set(e.lines.map((l) => l.id)), `${label(e.from)} → ${label(e.to)}`, { heading: 'Lines on the edge', ok: 'Set' });
+    if (!lines) return;
+    if (!lines.length) { toast('An edge carries at least one line; Del removes it'); return; }
+    if (apply({ op: 'lines', from: e.from, to: e.to, lines }, { expect: carries(e.from, e.to, lines) })) {
+      sel = { kind: 'edge', from: e.from, to: e.to };
+    }
+    draw();
+    onChange?.();
+  }
 
   // ---------- overlay ----------
   const el = (tag, attrs, parent) => {
@@ -189,15 +248,31 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function draw() {
     if (!svg) return;
     svg.querySelector(':scope > g.lm-edit')?.remove();
+    // one line of a bundle selected: the others of that edge fade
+    for (const x of svg.querySelectorAll('.lm-edit-dim')) x.classList.remove('lm-edit-dim');
+    if (on && sel?.kind === 'edge' && sel.line) {
+      const ge = [...svg.querySelectorAll('g.edge')].find((x) => x.dataset.from === sel.from && x.dataset.to === sel.to);
+      for (const x of ge?.querySelectorAll('[data-line]') ?? []) if (x.getAttribute('data-line') !== sel.line) x.classList.add('lm-edit-dim');
+    }
     if (!on) return;
     const u = unit(), r = HANDLE * u;
     const g = el('g', { class: 'lm-edit' }, svg);
     if (sel?.kind === 'node' && itemOf(sel.id)) {
-      // (while it is dragged: where the pointer has it)
-      const n = drag?.kind === 'move' && drag.moved && drag.id === sel.id ? { ...itemOf(sel.id), ...drag.at } : itemOf(sel.id);
-      const pad = 6 * u;
-      el('rect', { class: 'lm-edit-sel', x: n.x - n.w / 2 - pad, y: n.y - n.h / 2 - pad, width: n.w + 2 * pad, height: n.h + 2 * pad, rx: 8 * u }, g);
-      if (n.kind !== 'legend') {
+      // (while it is dragged or resized: where the pointer has it)
+      const dragged = drag?.moved && drag.id === sel.id;
+      const n = dragged && drag.kind === 'move' ? { ...itemOf(sel.id), ...drag.at }
+        : dragged && drag.kind === 'size' ? { ...itemOf(sel.id), ...drag.at, ...drag.size } : itemOf(sel.id);
+      const sizing = sel.mode === 'size';
+      const pad = (sizing ? 0 : 6) * u;
+      el('rect', { class: `lm-edit-sel${sizing ? ' sizing' : ''}`, x: n.x - n.w / 2 - pad, y: n.y - n.h / 2 - pad, width: n.w + 2 * pad, height: n.h + 2 * pad, rx: sizing ? 0 : 8 * u }, g);
+      if (sizing) {
+        const s = r * 0.85;
+        for (const dir of SIZE_DIRS) {
+          const x = n.x + (dir.includes('w') ? -1 : dir.includes('e') ? 1 : 0) * n.w / 2;
+          const y = n.y + (dir.includes('n') ? -1 : dir.includes('s') ? 1 : 0) * n.h / 2;
+          el('rect', { x: x - s, y: y - s, width: 2 * s, height: 2 * s, class: `lm-edit-handle lm-edit-size lm-edit-size-${dir}`, 'data-handle': 'size', 'data-dir': dir }, g);
+        }
+      } else if (n.kind !== 'legend') {
         const c = el('g', { class: 'lm-edit-handle lm-edit-connect', 'data-handle': 'connect' }, g);
         const cx = n.x + n.w / 2 + pad + 14 * u;
         el('circle', { cx, cy: n.y, r: r * 1.5 }, c);
@@ -206,7 +281,14 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     }
     for (const e of model.edges) {
       const picked = sel && sel.kind !== 'node' && sel.from === e.from && sel.to === e.to;
-      if (picked) {
+      const strand = picked && sel.line ? e.strands?.find((s) => s.line.id === sel.line) : null;
+      if (strand) {
+        // one line of the bundle: its lane, and handles on its ends
+        el('path', { d: strand.d, class: 'lm-edit-route lm-edit-lane', 'stroke-width': e.width / e.strands.length + 8 * u }, g);
+        for (const [end, p] of [['from', strand.start.p], ['to', strand.end.p]]) {
+          el('circle', { cx: p.x, cy: p.y, r: r * 1.2, class: 'lm-edit-handle lm-edit-end', 'data-handle': 'end', 'data-end': end, 'data-from': e.from, 'data-to': e.to, 'data-line': sel.line }, g);
+        }
+      } else if (picked) {
         const d = e.path.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join('');
         el('path', { d, class: 'lm-edit-route', 'stroke-width': e.width + 10 * u }, g);
         for (const [end, p] of [['from', e.path[0]], ['to', e.path.at(-1)]]) {
@@ -251,11 +333,16 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const ed = edgeOf(handle.dataset.from, handle.dataset.to);
       if (!ed) return;
       drag = { kind: 'via', start, base, from: ed.from, to: ed.to, i: Number(handle.dataset.i), points: ed.via.map((q) => [...q]) };
+    } else if (handle?.dataset.handle === 'size' && sel?.kind === 'node') {
+      const n = itemOf(sel.id);
+      drag = { kind: 'size', start, base, id: sel.id, dir: handle.dataset.dir, rect: { x0: n.x - n.w / 2, y0: n.y - n.h / 2, x1: n.x + n.w / 2, y1: n.y + n.h / 2 } };
     } else if (handle?.dataset.handle === 'end') {
       const ed = edgeOf(handle.dataset.from, handle.dataset.to);
       if (!ed) return;
-      const fixed = handle.dataset.end === 'from' ? ed.path.at(-1) : ed.path[0];
-      drag = { kind: 'end', start, from: ed.from, to: ed.to, end: handle.dataset.end, ghost: { a: fixed, b: p } };
+      const line = handle.dataset.line || null;
+      const strand = line && ed.strands?.find((s) => s.line.id === line);
+      const fixed = strand ? (handle.dataset.end === 'from' ? strand.end.p : strand.start.p) : handle.dataset.end === 'from' ? ed.path.at(-1) : ed.path[0];
+      drag = { kind: 'end', start, from: ed.from, to: ed.to, line, end: handle.dataset.end, ghost: { a: fixed, b: p } };
     } else if (handle?.dataset.handle === 'connect' && sel?.kind === 'node') {
       const n = itemOf(sel.id);
       drag = { kind: 'connect', start, from: sel.id, ghost: { a: { x: n.x, y: n.y }, b: p } };
@@ -266,7 +353,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         const n = itemOf(g.id);
         drag = { kind: 'move', start, base, id: g.id, off: { x: p.x - n.x, y: p.y - n.y }, at: { x: n.x, y: n.y } };
       } else if (edge) {
-        drag = { kind: 'bend', start, base, from: edge.dataset.from, to: edge.dataset.to, p };
+        drag = { kind: 'bend', start, base, from: edge.dataset.from, to: edge.dataset.to, p, line: lineAt(edge, e) };
       } else {
         return; // the background: a pan, and a click clears the selection
       }
@@ -296,10 +383,23 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (at.x === drag.at.x && at.y === drag.at.y) return;
       drag.at = at;
       drag.bad = blocked(drag.id, at);
-      sel = { kind: 'node', id: drag.id };
+      if (sel?.kind !== 'node' || sel.id !== drag.id) sel = { kind: 'node', id: drag.id, mode: 'move' };
       placeDragged();
       draw();
       if (!drag.bad) tryPreview({ op: 'pos', id: drag.id, x: at.x, y: at.y });
+    } else if (drag.kind === 'size') {
+      // the sides the handle names follow the pointer; the others stay
+      const q = snap(p, e), r = { ...drag.rect }, dir = drag.dir;
+      if (dir.includes('w')) r.x0 = Math.min(q.x, r.x1 - MIN_SIZE);
+      if (dir.includes('e')) r.x1 = Math.max(q.x, r.x0 + MIN_SIZE);
+      if (dir.includes('n')) r.y0 = Math.min(q.y, r.y1 - MIN_SIZE);
+      if (dir.includes('s')) r.y1 = Math.max(q.y, r.y0 + MIN_SIZE);
+      const size = { w: Math.round(r.x1 - r.x0), h: Math.round(r.y1 - r.y0) };
+      const at = { x: Math.round((r.x0 + r.x1) / 2), y: Math.round((r.y0 + r.y1) / 2) };
+      if (drag.size && size.w === drag.size.w && size.h === drag.size.h && at.x === drag.at.x && at.y === drag.at.y) return;
+      Object.assign(drag, { size, at, bad: blocked(drag.id, at, size) });
+      draw();
+      if (!drag.bad) tryPreview(sizeOps(drag));
     } else if (drag.kind === 'via') {
       const at = snap(p, e);
       const [x, y] = drag.points[drag.i];
@@ -313,6 +413,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     }
   });
 
+  const sizeOps = (d) => [{ op: 'size', id: d.id, w: d.size.w, h: d.size.h }, { op: 'pos', id: d.id, x: d.at.x, y: d.at.y }];
   function end(e) {
     if (!drag) return;
     const d = drag;
@@ -327,8 +428,17 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const twice = key && lastClick?.key === key && performance.now() - lastClick.t < 450;
       lastClick = key && !twice ? { key, t: performance.now() } : null;
       if (twice) { sel = { kind: 'via', from: d.from, to: d.to, i: d.i }; remove(); return; }
-      if (d.kind === 'move') sel = { kind: 'node', id: d.id };
-      else if (d.kind === 'bend') sel = { kind: 'edge', from: d.from, to: d.to };
+      // a click on the selection switches its mode
+      const again = sel && sel.kind !== 'via' && (d.kind === 'move' ? sel.id === d.id : sel.from === d.from && sel.to === d.to);
+      if (d.kind === 'move') {
+        const sizable = itemOf(d.id)?.kind !== 'legend';
+        sel = { kind: 'node', id: d.id, mode: again && sel.mode !== 'size' && sizable ? 'size' : 'move' };
+      } else if (d.kind === 'bend') {
+        const many = (edgeOf(d.from, d.to)?.lines.length ?? 0) > 1;
+        // the bundle -> the line clicked -> (another line clicked: that one) -> the bundle
+        const line = again && many && d.line && sel.kind === 'edge' && sel.line !== d.line ? d.line : null;
+        sel = { kind: 'edge', from: d.from, to: d.to, ...(line ? { line } : {}) };
+      }
       else if (d.kind === 'via') sel = { kind: 'via', from: d.from, to: d.to, i: d.i };
       else if (d.kind === 'end') sel = { kind: 'edge', from: d.from, to: d.to };
       draw();
@@ -338,6 +448,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (d.kind === 'move') {
       if (d.bad) toast('A box cannot sit on another box, or on a container it is not part of');
       if (d.bad || !apply({ op: 'pos', id: d.id, x: d.at.x, y: d.at.y })) cancelPreview();
+    } else if (d.kind === 'size') {
+      if (d.bad) toast('A box cannot sit on another box, or on a container it is not part of');
+      if (!d.size || d.bad || !apply(sizeOps(d))) cancelPreview();
     } else if (d.kind === 'via') {
       if (apply({ op: 'via', from: d.from, to: d.to, points: d.points })) sel = { kind: 'via', from: d.from, to: d.to, i: d.i };
       else cancelPreview();
@@ -346,7 +459,16 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const old = d.end === 'from' ? d.from : d.to;
       if (id && id !== old) {
         const [nf, nt] = d.end === 'from' ? [id, d.to] : [d.from, id];
-        if (apply({ op: 'moveEdge', from: d.from, to: d.to, newFrom: nf, newTo: nt })) sel = { kind: 'edge', from: nf, to: nt };
+        const ed = edgeOf(d.from, d.to);
+        if (d.line && ed?.lines.length > 1) {
+          // only this line: off this edge, onto the new one (added to its lines if it is there)
+          const off = lineOff(ed, d.line);
+          const there = edgeOf(nf, nt)?.lines.map((l) => l.id) ?? [];
+          const ops = [off, there.length ? { op: 'lines', from: nf, to: nt, lines: [...new Set([...there, d.line])] } : { op: 'addEdge', from: nf, to: nt, lines: [d.line] }];
+          if (apply(ops, { expect: (f) => carries(d.from, d.to, off.lines)(f) ?? carries(nf, nt, [...new Set([...there, d.line])])(f) })) {
+            sel = { kind: 'edge', from: nf, to: nt, line: d.line };
+          }
+        } else if (apply({ op: 'moveEdge', from: d.from, to: d.to, newFrom: nf, newTo: nt })) sel = { kind: 'edge', from: nf, to: nt };
       }
     } else if (d.kind === 'connect') {
       const id = targetAt(e.clientX, e.clientY);
@@ -384,6 +506,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       // a selection whose node or edge is gone
       if (sel?.kind === 'node' && !itemOf(sel.id)) sel = null;
       if (sel && sel.kind !== 'node' && !edgeOf(sel.from, sel.to)) sel = null;
+      if (sel?.line && !edgeOf(sel.from, sel.to)?.lines.some((l) => l.id === sel.line)) sel = { kind: 'edge', from: sel.from, to: sel.to };
       if (sel?.kind === 'via' && !edgeOf(sel.from, sel.to)?.via[sel.i]) sel = { kind: 'edge', from: sel.from, to: sel.to };
       draw();
       placeDragged();
@@ -407,7 +530,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     canUndo: () => undo.length > 0,
     canRedo: () => redo.length > 0,
     remove,
+    editLines,
     selection: () => sel,
+    // the label of the line selected alone, for the hint
+    lineLabel,
     adding: () => adding,
     startAdding() {
       adding = !adding;
@@ -424,6 +550,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     escape() {
       if (drag) { const d = drag; drag = null; host.classList.remove('dragging'); if (d.base && d.moved) cancelPreview(); draw(); return true; }
       if (adding) { adding = false; host.classList.remove('adding'); onChange?.(); return true; }
+      // a mode of the selection: back to the plain one
+      if (sel?.line || sel?.mode === 'size') { sel = sel.line ? { kind: 'edge', from: sel.from, to: sel.to } : { ...sel, mode: 'move' }; draw(); onChange?.(); return true; }
       if (sel) { sel = null; draw(); onChange?.(); return true; }
       return false;
     },

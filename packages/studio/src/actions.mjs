@@ -70,11 +70,13 @@ export function askLabel(dialog) {
   });
 }
 
-// Which lines a new edge carries: a checkbox per line, `checked` ticked. Resolves with the ids
-// ticked, or null.
-export function askLines(dialog, lines, checked, title) {
+// Which lines an edge carries: a checkbox per line, `checked` ticked. Resolves with the ids
+// ticked, or null. heading, ok: the dialog's title and button (else those for a new edge).
+export function askLines(dialog, lines, checked, title, { heading = 'Lines on the new edge', ok = 'Connect' } = {}) {
   const list = dialog.querySelector('.lines');
   dialog.querySelector('.hint').textContent = title;
+  dialog.querySelector('h2').textContent = heading;
+  dialog.querySelector('button[value="ok"]').textContent = ok;
   list.replaceChildren(...lines.map((l) => {
     const row = document.createElement('label');
     row.className = 'line-row';

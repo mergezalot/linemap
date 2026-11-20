@@ -931,6 +931,59 @@ console.log('edit mode, saving to the file (linemap studio)');
   text = await changed(before, 'connecting a -> c');
   check(/\n  a -> c \[lines="A"\]\n\}/.test(text), 'connecting a to c adds a -> c [lines="A"]');
 
+  // resize: a click on the selected box switches to resizing; the side across from the handle stays
+  const click = async (pt) => { await page.mouse.click(pt.x, pt.y); await page.waitForTimeout(500); };
+  await click(await nodeAt('a'));
+  await click(await nodeAt('a'));
+  check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-size').length) === 8 && /resize/.test(await page.textContent('#edit-hint')), 'clicking the selected box shows resize handles');
+  await shot(page, 'edit-2a-resize');
+  before = read();
+  const se = await handle('#map .lm-edit-size-se'), nw = await handle('#map .lm-edit-size-nw');
+  await drag(se, { x: se.x + 60, y: se.y + 30 });
+  text = await changed(before, 'resizing a');
+  const sized = /a \[label="A", pos="(-?\d+),(-?\d+)", width=([\d.]+), height=([\d.]+)\]/.exec(text);
+  const nw2 = await handle('#map .lm-edit-size-nw');
+  check(!!sized && Math.abs(nw2.x - nw.x) < 4 && Math.abs(nw2.y - nw.y) < 4, `dragging the se handle resizes a, its nw corner stays (${sized?.[0]})`);
+  await click(await nodeAt('a'));
+  check(await page.evaluate(() => !document.querySelector('#map .lm-edit-size') && !!document.querySelector('#map .lm-edit-connect')), 'a click again: back to moving');
+
+  // one line of a bundle: click the selected edge on a lane
+  const laneAt = (from, to, line, f = 0.5) => page.evaluate(([from, to, line, f]) => {
+    const p = document.querySelector(`#map g.edge[data-from="${from}"][data-to="${to}"] path.lm-strand[data-line="${line}"]`);
+    const pt = p.getPointAtLength(p.getTotalLength() * f), m = p.getScreenCTM();
+    return { x: pt.x * m.a + m.e, y: pt.y * m.d + m.f };
+  }, [from, to, line, f]);
+  await click(await laneAt('a', 'b', 'B', 0.4));
+  check(!/^Line/.test(await page.textContent('#edit-hint')) && await page.isVisible('#edit-lines'), 'a click on an edge selects its bundle, Lines… shows');
+  await click(await laneAt('a', 'b', 'B', 0.4));
+  check(/^Line Beta:/.test(await page.textContent('#edit-hint')) && await page.evaluate(() => !!document.querySelector('#map .lm-edit-lane')), `a click again selects the line clicked ("${(await page.textContent('#edit-hint')).slice(0, 20)}")`);
+  await shot(page, 'edit-2b-line');
+  before = read();
+  await page.keyboard.press('Delete');
+  text = await changed(before, 'taking B off a -> b');
+  check(/a -> b \[lines="A"\]/.test(text), 'Delete takes only that line off the edge');
+  before = read();
+  await page.keyboard.press('Control+z');
+  await changed(before, 'undo');
+  await click(await laneAt('a', 'b', 'B', 0.4));
+  await click(await laneAt('a', 'b', 'B', 0.4));
+  before = read();
+  await drag(await handle('#map .lm-edit-end[data-end="to"]'), await nodeAt('c'));
+  text = await changed(before, 'moving B to a -> c');
+  check(/a -> b \[lines="A"\]/.test(text) && /a -> c \[lines="A B"\]/.test(text), 'dragging the end of one line moves only it: onto a -> c');
+  // Lines…: pick the lines of the selected edge
+  await click(await laneAt('a', 'b', 'A'));
+  await page.click('#edit-lines');
+  await page.waitForSelector('#lines-dialog[open]');
+  const on = await page.evaluate(() => [...document.querySelectorAll('#lines-dialog input:checked')].map((b) => b.value).join());
+  check(on === 'A', `Lines… ticks the lines of the edge (${on})`);
+  before = read();
+  await page.click('#lines-dialog input[value="B"]');
+  await page.click('#lines-dialog .btn.primary');
+  text = await changed(before, 'setting the lines of a -> b');
+  check(/a -> b \[lines="A B"\]/.test(text), 'and sets them');
+  await shot(page, 'edit-2c-lines');
+
   // a new box: double-click the map, name it
   before = read();
   // a spot where the map shows only its background
