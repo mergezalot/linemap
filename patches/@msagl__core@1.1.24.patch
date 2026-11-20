@@ -1,3 +1,130 @@
+diff --git a/src/routing/rectilinear/ObstaclePortEntrance.ts b/src/routing/rectilinear/ObstaclePortEntrance.ts
+index 4b475ca3c0b8089840de5b5f605b20d8aaa4a2b4..0fa80c1e7cc99b903b8ad0f20069bac1dc0b0fc5 100644
+--- a/src/routing/rectilinear/ObstaclePortEntrance.ts
++++ b/src/routing/rectilinear/ObstaclePortEntrance.ts
+@@ -147,6 +147,27 @@ export class ObstaclePortEntrance {
+     return this.pointAndCrossingsList != null && this.pointAndCrossingsList.Count() > 0
+   }
+ 
++  // Like HasGroupCrossingBeforePoint, but crossings of the boundaries of `crossable` groups (the
++  // groups a path between two ports has to leave or enter anyway) do not count.
++  HasForeignGroupCrossingBeforePoint(point: Point, crossable: Set<any>): boolean {
++    if (!this.HasGroupCrossings) {
++      return false
++    }
++
++    const start = this.MaxVisibilitySegment.start
++    for (const pac of this.pointAndCrossingsList.ListOfPointsAndCrossings) {
++      const before =
++        point == null ||
++        Point.closeDistEps(pac.Location, point) ||
++        PointComparer.GetDirections(start, pac.Location) === PointComparer.GetDirections(pac.Location, point)
++      if (before && pac.Crossings.some((c) => !crossable.has(c.Group.InputShape))) {
++        return true
++      }
++    }
++
++    return false
++  }
++
+   HasGroupCrossingBeforePoint(point: Point): boolean {
+     if (!this.HasGroupCrossings) {
+       return false
+diff --git a/src/routing/rectilinear/PortManager.ts b/src/routing/rectilinear/PortManager.ts
+index 59811e7d518a662eee99ee43ef2d89867c660b8f..3254a6e7faed9ca5772a9d13c42b7418f327f0b4 100644
+--- a/src/routing/rectilinear/PortManager.ts
++++ b/src/routing/rectilinear/PortManager.ts
+@@ -439,6 +439,17 @@ export class PortManager {
+       return null
+     }
+ 
++    // The boundaries of the groups only one end is in are crossed by any path between them; they
++    // do not rule out the direct path.
++    const crossable = new Set<Shape>()
++    if (this.AncestorSets.size > 0) {
++      const ss = this.AncestorSets.get(sourceOport.Obstacle.InputShape) ?? new Set<Shape>()
++      const tt = this.AncestorSets.get(targetOport.Obstacle.InputShape) ?? new Set<Shape>()
++      for (const g of substractSets(ss, tt)) crossable.add(g)
++      for (const g of substractSets(tt, ss)) crossable.add(g)
++    }
++
++    let best: Point[] = null
+     for (const sourceEntrance of sourceOport.PortEntrances) {
+       if (!sourceEntrance.WantVisibilityIntersection) {
+         continue
+@@ -451,21 +462,38 @@ export class PortManager {
+ 
+         const points =
+           sourceEntrance.IsVertical === targetEntrance.IsVertical
+-            ? PortManager.GetPathPointsFromOverlappingCollinearVisibility(sourceEntrance, targetEntrance)
+-            : PortManager.GetPathPointsFromIntersectingVisibility(sourceEntrance, targetEntrance)
++            ? PortManager.GetPathPointsFromOverlappingCollinearVisibility(sourceEntrance, targetEntrance, crossable)
++            : PortManager.GetPathPointsFromIntersectingVisibility(sourceEntrance, targetEntrance, crossable)
+ 
+-        if (points != null) {
+-          return points
++        // A straight path wins; of two paths with one bend, the one that ends along the longer
++        // leg (so it bends early and runs into the target head-on).
++        if (points != null && (best == null || PortManager.IsBetterDirectPath(points, best))) {
++          best = points
+         }
+       }
+     }
+ 
+-    return null
++    return best
++  }
++
++  private static IsBetterDirectPath(points: Point[], than: Point[]): boolean {
++    if (points.length !== than.length) {
++      return points.length < than.length
++    }
++
++    const endsAlongLongerLeg = (pts: Point[]) => {
++      const n = pts.length
++      const first = pts[1].sub(pts[0]).length
++      const last = pts[n - 1].sub(pts[n - 2]).length
++      return last >= first
++    }
++    return endsAlongLongerLeg(points) && !endsAlongLongerLeg(than)
+   }
+ 
+   private static GetPathPointsFromOverlappingCollinearVisibility(
+     sourceEntrance: ObstaclePortEntrance,
+     targetEntrance: ObstaclePortEntrance,
++    crossable: Set<Shape>,
+   ): Point[] {
+     // If the segments are the same they'll be in reverse.  Note: check for IntervalsOverlap also, if we support FreePoints here.
+     if (
+@@ -479,7 +507,7 @@ export class PortManager {
+       return null
+     }
+ 
+-    if (sourceEntrance.HasGroupCrossings || targetEntrance.HasGroupCrossings) {
++    if (sourceEntrance.HasForeignGroupCrossingBeforePoint(null, crossable) || targetEntrance.HasForeignGroupCrossingBeforePoint(null, crossable)) {
+       return null
+     }
+ 
+@@ -494,6 +522,7 @@ export class PortManager {
+   private static GetPathPointsFromIntersectingVisibility(
+     sourceEntrance: ObstaclePortEntrance,
+     targetEntrance: ObstaclePortEntrance,
++    crossable: Set<Shape>,
+   ): Point[] {
+     const intersect: Point = StaticGraphUtility.SegmentsIntersectLL(
+       sourceEntrance.MaxVisibilitySegment,
+@@ -503,7 +532,10 @@ export class PortManager {
+       return null
+     }
+ 
+-    if (sourceEntrance.HasGroupCrossingBeforePoint(intersect) || targetEntrance.HasGroupCrossingBeforePoint(intersect)) {
++    if (
++      sourceEntrance.HasForeignGroupCrossingBeforePoint(intersect, crossable) ||
++      targetEntrance.HasForeignGroupCrossingBeforePoint(intersect, crossable)
++    ) {
+       return null
+     }
+ 
 diff --git a/src/routing/rectilinear/SparseVisibiltyGraphGenerator.ts b/src/routing/rectilinear/SparseVisibiltyGraphGenerator.ts
 index 98539ae864e50cf41849bd9910ef5729ed6594b6..190859733e30802e430129f094b37c57446afb4f 100644
 --- a/src/routing/rectilinear/SparseVisibiltyGraphGenerator.ts

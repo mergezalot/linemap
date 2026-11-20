@@ -61,7 +61,7 @@
 <g class="group" id="cluster_data" data-label="Data">
 <rect x="4015" y="539.5" width="370" height="901" rx="18" class="lm-group-box" style="fill:#24121a;stroke:#c66618"/>
 </g>
-<path d="M1298.5,930 L1223,930 L1223,723 L1151,723" class="lm-note-link"/>
+<path d="M1298.5,930 L1075.5,930 L1075.5,790" class="lm-note-link"/>
 <path d="M1880,1591 L1880,1375.5" class="lm-note-link"/>
 <g class="edge" data-from="browser" data-to="cdn" data-lines="SI CO SR BR UP">
 <path d="M225,251.3 L395,251.3" class="lm-casing" stroke-width="50"/>

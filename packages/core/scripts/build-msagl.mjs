@@ -5,7 +5,11 @@
 //   node scripts/build-msagl.mjs       (pnpm --filter @linemap/core build:msagl)
 // @msagl/core is patched (patches/@msagl__core@1.1.24.patch): its sparse visibility graph
 // incremented the overlap depth on leaving an obstacle, so every obstacle after the first was
-// invisible to the router.
+// invisible to the router. And it took the direct route between two ports (straight, or one bend)
+// only when no container border lay on it, not even the border of a container the route has to
+// leave anyway; the sparse graph has no vertex at that bend, so such routes came out as
+// staircases. Borders of containers only one end is in no longer rule the direct route out; and
+// of two direct routes with one bend, the one that runs into the target along its longer leg wins.
 //
 // Licenses: @msagl/core and most of what it pulls in are MIT; reliable-random is Apache-2.0.
 // Both want their notice kept with every copy, so the full text of each bundled package's

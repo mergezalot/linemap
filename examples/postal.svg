@@ -637,30 +637,30 @@
 </g>
 </g>
 <g class="edge" data-from="collected" data-to="recipient" data-lines="B C H D" data-label="Yes">
-<path d="M3571.3,1350 L3660.3,1350 Q3692.3,1350 3692.3,1318 L3692.3,654 Q3692.3,622 3724.3,622 L3765,622" class="lm-casing" stroke-width="41"/>
-<path d="M3571.3,1336.5 L3660.3,1336.5 Q3678.8,1336.5 3678.8,1318 L3678.8,651.7 Q3678.8,608.5 3721.9,608.5 L3765,608.5" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
-<path d="M3571.3,1345.5 L3660.3,1345.5 Q3687.8,1345.5 3687.8,1318 L3687.8,654 Q3687.8,617.5 3724.3,617.5 L3765,617.5" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
-<path d="M3571.3,1354.5 L3660.3,1354.5 Q3696.8,1354.5 3696.8,1318 L3696.8,654 Q3696.8,626.5 3724.3,626.5 L3765,626.5" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
-<path d="M3571.3,1363.5 L3660.3,1363.5 Q3705.8,1363.5 3705.8,1318 L3705.8,654 Q3705.8,635.5 3724.3,635.5 L3765,635.5" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
+<path d="M3571.3,1350 L3660.3,1350 Q3692.3,1350 3692.3,1318 L3692.3,648.9 Q3692.3,616.9 3724.3,616.9 L3765,616.9" class="lm-casing" stroke-width="41"/>
+<path d="M3571.3,1336.5 L3660.3,1336.5 Q3678.8,1336.5 3678.8,1318 L3678.8,646.6 Q3678.8,603.4 3721.9,603.4 L3765,603.4" class="lm-strand" stroke="#00838f" stroke-width="9" data-line="B"><title>Registered letter</title></path>
+<path d="M3571.3,1345.5 L3660.3,1345.5 Q3687.8,1345.5 3687.8,1318 L3687.8,648.9 Q3687.8,612.4 3724.3,612.4 L3765,612.4" class="lm-strand" stroke="#ef6c00" stroke-width="9" data-line="C"><title>Parcel</title></path>
+<path d="M3571.3,1354.5 L3660.3,1354.5 Q3696.8,1354.5 3696.8,1318 L3696.8,648.9 Q3696.8,621.4 3724.3,621.4 L3765,621.4" class="lm-strand" stroke="#ad1457" stroke-width="9" data-line="H"><title>Locker drop-off</title></path>
+<path d="M3571.3,1363.5 L3660.3,1363.5 Q3705.8,1363.5 3705.8,1318 L3705.8,648.9 Q3705.8,630.4 3724.3,630.4 L3765,630.4" class="lm-strand" stroke="#6a1b9a" stroke-width="9" data-line="D"><title>International parcel</title></path>
 <g class="lm-marks" data-line="B">
-<polygon points="3678.8,1084 3676.1,1094.4 3681.5,1094.4" fill="#ffffff"/>
-<polygon points="3678.8,877.7 3676.1,888 3681.5,888" fill="#ffffff"/>
-<polygon points="3759,608.5 3748.7,605.8 3748.7,611.2" fill="#ffffff"/>
+<polygon points="3678.8,1082.3 3676.1,1092.7 3681.5,1092.7" fill="#ffffff"/>
+<polygon points="3678.8,874.3 3676.1,884.6 3681.5,884.6" fill="#ffffff"/>
+<polygon points="3759,603.4 3748.7,600.7 3748.7,606.1" fill="#ffffff"/>
 </g>
 <g class="lm-marks" data-line="C">
-<polygon points="3687.8,1084 3685.1,1094.4 3690.5,1094.4" fill="#ffffff"/>
-<polygon points="3687.8,877.7 3685.1,888 3690.5,888" fill="#ffffff"/>
-<polygon points="3759,617.5 3748.7,614.8 3748.7,620.2" fill="#ffffff"/>
+<polygon points="3687.8,1082.3 3685.1,1092.7 3690.5,1092.7" fill="#ffffff"/>
+<polygon points="3687.8,874.3 3685.1,884.6 3690.5,884.6" fill="#ffffff"/>
+<polygon points="3759,612.4 3748.7,609.7 3748.7,615.1" fill="#ffffff"/>
 </g>
 <g class="lm-marks" data-line="H">
-<polygon points="3696.8,1084 3694.1,1094.4 3699.5,1094.4" fill="#ffffff"/>
-<polygon points="3696.8,877.7 3694.1,888 3699.5,888" fill="#ffffff"/>
-<polygon points="3759,626.5 3748.7,623.8 3748.7,629.2" fill="#ffffff"/>
+<polygon points="3696.8,1082.3 3694.1,1092.7 3699.5,1092.7" fill="#ffffff"/>
+<polygon points="3696.8,874.3 3694.1,884.6 3699.5,884.6" fill="#ffffff"/>
+<polygon points="3759,621.4 3748.7,618.7 3748.7,624.1" fill="#ffffff"/>
 </g>
 <g class="lm-marks" data-line="D">
-<polygon points="3705.8,1084 3703.1,1094.4 3708.5,1094.4" fill="#ffffff"/>
-<polygon points="3705.8,877.7 3703.1,888 3708.5,888" fill="#ffffff"/>
-<polygon points="3759,635.5 3748.7,632.8 3748.7,638.2" fill="#ffffff"/>
+<polygon points="3705.8,1082.3 3703.1,1092.7 3708.5,1092.7" fill="#ffffff"/>
+<polygon points="3705.8,874.3 3703.1,884.6 3708.5,884.6" fill="#ffffff"/>
+<polygon points="3759,630.4 3748.7,627.7 3748.7,633.1" fill="#ffffff"/>
 </g>
 </g>
 <g class="edge" data-from="student" data-to="locker" data-lines="H">
@@ -753,20 +753,20 @@
 </g>
 </g>
 <g class="edge" data-from="cluster_sorting" data-to="cluster_it" data-lines="T" data-label="Sorter scans">
-<path d="M2105,239.5 L2105,222.1 Q2105,204.8 2122.4,204.8 L2140.5,204.8 Q2172.5,204.8 2172.5,172.8 L2172.5,7.1 Q2172.5,-24.9 2140.5,-24.9 L2137,-24.9 Q2105,-24.9 2105,-56.9 L2105,-309.5" class="lm-casing" stroke-width="14"/>
-<path d="M2105,239.5 L2105,222.1 Q2105,204.8 2122.4,204.8 L2140.5,204.8 Q2172.5,204.8 2172.5,172.8 L2172.5,7.1 Q2172.5,-24.9 2140.5,-24.9 L2137,-24.9 Q2105,-24.9 2105,-56.9 L2105,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
+<path d="M2105,239.5 L2105,222.1 Q2105,204.8 2122.4,204.8 L2140.5,204.8 Q2172.5,204.8 2172.5,172.8 L2172.5,-49.7 Q2172.5,-81.7 2140.5,-81.7 L2137,-81.7 Q2105,-81.7 2105,-113.7 L2105,-309.5" class="lm-casing" stroke-width="14"/>
+<path d="M2105,239.5 L2105,222.1 Q2105,204.8 2122.4,204.8 L2140.5,204.8 Q2172.5,204.8 2172.5,172.8 L2172.5,-49.7 Q2172.5,-81.7 2140.5,-81.7 L2137,-81.7 Q2105,-81.7 2105,-113.7 L2105,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
 <g class="lm-marks" data-line="T">
 <polygon points="2105,-303.5 2102.3,-293.1 2107.7,-293.1" fill="rgba(0,0,0,0.6)"/>
 </g>
 </g>
 <g class="edge" data-from="cluster_depot" data-to="cluster_it" data-lines="T" data-label="Van scans">
-<path d="M2869,269.5 L2869,-44.9 Q2869,-76.9 2837,-76.9 L2163,-76.9 Q2131,-76.9 2131,-108.9 L2131,-309.5" class="lm-casing" stroke-width="14"/>
-<path d="M2869,269.5 L2869,-44.9 Q2869,-76.9 2837,-76.9 L2163,-76.9 Q2131,-76.9 2131,-108.9 L2131,-309.5" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
+<path d="M2869,269.5 L2869,-388 Q2869,-420 2837,-420 L2445,-420" class="lm-casing" stroke-width="14"/>
+<path d="M2869,269.5 L2869,-388 Q2869,-420 2837,-420 L2445,-420" class="lm-strand" stroke="#fdd835" stroke-width="9" data-line="T"><title>Tracking data</title></path>
 <g class="lm-marks" data-line="T">
-<polygon points="2869,109.6 2866.3,120 2871.7,120" fill="rgba(0,0,0,0.6)"/>
-<polygon points="2604.2,-76.9 2614.5,-74.2 2614.5,-79.6" fill="rgba(0,0,0,0.6)"/>
-<polygon points="2385.5,-76.9 2395.8,-74.2 2395.8,-79.6" fill="rgba(0,0,0,0.6)"/>
-<polygon points="2131,-303.5 2128.3,-293.1 2133.7,-293.1" fill="rgba(0,0,0,0.6)"/>
+<polygon points="2869,45.5 2866.3,55.8 2871.7,55.8" fill="rgba(0,0,0,0.6)"/>
+<polygon points="2869,-169.3 2866.3,-159 2871.7,-159" fill="rgba(0,0,0,0.6)"/>
+<polygon points="2451,-420 2461.4,-417.3 2461.4,-422.7" fill="rgba(0,0,0,0.6)"/>
+<polygon points="2691,-420 2701.4,-417.3 2701.4,-422.7" fill="rgba(0,0,0,0.6)"/>
 </g>
 </g>
 <g class="edge" data-from="tracking_db" data-to="app" data-lines="T">
@@ -820,13 +820,13 @@
 </g>
 </g>
 <g class="edge" data-from="cluster_complaints" data-to="cluster_depot" data-lines="Q" data-label="A stern word">
-<path d="M3695,-309.5 L3695,-35 Q3695,-3 3663,-3 L2953,-3 Q2921,-3 2921,29 L2921,269.5" class="lm-casing" stroke-width="14"/>
-<path d="M3695,-309.5 L3695,-35 Q3695,-3 3663,-3 L2953,-3 Q2921,-3 2921,29 L2921,269.5" class="lm-strand" stroke="#f06292" stroke-width="9" data-line="Q"><title>Complaints</title></path>
+<path d="M3355,-420 L2953,-420 Q2921,-420 2921,-388 L2921,269.5" class="lm-casing" stroke-width="14"/>
+<path d="M3355,-420 L2953,-420 Q2921,-420 2921,-388 L2921,269.5" class="lm-strand" stroke="#f06292" stroke-width="9" data-line="Q"><title>Complaints</title></path>
 <g class="lm-marks" data-line="Q">
-<polygon points="3695,-169.6 3697.7,-179.9 3692.3,-179.9" fill="#ffffff"/>
-<polygon points="3418.2,-3 3428.5,-0.3 3428.5,-5.7" fill="#ffffff"/>
-<polygon points="3187.5,-3 3197.8,-0.3 3197.8,-5.7" fill="#ffffff"/>
+<polygon points="3151.3,-420 3161.7,-417.3 3161.7,-422.7" fill="#ffffff"/>
 <polygon points="2921,263.5 2923.7,253.2 2918.3,253.2" fill="#ffffff"/>
+<polygon points="2921,23.5 2923.7,13.2 2918.3,13.2" fill="#ffffff"/>
+<polygon points="2921,-216.5 2923.7,-226.8 2918.3,-226.8" fill="#ffffff"/>
 </g>
 </g>
 <g class="edge" data-from="cluster_north" data-to="cluster_rail" data-lines="N">
@@ -1007,7 +1007,7 @@
 <text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3599.8" y="269.5">Where is it?</tspan></text></g>
 <g class="lm-edge-label-group"><rect x="3860.5" y="-301.1" width="85.2" height="23" rx="11.5" class="lm-edge-label-box"/>
 <text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3903.1" y="-289.6">Sorry note</tspan></text></g>
-<g class="lm-edge-label-group"><rect x="3403.8" y="7.5" width="98.6" height="23" rx="11.5" class="lm-edge-label-box"/>
-<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3453.1" y="19">A stern word</tspan></text></g>
+<g class="lm-edge-label-group"><rect x="3197.2" y="-409.5" width="98.6" height="23" rx="11.5" class="lm-edge-label-box"/>
+<text font-size="12" text-anchor="middle" dominant-baseline="central" class="lm-edge-label"><tspan x="3246.5" y="-398">A stern word</tspan></text></g>
 <g class="legend"><rect x="-160" y="2570.5" width="270.8" height="422" rx="12" class="lm-legend-box"/><text x="-142" y="2592.5" font-size="12" class="lm-legend-title" dominant-baseline="central">LINES</text><g class="legend-row" data-line="A"><line x1="-138" y1="2620.5" x2="-86" y2="2620.5" stroke="#1565c0" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2620.5 -117,2617.8 -117,2623.2" fill="#ffffff"/><text x="-68" y="2620.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Letter</text></g><g class="legend-row" data-line="B"><line x1="-138" y1="2648.5" x2="-86" y2="2648.5" stroke="#00838f" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2648.5 -117,2645.8 -117,2651.2" fill="#ffffff"/><text x="-68" y="2648.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Registered letter</text></g><g class="legend-row" data-line="G"><line x1="-138" y1="2676.5" x2="-86" y2="2676.5" stroke="#2e7d32" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2676.5 -117,2673.8 -117,2679.2" fill="#ffffff"/><text x="-68" y="2676.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Bulk mail</text></g><g class="legend-row" data-line="C"><line x1="-138" y1="2704.5" x2="-86" y2="2704.5" stroke="#ef6c00" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2704.5 -117,2701.8 -117,2707.2" fill="#ffffff"/><text x="-68" y="2704.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Parcel</text></g><g class="legend-row" data-line="H"><line x1="-138" y1="2732.5" x2="-86" y2="2732.5" stroke="#ad1457" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2732.5 -117,2729.8 -117,2735.2" fill="#ffffff"/><text x="-68" y="2732.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Locker drop-off</text></g><g class="legend-row" data-line="D"><line x1="-138" y1="2760.5" x2="-86" y2="2760.5" stroke="#6a1b9a" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2760.5 -117,2757.8 -117,2763.2" fill="#ffffff"/><text x="-68" y="2760.5" font-size="14" class="lm-legend-text" dominant-baseline="central">International parcel</text></g><g class="legend-row" data-line="E"><line x1="-138" y1="2788.5" x2="-86" y2="2788.5" stroke="#c62828" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2788.5 -117,2785.8 -117,2791.2" fill="#ffffff"/><text x="-68" y="2788.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Express</text></g><g class="legend-row" data-line="F"><line x1="-138" y1="2816.5" x2="-86" y2="2816.5" stroke="#5d4037" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2816.5 -117,2813.8 -117,2819.2" fill="#ffffff"/><text x="-68" y="2816.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Return to sender</text></g><g class="legend-row" data-line="L"><line x1="-138" y1="2844.5" x2="-86" y2="2844.5" stroke="#78909c" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2844.5 -117,2841.8 -117,2847.2" fill="#ffffff"/><text x="-68" y="2844.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Lost item</text></g><g class="legend-row" data-line="N"><line x1="-138" y1="2872.5" x2="-86" y2="2872.5" stroke="#29b6f6" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2872.5 -117,2869.8 -117,2875.2" fill="rgba(0,0,0,0.6)"/><text x="-68" y="2872.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Mail train</text></g><g class="legend-row" data-line="T"><line x1="-138" y1="2900.5" x2="-86" y2="2900.5" stroke="#fdd835" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2900.5 -117,2897.8 -117,2903.2" fill="rgba(0,0,0,0.6)"/><text x="-68" y="2900.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Tracking data</text></g><g class="legend-row" data-line="S"><line x1="-138" y1="2928.5" x2="-86" y2="2928.5" stroke="#212121" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2928.5 -117,2925.8 -117,2931.2" fill="#ffffff"/><text x="-68" y="2928.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Supplies</text></g><g class="legend-row" data-line="Q"><line x1="-138" y1="2956.5" x2="-86" y2="2956.5" stroke="#f06292" stroke-width="9" stroke-linecap="round"/><polygon points="-107,2956.5 -117,2953.8 -117,2959.2" fill="#ffffff"/><text x="-68" y="2956.5" font-size="14" class="lm-legend-text" dominant-baseline="central">Complaints</text></g></g>
 </svg>
