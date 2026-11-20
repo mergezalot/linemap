@@ -23,6 +23,8 @@ const svg = render(layout(parseFlow(dotText)), { theme: 'dark' });
   `lm-open` on its `g.note` shows the note beside the badge.
 - `positions(model)` gives the computed positions of unpinned nodes, ready to pin with `pos`;
   `legendPosition(model)` the legend's.
+- `editDot(text, ops)` changes DOT text (move or add a node, set an edge's `via`, add, remove or
+  reattach an edge) and leaves the rest of the file as it was written.
 
 The command line is [`@linemap/cli`](https://www.npmjs.com/package/@linemap/cli): `npx @linemap/cli export flow.dot`.
 The DOT format, themes and the studio are described in the

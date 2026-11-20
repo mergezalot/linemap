@@ -219,6 +219,7 @@ export function parseFlow(text) {
   // `lines` attribute. The same pair of nodes may appear in several edge statements: their lines
   // are merged into one edge, and their labels must agree. Edge order = first appearance.
   const edgeById = new Map();
+  const firstLine = new Map(); // edge id -> DOT line of its first statement, for errors
   for (const x of dot.edges) {
     const id = `${x.from}->${x.to}`;
     check('edge', id, x.attrs);
@@ -238,9 +239,12 @@ export function parseFlow(text) {
       note.attach = target.id;
       continue;
     }
+    // a statement may leave the lines to another one of the same edge (e.g. one that only sets `via`)
     const lineIds = (x.attrs.lines ?? '').split(/[\s,]+/).filter(Boolean);
-    if (!lineIds.length) throw new Error(`DOT line ${x.line}: edge ${id} has no lines; set lines="..." on it or with edge [lines="..."]`);
-    if (!edgeById.has(id)) edgeById.set(id, { id, from: x.from, to: x.to, lines: [], label: null, via: [] });
+    if (!edgeById.has(id)) {
+      edgeById.set(id, { id, from: x.from, to: x.to, lines: [], label: null, via: [] });
+      firstLine.set(id, x.line);
+    }
     const e = edgeById.get(id);
     for (const lid of lineIds) {
       const l = lineById.get(lid);
@@ -253,6 +257,9 @@ export function parseFlow(text) {
       e.label = label;
     }
     if (x.attrs.via) e.via = x.attrs.via.trim().split(/\s+/).map((p) => point(p, `edge ${id}: via`));
+  }
+  for (const e of edgeById.values()) {
+    if (!e.lines.length) throw new Error(`DOT line ${firstLine.get(e.id)}: edge ${e.id} has no lines; set lines="..." on it or with edge [lines="..."]`);
   }
   // Lane order inside a bundle follows the order of the line declarations.
   for (const e of edgeById.values()) e.lines.sort((a, b) => a.index - b.index);

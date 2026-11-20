@@ -15,6 +15,7 @@ const CASES = [
   ['unknown theme', `digraph g { theme=sepia; ${L} a }`, /graph: unknown theme "sepia"/],
   ['unknown line', `digraph g { ${L} a -> b [lines=B] }`, /edge a->b: unknown line "B"/],
   ['edge without lines', `digraph g { ${L} a -> b }`, /edge a->b has no lines/],
+  ['edge with only via', `digraph g { ${L} a -> b [via="1,2"] }`, /DOT line 1: edge a->b has no lines/],
   ['loop', `digraph g { ${L} a -> a [lines=A] }`, /edge a->a is a loop/],
   ['line declared twice', 'digraph g { subgraph lines { A; A } a }', /line "A" declared twice/],
   ['node in two clusters', `digraph g { ${L} subgraph cluster_x { a } subgraph cluster_y { a } }`, /node a is in both/],
