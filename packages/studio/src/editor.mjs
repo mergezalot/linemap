@@ -9,7 +9,9 @@
 // another box, and Delete takes only it off the edge). Lines… picks the lines of the edge.
 // Every change is an editDot op on the flow's text, laid out by check(text) (an error refuses it)
 // and handed to commit(text); while something is dragged, preview(text) draws the map as it would
-// be, without keeping it. A box may not land on another box, nor on a container it is not in. Undo and redo step through the texts committed here; any other change of the text
+// be, without keeping it: only once the pointer rests (a layout of a big map takes ~100 ms), and
+// meanwhile dashed stand-ins run straight from the dragged box (or through the via points) and
+// the routes they stand in for fade. A box may not land on another box, nor on a container it is not in. Undo and redo step through the texts committed here; any other change of the text
 // (a reload, another file) forgets them.
 // The overlay (selection, handles) is drawn into the map's SVG in map units, after every render;
 // handles keep their size on screen.
@@ -18,6 +20,7 @@ import { editDot, parseFlow } from '@linemap/core';
 const NS = 'http://www.w3.org/2000/svg';
 const SNAP = 10;        // positions snap to this grid (Alt: no snapping)
 const DRAG_START = 4;   // screen px before a press becomes a drag
+const PREVIEW_DELAY = 120; // ms the pointer rests before a drag lays the map out again
 const HANDLE = 6;       // handle radius, screen px
 const MIN_SIZE = 20;    // a node resized is at least this wide and high, map px
 const SIZE_DIRS = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
@@ -151,9 +154,22 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     onChange?.();
     return true;
   }
-  const tryPreview = (ops) => {
-    try { preview(editDot(drag.base, ops)); } catch { /* shown on release */ }
-  };
+  // The drag moved on: the map shown is stale until the pointer rests and it is laid out again.
+  // (drag.shown: the drag.version the map on screen was laid out for)
+  let previewTimer = 0;
+  function moved() {
+    clearTimeout(previewTimer);
+    drag.version = (drag.version ?? 0) + 1;
+  }
+  const stale = () => drag?.moved && drag.base && drag.shown !== drag.version;
+  function tryPreview(ops) {
+    const d = drag;
+    previewTimer = setTimeout(() => {
+      if (drag !== d) return;
+      d.requested = d.version;
+      try { preview(editDot(d.base, ops)); } catch { /* shown on release */ }
+    }, PREVIEW_DELAY);
+  }
   function step(from, to) {
     if (!from.length) return;
     const text = getText();
@@ -250,8 +266,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     svg.querySelector(':scope > g.lm-edit')?.remove();
     // one line of a bundle selected: the others of that edge fade
     for (const x of svg.querySelectorAll('.lm-edit-dim')) x.classList.remove('lm-edit-dim');
+    const standins = stale() ? staleEdges() : [];
+    for (const { e } of standins) edgeG(e)?.classList.add('lm-edit-dim');
     if (on && sel?.kind === 'edge' && sel.line) {
-      const ge = [...svg.querySelectorAll('g.edge')].find((x) => x.dataset.from === sel.from && x.dataset.to === sel.to);
+      const ge = edgeG(sel);
       for (const x of ge?.querySelectorAll('[data-line]') ?? []) if (x.getAttribute('data-line') !== sel.line) x.classList.add('lm-edit-dim');
     }
     if (!on) return;
@@ -301,12 +319,30 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         el('rect', { x: x - s, y: y - s, width: 2 * s, height: 2 * s, transform: `rotate(45 ${x} ${y})`, class: `lm-edit-handle lm-edit-via${hot ? ' on' : ''}`, 'data-handle': 'via', 'data-from': e.from, 'data-to': e.to, 'data-i': i }, g);
       });
     }
+    for (const { pts } of standins) el('path', { d: pts.map((q, i) => `${i ? 'L' : 'M'}${q.x},${q.y}`).join(''), class: 'lm-edit-standin' }, g);
     if (drag?.ghost) el('path', { d: `M${drag.ghost.a.x},${drag.ghost.a.y}L${drag.ghost.b.x},${drag.ghost.b.y}`, class: 'lm-edit-ghost' }, g);
     if (drag?.kind === 'via' && drag.moved) {
       const [x, y] = drag.points[drag.i];
       const s = 1.2 * r;
       el('rect', { x: x - s, y: y - s, width: 2 * s, height: 2 * s, transform: `rotate(45 ${x} ${y})`, class: 'lm-edit-handle lm-edit-via on' }, g);
     }
+  }
+  const edgeG = (e) => svg.querySelector(`g.edge[data-from="${CSS.escape(e.from)}"][data-to="${CSS.escape(e.to)}"]`);
+  // While the map is stale: the edges the drag changes, each with a straight stand-in route from
+  // where its ends are (the dragged box's centre) through its via points.
+  function staleEdges() {
+    const out = [];
+    if (drag.kind === 'move' || drag.kind === 'size') {
+      for (const e of model.edges) {
+        if (e.from !== drag.id && e.to !== drag.id) continue;
+        const a = e.from === drag.id ? drag.at : e.path[0], b = e.to === drag.id ? drag.at : e.path.at(-1);
+        out.push({ e, pts: [a, ...e.via.map(([x, y]) => ({ x, y })), b] });
+      }
+    } else if (drag.kind === 'via') {
+      const e = edgeOf(drag.from, drag.to);
+      if (e) out.push({ e, pts: [e.path[0], ...drag.points.map(([x, y]) => ({ x, y })), e.path.at(-1)] });
+    }
+    return out;
   }
   // a node being dragged sits where the pointer put it, also on a map drawn for an earlier spot
   function placeDragged() {
@@ -383,6 +419,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (at.x === drag.at.x && at.y === drag.at.y) return;
       drag.at = at;
       drag.bad = blocked(drag.id, at);
+      moved();
       if (sel?.kind !== 'node' || sel.id !== drag.id) sel = { kind: 'node', id: drag.id, mode: 'move' };
       placeDragged();
       draw();
@@ -398,6 +435,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const at = { x: Math.round((r.x0 + r.x1) / 2), y: Math.round((r.y0 + r.y1) / 2) };
       if (drag.size && size.w === drag.size.w && size.h === drag.size.h && at.x === drag.at.x && at.y === drag.at.y) return;
       Object.assign(drag, { size, at, bad: blocked(drag.id, at, size) });
+      moved();
       draw();
       if (!drag.bad) tryPreview(sizeOps(drag));
     } else if (drag.kind === 'via') {
@@ -405,6 +443,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const [x, y] = drag.points[drag.i];
       if (at.x === x && at.y === y) return;
       drag.points[drag.i] = [at.x, at.y];
+      moved();
       draw();
       tryPreview({ op: 'via', from: drag.from, to: drag.to, points: drag.points });
     } else if (drag.ghost) {
@@ -416,6 +455,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   const sizeOps = (d) => [{ op: 'size', id: d.id, w: d.size.w, h: d.size.h }, { op: 'pos', id: d.id, x: d.at.x, y: d.at.y }];
   function end(e) {
     if (!drag) return;
+    clearTimeout(previewTimer);
     const d = drag;
     drag = null;
     host.classList.remove('dragging');
@@ -508,6 +548,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (sel && sel.kind !== 'node' && !edgeOf(sel.from, sel.to)) sel = null;
       if (sel?.line && !edgeOf(sel.from, sel.to)?.lines.some((l) => l.id === sel.line)) sel = { kind: 'edge', from: sel.from, to: sel.to };
       if (sel?.kind === 'via' && !edgeOf(sel.from, sel.to)?.via[sel.i]) sel = { kind: 'edge', from: sel.from, to: sel.to };
+      // the preview asked for last is the map now
+      if (drag?.requested !== undefined) drag.shown = drag.requested;
       draw();
       placeDragged();
     },
@@ -548,7 +590,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     },
     // Escape: stop adding, else drop the selection; false when there was nothing to drop
     escape() {
-      if (drag) { const d = drag; drag = null; host.classList.remove('dragging'); if (d.base && d.moved) cancelPreview(); draw(); return true; }
+      if (drag) { clearTimeout(previewTimer); const d = drag; drag = null; host.classList.remove('dragging'); if (d.base && d.moved) cancelPreview(); draw(); return true; }
       if (adding) { adding = false; host.classList.remove('adding'); onChange?.(); return true; }
       // a mode of the selection: back to the plain one
       if (sel?.line || sel?.mode === 'size') { sel = sel.line ? { kind: 'edge', from: sel.from, to: sel.to } : { ...sel, mode: 'move' }; draw(); onChange?.(); return true; }

@@ -888,6 +888,25 @@ console.log('edit mode, saving to the file (linemap studio)');
   await until(async () => /Saved to t\.dot/.test(await status()), 'saved status');
   await shot(page, 'edit-1-moved');
 
+  // while the pointer moves the map is not laid out again: stand-ins; once it rests, a preview
+  {
+    const svgNow = () => page.evaluateHandle(() => document.querySelector('#map svg'));
+    const c0 = await nodeAt('c'), first = await svgNow();
+    await page.mouse.move(c0.x, c0.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 6; i++) { await page.mouse.move(c0.x - i * 8, c0.y); await page.waitForTimeout(30); }
+    const moving = await page.evaluate((s) => ({ same: document.querySelector('#map svg') === s, standins: document.querySelectorAll('#map .lm-edit-standin').length }), first);
+    check(moving.same && moving.standins === 1, `a moving drag draws stand-ins, not the map (${JSON.stringify(moving)})`);
+    await page.waitForTimeout(700);
+    const rested = await page.evaluate((s) => ({ redrawn: document.querySelector('#map svg') !== s, standins: document.querySelectorAll('#map .lm-edit-standin').length }), first);
+    check(rested.redrawn && rested.standins === 0, `once the pointer rests the map is drawn as it would be (${JSON.stringify(rested)})`);
+    const kept = read();
+    await page.keyboard.press('Escape');
+    await page.mouse.up();
+    await page.waitForTimeout(400);
+    check(read() === kept, 'Esc during the drag keeps the file');
+  }
+
   // a box dropped on another one: refused
   before = read();
   await drag(await nodeAt('c'), await nodeAt('b'));
