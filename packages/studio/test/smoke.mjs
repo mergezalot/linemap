@@ -1003,6 +1003,43 @@ console.log('edit mode, saving to the file (linemap studio)');
   check(/a -> b \[lines="A B"\]/.test(text), 'and sets them');
   await shot(page, 'edit-2c-lines');
 
+  // several boxes: Shift+click, then drag one of them: both move as far
+  {
+    const posOf = (t, id) => new RegExp(`\\n\\s*${id} \\[[^\\]]*pos="(-?\\d+),(-?\\d+)"`).exec(t).slice(1).map(Number);
+    await page.keyboard.press('Escape');
+    await click(await nodeAt('a'));
+    await page.keyboard.down('Shift');
+    await click(await nodeAt('b'));
+    await page.keyboard.up('Shift');
+    check(/^2 boxes:/.test(await page.textContent('#edit-hint')) && await page.evaluate(() => document.querySelectorAll('#map .lm-edit-sel').length) === 2, 'Shift+click adds a box to the selection');
+    before = read();
+    const [a0, b0] = [posOf(before, 'a'), posOf(before, 'b')];
+    const bAt = await nodeAt('b'), up = await scr(0, -100), zero = await scr(0, 0);
+    await drag(bAt, { x: bAt.x, y: bAt.y + (up.y - zero.y) });
+    text = await changed(before, 'moving a and b');
+    const [a1, b1] = [posOf(text, 'a'), posOf(text, 'b')];
+    check(a1[0] === a0[0] && b1[0] === b0[0] && a1[1] - a0[1] === -100 && b1[1] - b0[1] === -100, `dragging one moves both by as much (a ${a0} -> ${a1}, b ${b0} -> ${b1})`);
+    await shot(page, 'edit-2d-multi');
+    // a click on a container: its boxes (Shift: added)
+    await page.keyboard.press('Escape');
+    await click(await nodeAt('c'));
+    const corner = await page.evaluate(() => { const r = document.querySelector('#map g.group#cluster_x > rect').getBoundingClientRect(); return { x: r.x + 10, y: r.y + r.height - 10 }; });
+    await page.keyboard.down('Shift');
+    await click(corner);
+    await page.keyboard.up('Shift');
+    check(/^2 boxes:/.test(await page.textContent('#edit-hint')), `Shift+click on a container adds its boxes (${(await page.textContent('#edit-hint')).slice(0, 12)})`);
+    await click(corner);
+    check(!/boxes/.test(await page.textContent('#edit-hint')) && /click again to resize/.test(await page.textContent('#edit-hint')), 'a click on a container selects its boxes (here: d alone)');
+    // Shift+drag on the map: the boxes in the rectangle
+    await page.keyboard.press('Escape');
+    const r0 = await scr(-200, 650), r1 = await scr(720, 250);
+    await page.keyboard.down('Shift');
+    await drag(r0, r1);
+    await page.keyboard.up('Shift');
+    check(/^2 boxes:/.test(await page.textContent('#edit-hint')), 'Shift+drag selects the boxes in the rectangle (c and d)');
+    await page.keyboard.press('Escape');
+  }
+
   // a new box: double-click the map, name it
   before = read();
   // a spot where the map shows only its background

@@ -7,6 +7,8 @@
 // its corners and sides; the side across from the one dragged stays put, and the node is pinned),
 // an edge between its whole bundle and the one line clicked (whose ends move only that line to
 // another box, and Delete takes only it off the edge). Lines… picks the lines of the edge.
+// Several boxes: Shift+click adds or removes one, Shift+drag on the map selects those in the
+// rectangle, a click on a container selects the boxes in it; dragging one of them moves them all.
 // Every change is an editDot op on the flow's text, laid out by check(text) (an error refuses it)
 // and handed to commit(text); while something is dragged, preview(text) draws the map as it would
 // be, without keeping it: only once the pointer rests (a layout of a big map takes ~100 ms), and
@@ -29,7 +31,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   let on = false;
   let svg = null, model = null;
   // { kind: 'node', id, mode: 'move' | 'size' } | { kind: 'edge', from, to, line? } (line: that
-  // line alone, not the bundle) | { kind: 'via', from, to, i }
+  // line alone, not the bundle) | { kind: 'via', from, to, i } | { kind: 'nodes', ids } (two or more)
   let sel = null;
   let drag = null;
   let adding = false; // Add node: the next click on the map places one
@@ -48,6 +50,17 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     : { x: Math.round(p.x / SNAP) * SNAP, y: Math.round(p.y / SNAP) * SNAP });
   const edgeOf = (from, to) => model?.edges.find((e) => e.from === from && e.to === to);
   const itemOf = (id) => model?.items.get(id);
+  // the boxes selected, and a selection of these ids
+  const selectedIds = () => (sel?.kind === 'node' ? [sel.id] : sel?.kind === 'nodes' ? sel.ids : []);
+  const selectIds = (ids) => {
+    ids = [...new Set(ids)].filter((id) => itemOf(id) && itemOf(id).kind !== 'legend');
+    sel = !ids.length ? null : ids.length === 1 ? { kind: 'node', id: ids[0], mode: 'move' } : { kind: 'nodes', ids };
+  };
+  // the boxes and notes in a container, at any depth
+  function membersOf(group) {
+    const inside = (id) => { for (let g = id; g; g = model.groups.find((x) => x.id === g)?.parent) if (g === group) return true; return false; };
+    return [...model.items.values()].filter((n) => n.kind !== 'legend' && inside(n.group)).map((n) => n.id);
+  }
   const lineLabel = (id) => model?.lines.find((l) => l.id === id)?.label ?? id;
 
   // the line of an edge's bundle under a pointer event: the strand hit, else the nearest one
@@ -108,24 +121,25 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
 
   // Would item `id` at `at` sit on another box, or on a container it is not in? Its rectangle with
   // a margin, against the boxes and containers drawn now.
-  function blocked(id, at, size = itemOf(id)) {
+  // the containers as drawn now: { id, x0, y0, x1, y1 }
+  const groupBoxes = () => [...svg.querySelectorAll('g.group')].map((g) => {
+    const b = g.querySelector('rect')?.getBBox();
+    return b && { id: g.id, x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height };
+  }).filter(Boolean);
+  function blocked(id, at, size = itemOf(id), moving = new Set([id]), boxes = groupBoxes()) {
     const n = itemOf(id);
     const m = 8;
     const r = { x0: at.x - size.w / 2 - m, y0: at.y - size.h / 2 - m, x1: at.x + size.w / 2 + m, y1: at.y + size.h / 2 + m };
     const hit = (b) => r.x0 < b.x1 && b.x0 < r.x1 && r.y0 < b.y1 && b.y0 < r.y1;
     for (const o of model.items.values()) {
-      if (o.id === id || o.kind === 'legend') continue;
+      if (moving.has(o.id) || o.kind === 'legend') continue;
       if (hit({ x0: o.x - o.w / 2, y0: o.y - o.h / 2, x1: o.x + o.w / 2, y1: o.y + o.h / 2 })) return true;
     }
     const homes = new Set();
     for (let g = n.group; g; g = model.groups.find((x) => x.id === g)?.parent) homes.add(g);
     // a note may sit inside the containers of its node
     if (n.kind === 'note' && n.attach) for (let g = itemOf(n.attach)?.group; g; g = model.groups.find((x) => x.id === g)?.parent) homes.add(g);
-    for (const g of svg.querySelectorAll('g.group')) {
-      if (homes.has(g.id)) continue;
-      const b = g.querySelector('rect')?.getBBox();
-      if (b && hit({ x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height })) return true;
-    }
+    for (const b of boxes) if (!homes.has(b.id) && hit(b)) return true;
     return false;
   }
 
@@ -194,6 +208,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function remove() {
     if (!sel) return;
     if (sel.kind === 'node') apply({ op: 'removeNode', id: sel.id });
+    else if (sel.kind === 'nodes') apply(sel.ids.map((id) => ({ op: 'removeNode', id })));
     else if (sel.kind === 'edge' && sel.line) {
       const e = edgeOf(sel.from, sel.to);
       const op = e && lineOff(e, sel.line);
@@ -277,7 +292,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     const g = el('g', { class: 'lm-edit' }, svg);
     if (sel?.kind === 'node' && itemOf(sel.id)) {
       // (while it is dragged or resized: where the pointer has it)
-      const dragged = drag?.moved && drag.id === sel.id;
+      const dragged = drag?.moved && drag.id === sel.id && (drag.kind !== 'move' || drag.ids.length === 1);
       const n = dragged && drag.kind === 'move' ? { ...itemOf(sel.id), ...drag.at }
         : dragged && drag.kind === 'size' ? { ...itemOf(sel.id), ...drag.at, ...drag.size } : itemOf(sel.id);
       const sizing = sel.mode === 'size';
@@ -297,8 +312,20 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         el('path', { d: `M${cx - r * 0.8},${n.y}H${cx + r * 0.8}M${cx},${n.y - r * 0.8}V${n.y + r * 0.8}`, class: 'lm-edit-plus' }, c);
       }
     }
+    if (sel?.kind === 'nodes') {
+      const pad = 6 * u;
+      const moving = drag?.kind === 'move' && drag.moved;
+      for (const id of sel.ids) {
+        const n = moving && drag.orig.has(id) ? { ...itemOf(id), ...dragAt(drag, id) } : itemOf(id);
+        if (n) el('rect', { class: 'lm-edit-sel', x: n.x - n.w / 2 - pad, y: n.y - n.h / 2 - pad, width: n.w + 2 * pad, height: n.h + 2 * pad, rx: 8 * u }, g);
+      }
+    }
+    if (drag?.kind === 'box' && drag.moved) {
+      const { a, b } = drag;
+      el('rect', { class: 'lm-edit-box', x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), width: Math.abs(b.x - a.x), height: Math.abs(b.y - a.y) }, g);
+    }
     for (const e of model.edges) {
-      const picked = sel && sel.kind !== 'node' && sel.from === e.from && sel.to === e.to;
+      const picked = sel && sel.kind !== 'node' && sel.kind !== 'nodes' && sel.from === e.from && sel.to === e.to;
       const strand = picked && sel.line ? e.strands?.find((s) => s.line.id === sel.line) : null;
       if (strand) {
         // one line of the bundle: its lane, and handles on its ends
@@ -333,9 +360,11 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function staleEdges() {
     const out = [];
     if (drag.kind === 'move' || drag.kind === 'size') {
+      const at = (id) => (drag.kind === 'size' ? (id === drag.id ? drag.at : null) : drag.orig.has(id) ? dragAt(drag, id) : null);
       for (const e of model.edges) {
-        if (e.from !== drag.id && e.to !== drag.id) continue;
-        const a = e.from === drag.id ? drag.at : e.path[0], b = e.to === drag.id ? drag.at : e.path.at(-1);
+        const af = at(e.from), bt = at(e.to);
+        if (!af && !bt) continue;
+        const a = af ?? e.path[0], b = bt ?? e.path.at(-1);
         out.push({ e, pts: [a, ...e.via.map(([x, y]) => ({ x, y })), b] });
       }
     } else if (drag.kind === 'via') {
@@ -344,15 +373,23 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     }
     return out;
   }
-  // a node being dragged sits where the pointer put it, also on a map drawn for an earlier spot
+  // where a move drag has box `id`: where it was, moved as far as the box pressed
+  const dragAt = (d, id) => {
+    const o = d.orig.get(id), a = d.orig.get(d.id);
+    return { x: o.x + d.at.x - a.x, y: o.y + d.at.y - a.y };
+  };
+  // the nodes being dragged sit where the pointer put them, also on a map drawn for an earlier spot
   function placeDragged() {
     if (drag?.kind !== 'move' || !drag.moved) return;
-    const n = itemOf(drag.id), g = [...svg.querySelectorAll('g.node, g.note')].find((x) => x.id === drag.id);
-    if (n && g) {
-      g.setAttribute('transform', `translate(${drag.at.x - n.x} ${drag.at.y - n.y})`);
+    for (const id of drag.ids) {
+      const n = itemOf(id), g = svg.querySelector(`:is(g.node, g.note)[id="${CSS.escape(id)}"]`);
+      if (!n || !g) continue;
+      const at = dragAt(drag, id);
+      g.setAttribute('transform', `translate(${at.x - n.x} ${at.y - n.y})`);
       g.classList.toggle('lm-edit-bad', !!drag.bad);
     }
   }
+  const moveOps = (d) => d.ids.map((id) => ({ op: 'pos', id, ...dragAt(d, id) }));
 
   // ---------- pointer ----------
   host.addEventListener('pointerdown', (e) => {
@@ -387,9 +424,15 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const edge = !g && t.closest('g.edge');
       if (g && itemOf(g.id) && itemOf(g.id).kind !== 'legend') {
         const n = itemOf(g.id);
-        drag = { kind: 'move', start, base, id: g.id, off: { x: p.x - n.x, y: p.y - n.y }, at: { x: n.x, y: n.y } };
+        // a box of the selection takes the others along (with Shift, any box does)
+        const chosen = selectedIds();
+        const ids = chosen.includes(g.id) ? chosen : e.shiftKey ? [...chosen, g.id] : [g.id];
+        const orig = new Map(ids.map((id) => [id, { x: itemOf(id).x, y: itemOf(id).y }]));
+        drag = { kind: 'move', start, base, id: g.id, ids, orig, shift: e.shiftKey, off: { x: p.x - n.x, y: p.y - n.y }, at: { x: n.x, y: n.y } };
       } else if (edge) {
         drag = { kind: 'bend', start, base, from: edge.dataset.from, to: edge.dataset.to, p, line: lineAt(edge, e) };
+      } else if (e.shiftKey) {
+        drag = { kind: 'box', start, a: p, b: p }; // Shift on the map: select a rectangle
       } else {
         return; // the background: a pan, and a click clears the selection
       }
@@ -418,12 +461,15 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const at = snap({ x: p.x - drag.off.x, y: p.y - drag.off.y }, e);
       if (at.x === drag.at.x && at.y === drag.at.y) return;
       drag.at = at;
-      drag.bad = blocked(drag.id, at);
+      const moving = new Set(drag.ids);
+      const boxes = groupBoxes();
+      drag.bad = drag.ids.some((id) => blocked(id, dragAt(drag, id), itemOf(id), moving, boxes));
       moved();
-      if (sel?.kind !== 'node' || sel.id !== drag.id) sel = { kind: 'node', id: drag.id, mode: 'move' };
+      if (drag.ids.length > 1) { if (sel?.kind !== 'nodes' || sel.ids.length !== drag.ids.length) selectIds(drag.ids); }
+      else if (sel?.kind !== 'node' || sel.id !== drag.id) sel = { kind: 'node', id: drag.id, mode: 'move' };
       placeDragged();
       draw();
-      if (!drag.bad) tryPreview({ op: 'pos', id: drag.id, x: at.x, y: at.y });
+      if (!drag.bad) tryPreview(moveOps(drag));
     } else if (drag.kind === 'size') {
       // the sides the handle names follow the pointer; the others stay
       const q = snap(p, e), r = { ...drag.rect }, dir = drag.dir;
@@ -446,6 +492,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       moved();
       draw();
       tryPreview({ op: 'via', from: drag.from, to: drag.to, points: drag.points });
+    } else if (drag.kind === 'box') {
+      drag.b = p;
+      draw();
     } else if (drag.ghost) {
       drag.ghost.b = p;
       draw();
@@ -470,7 +519,13 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (twice) { sel = { kind: 'via', from: d.from, to: d.to, i: d.i }; remove(); return; }
       // a click on the selection switches its mode
       const again = sel && sel.kind !== 'via' && (d.kind === 'move' ? sel.id === d.id : sel.from === d.from && sel.to === d.to);
-      if (d.kind === 'move') {
+      if (d.kind === 'move' && d.shift) {
+        // Shift+click: the box joins the selection, or leaves it
+        const ids = selectedIds();
+        selectIds(ids.includes(d.id) ? ids.filter((x) => x !== d.id) : [...ids, d.id]);
+      } else if (d.kind === 'move' && sel?.kind === 'nodes') {
+        sel = { kind: 'node', id: d.id, mode: 'move' };
+      } else if (d.kind === 'move') {
         const sizable = itemOf(d.id)?.kind !== 'legend';
         sel = { kind: 'node', id: d.id, mode: again && sel.mode !== 'size' && sizable ? 'size' : 'move' };
       } else if (d.kind === 'bend') {
@@ -485,9 +540,13 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       onChange?.();
       return;
     }
-    if (d.kind === 'move') {
+    if (d.kind === 'box') {
+      const x0 = Math.min(d.a.x, d.b.x), x1 = Math.max(d.a.x, d.b.x), y0 = Math.min(d.a.y, d.b.y), y1 = Math.max(d.a.y, d.b.y);
+      const inside = [...model.items.values()].filter((n) => n.kind !== 'legend' && n.x >= x0 && n.x <= x1 && n.y >= y0 && n.y <= y1).map((n) => n.id);
+      selectIds([...selectedIds(), ...inside]);
+    } else if (d.kind === 'move') {
       if (d.bad) toast('A box cannot sit on another box, or on a container it is not part of');
-      if (d.bad || !apply({ op: 'pos', id: d.id, x: d.at.x, y: d.at.y })) cancelPreview();
+      if (d.bad || !apply(moveOps(d))) cancelPreview();
     } else if (d.kind === 'size') {
       if (d.bad) toast('A box cannot sit on another box, or on a container it is not part of');
       if (!d.size || d.bad || !apply(sizeOps(d))) cancelPreview();
@@ -527,7 +586,15 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     e.stopPropagation();
     if (!(e.target instanceof Element)) return;
     const hit = e.target.closest('[data-handle], g.node, g.note, g.edge');
-    if (!hit && sel) { sel = null; draw(); onChange?.(); }
+    if (hit) return;
+    // a container (its box or its title): the boxes in it (with Shift: added to the selection)
+    const group = e.target.closest('g.group, g.group-tab');
+    const id = group?.classList.contains('group-tab') ? group.dataset.group : group?.id;
+    if (id && model.groups.some((x) => x.id === id)) {
+      selectIds([...(e.shiftKey ? selectedIds() : []), ...membersOf(id)]);
+      draw();
+      onChange?.();
+    } else if (sel && !e.shiftKey) { sel = null; draw(); onChange?.(); }
   }, true);
   host.addEventListener('dblclick', (e) => {
     if (!on || !svg || !(e.target instanceof Element)) return;
@@ -545,7 +612,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       model = m;
       // a selection whose node or edge is gone
       if (sel?.kind === 'node' && !itemOf(sel.id)) sel = null;
-      if (sel && sel.kind !== 'node' && !edgeOf(sel.from, sel.to)) sel = null;
+      if (sel?.kind === 'nodes') selectIds(sel.ids);
+      if (sel && sel.kind !== 'node' && sel.kind !== 'nodes' && !edgeOf(sel.from, sel.to)) sel = null;
       if (sel?.line && !edgeOf(sel.from, sel.to)?.lines.some((l) => l.id === sel.line)) sel = { kind: 'edge', from: sel.from, to: sel.to };
       if (sel?.kind === 'via' && !edgeOf(sel.from, sel.to)?.via[sel.i]) sel = { kind: 'edge', from: sel.from, to: sel.to };
       // the preview asked for last is the map now

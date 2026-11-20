@@ -325,6 +325,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 #map .lm-edit-plus { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 #map .lm-edit-route { fill: none; stroke: var(--accent); stroke-opacity: .2; stroke-linejoin: round; stroke-linecap: round; }
 #map .lm-edit-standin { fill: none; stroke: var(--accent); stroke-width: 3px; stroke-dasharray: 8 5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+#map .lm-edit-box { fill: var(--accent); fill-opacity: .08; stroke: var(--accent); stroke-width: 1px; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
 #map .lm-edit-ghost { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; }
 .edit-bar {
   top: calc(var(--tb-h) + 10px); left: 50%; transform: translateX(-50%); max-width: calc(100vw - 24px);

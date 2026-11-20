@@ -180,7 +180,8 @@ the note, click it to keep the note open beside it, click again (or press `Esc`)
 The studio remembers notes on or off for your next visit. **Edit** (or `E`) changes the map in
 place: drag boxes, bend lines, add, connect, reattach and delete boxes and edges, then undo with
 `Ctrl Z`. Click a selected box again to resize it, a selected edge again to work on the one line
-you clicked instead of the whole bundle. Under `linemap studio` each edit is saved to the DOT file, changing only the lines it
+you clicked instead of the whole bundle. Shift+click, Shift+drag or a click on a container
+selects several boxes, to move together. Under `linemap studio` each edit is saved to the DOT file, changing only the lines it
 must; elsewhere download or copy the edited DOT text, or the page with it baked in. The SVG download is the map as shown:
 hidden lines, through, theme and notes left out. The address keeps these settings and the view,
 so a link reopens the same map (a `notes=` in it wins over the remembered one). Press `?` for keys.
