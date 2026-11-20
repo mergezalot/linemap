@@ -53,8 +53,20 @@ let shown = null;                // { model, base, svg, theme } on screen
 let loadedOnce = false;
 let keepBanner = false;          // the next map leaves the error banner up
 const writeHash = hashWriter();
-// the file's URL goes into the hash only where it can be fetched again
-const hashSrc = () => (isHttp() ? source.current()?.src ?? null : null);
+// the file's URL goes into the hash only where it can be fetched again; a baked-in flow, by its
+// name, everywhere (it needs no fetch)
+const hashSrc = () => {
+  const cur = source.current();
+  if (cur?.flow != null) return cur.name;
+  return isHttp() ? cur?.src ?? null : null;
+};
+// what a #src= names: a baked-in flow by its name, else a URL to fetch
+function openSrc(src) {
+  const i = source.flowNamed(src);
+  if (i < 0) return source.loadUrl(src);
+  source.loadEmbedded(i);
+  return Promise.resolve(true);
+}
 const syncHash = () => writeHash(state.get(), shown ? viewport.getView() : null, hashSrc());
 let linked = null; // { settings, view } of a #src= link typed or clicked, for the file it opens
 
@@ -240,10 +252,10 @@ function updateToolbar() {
 
 // ---------- source ----------
 const source = createSource({
-  onText({ src, fresh }) {
+  onText({ src, flow, fresh }) {
     if (fresh && loadedOnce) {
       // a different file: its own settings (or the link's), fitted view, nothing pinned
-      const link = src ? linked : null;
+      const link = src || flow != null ? linked : null;
       linked = null;
       pendingView = link?.view ?? null;
       highlight.clearPins();
@@ -465,9 +477,10 @@ window.addEventListener('keydown', (e) => {
 // a hash typed or pasted into the address bar, or a #src= link clicked
 window.addEventListener('hashchange', async () => {
   const { settings, view, src } = readHash();
-  if (src && src !== source.current()?.src) {
+  const cur = source.current();
+  if (src && src !== (cur?.flow != null ? cur.name : cur?.src)) {
     linked = { settings, view };
-    if (!(await source.loadUrl(src))) linked = null;
+    if (!(await openSrc(src))) linked = null;
     return;
   }
   if (view && shown) viewport.setView(view); else pendingView = view;
@@ -476,15 +489,16 @@ window.addEventListener('hashchange', async () => {
 
 // ---------- start ----------
 updateToolbar();
-// A #src= link opens that file, also in a page with flows baked in; if it cannot be loaded,
-// the baked-in flows are there as without it. The query is not read: hosts such as Notion's
-// file preview put their own ?src= there. One baked-in flow opens right away; several are
-// offered on the start screen.
+// A #src= link opens that file, also in a page with flows baked in; one that names a baked-in
+// flow opens that flow (picking one puts its name there). If it cannot be loaded, the baked-in
+// flows are there as without it. The query is not read: hosts such as Notion's file preview put
+// their own ?src= there. One baked-in flow opens right away; several are offered on the start
+// screen.
 function openEmbedded() {
   if (embedded.length === 1) source.loadEmbedded(0); else setEmpty(true);
 }
 if (initial.src) {
-  source.loadUrl(initial.src).then((ok) => {
+  openSrc(initial.src).then((ok) => {
     if (ok) source.restoreWatch();
     if (ok || !embedded.length) return;
     keepBanner = embedded.length === 1; // the baked-in flow is drawn under the error, which stays

@@ -773,7 +773,60 @@ console.log('flows baked in (build --embed), under the same CSP');
     nodes: document.querySelectorAll('#map g.node').length,
   }));
   check(second.name === 'webshop.dot' && second.nodes > 5, `menu switches to webshop.dot (${second.nodes} nodes)`);
+  await page.waitForTimeout(400); // the hash is written after 250 ms
+  check(new URL(page.url()).hash.startsWith('#src=webshop.dot'), `picking a baked-in flow puts its name in the hash (${new URL(page.url()).hash})`);
+  // a reload keeps the pick: no start screen, nothing fetched, one map drawn
+  const fetched = [];
+  page.on('request', (r) => { if (r.url().endsWith('.dot')) fetched.push(r.url()); });
+  await page.addInitScript(() => {
+    window.__maps = 0;
+    new MutationObserver((ms) => { for (const m of ms) if (m.target.id === 'map') for (const n of m.addedNodes) if (n.nodeName === 'svg') window.__maps++; })
+      .observe(document, { childList: true, subtree: true });
+  });
+  page.errors.length = 0; // the start screen's look for the repo's examples, before
+  await page.reload();
+  await ready(page);
+  await page.waitForTimeout(800);
+  const reloaded = await page.evaluate(() => ({
+    name: document.querySelector('#file-name .name').textContent,
+    empty: !document.getElementById('empty').hidden,
+    maps: window.__maps,
+    hash: location.hash,
+  }));
+  check(reloaded.name === 'webshop.dot' && !reloaded.empty && !(await bannerShown(page)), `a reload opens the flow the hash names (${reloaded.name})`);
+  check(reloaded.maps === 1 && reloaded.hash.startsWith('#src=webshop.dot'), `drawn once, the hash kept (${reloaded.maps} maps, ${reloaded.hash})`);
+  // a #src= naming the other flow switches to it, with the link's settings
+  await rerun(page, () => page.evaluate(() => { location.hash = '#src=postal.dot&through=all'; }));
+  await page.waitForTimeout(400);
+  const lf = await page.evaluate(() => ({
+    name: document.querySelector('#file-name .name').textContent,
+    mode: document.querySelector('#through [aria-checked="true"]').dataset.mode,
+    hash: location.hash,
+  }));
+  check(lf.name === 'postal.dot' && lf.mode === 'all' && lf.hash.startsWith('#src=postal.dot&through=all'), `a #src= change opens that baked-in flow with its settings (${lf.name}, ${lf.hash})`);
+  check(!fetched.length, `baked-in flows are not fetched (${fetched.join(', ')})`);
+  check(page.errors.length === 0, `no page errors (${page.errors.join('; ')})`);
   await page.close();
+
+  // from file:// too: the hash names the flow, and a load with it opens that flow
+  {
+    const file = path.join(here, '..', 'dist', '_smoke-embed-file.html');
+    fs.writeFileSync(file, await embedHtml('webshop.dot', 'postal.dot'));
+    const fp = await newPage();
+    await fp.goto(pathToFileURL(file).href);
+    await fp.waitForSelector('#empty .flows:not([hidden]) [data-flow]');
+    await fp.click('#empty [data-flow="1"]');
+    await ready(fp);
+    await fp.waitForTimeout(400);
+    const h = new URL(fp.url()).hash;
+    await fp.goto('about:blank');
+    await fp.goto(pathToFileURL(file).href + '#src=webshop.dot');
+    await ready(fp);
+    const n = await fp.evaluate(() => document.querySelector('#file-name .name').textContent);
+    check(h.startsWith('#src=postal.dot') && n === 'webshop.dot', `from file:// as well (${h}; opened ${n})`);
+    await fp.close();
+    fs.rmSync(file);
+  }
 }
 
 await browser.close();

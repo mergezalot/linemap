@@ -172,7 +172,7 @@ pnpm studio                     # serves http://localhost:8000/studio.html#src=e
 pnpm export a.dot b.dot -o flows.html   # bakes flows into the page, e.g. for Notion
 ```
 
-Open a file with the toolbar, by dropping it on the page, by pasting DOT text, or with `#src=` in the address, also in a page with flows baked in.
+Open a file with the toolbar, by dropping it on the page, by pasting DOT text, or with `#src=` in the address, also in a page with flows baked in; there, a flow you pick is kept in the address too (`#src=flow.dot`), so a reload or a shared link shows it.
 **Watch** redraws on every save (for a file the studio serves, as under `linemap studio`). The legend hides and solos lines; the toolbar switches lines
 through nodes and the theme without moving any box. **Notes** off (or `N`) draws the map
 without the notes, like `--notes hide`, and puts a badge for each in its node: hover it to read

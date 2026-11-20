@@ -24,19 +24,19 @@ export const isHttp = () => /^https?:$/.test(location.protocol);
 const baseName = (s) => decodeURIComponent(String(s).split(/[?#]/)[0].split('/').pop() || s);
 const looksLikeDot = (t) => /^\s*(\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*|#[^\n]*\n\s*)*(strict\s+)?(di)?graph\b/i.test(t);
 
-// onText({ text, name, src, fresh }): fresh = a different file (fit the view, reset settings);
-// otherwise a reload of the same one. onError(title, message).
-// embedded: [{ name, text }] baked into the page.
+// onText({ text, name, src, flow, fresh }): fresh = a different file (fit the view, reset
+// settings); otherwise a reload of the same one. onError(title, message).
+// embedded: [{ name, text }] baked into the page; flow is the index of the one shown, if any.
 export function createSource({ onText, onError, onWatch, embedded = [] }) {
-  let current = null; // { text, name, src }
+  let current = null; // { text, name, src, flow }
   let watchTimer = 0;
   let polling = false;
 
-  function emit(text, name, src, fresh, { keep = true } = {}) {
+  function emit(text, name, src, fresh, { keep = true, flow = null } = {}) {
     const changed = !current || current.text !== text || current.name !== name;
-    current = { text, name, src };
+    current = { text, name, src, flow };
     if (changed && keep) remember(text, name, src);
-    onText({ text, name, src, fresh });
+    onText({ text, name, src, flow, fresh });
   }
 
   // URLs with Watch on, most recent first, as absolute URLs (the same file under ./x and x).
@@ -94,8 +94,10 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
     const f = embedded[i];
     if (!f) return;
     setWatch(false);
-    emit(f.text, f.name, null, true, { keep: false });
+    emit(f.text, f.name, null, true, { keep: false, flow: i });
   }
+  // the baked-in flow a #src= names (its name), or -1
+  const flowNamed = (src) => (src ? embedded.findIndex((f) => f.name === src) : -1);
 
   // Watching polls the src URL and re-runs when its text changed (only over http).
   // remember: the user switched it, so a page reload on this URL watches it (or not).
@@ -162,7 +164,7 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
   }
 
   return {
-    loadUrl, loadFile, loadText, loadEmbedded, reload,
+    loadUrl, loadFile, loadText, loadEmbedded, flowNamed, reload,
     embedded: () => embedded, setWatch, bindDrop, bindPaste,
     // on page load only: watch the file just loaded if it was watched when the page was left
     restoreWatch: () => { if (current?.src && watched().includes(watchKey(current.src))) setWatch(true); },
