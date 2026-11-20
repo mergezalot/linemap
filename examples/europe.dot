@@ -1,0 +1,851 @@
+// The railways of Europe as a line map: 242 cities pinned on a grid close to where they lie, and
+// 132 long-distance routes, real or nearly so, each its own line. The big example for testing the
+// studio's speed: everything is pinned, there are no containers, and the router finds all 355
+// routes between the pins. Brig, where the Simplon, the Lötschberg and the Glacier Express
+// cross, sits south-west of the middle.
+digraph europe {
+  subgraph lines {                               // order = lane order in every bundle
+    ES1  [label="Eurostar London to Amsterdam",         color="#a51d1d"]
+    ES2  [label="Eurostar London to Paris",             color="#26d95a"]
+    NOR  [label="Nord Express",                         color="#7d22bf"]
+    MED  [label="Paris to the Côte d'Azur",             color="#a5941d"]
+    SUD  [label="Sud Express",                          color="#26bbd9"]
+    BRE  [label="Bretagne",                             color="#bf2277"]
+    LOI  [label="Normandie to the Loire",               color="#3fa51d"]
+    EST  [label="Magistrale Paris to München",          color="#2e26d9"]
+    CAP  [label="Le Capitole",                          color="#bf5622"]
+    GSU  [label="Grand Sud",                            color="#1da572"]
+    FRE  [label="Fréjus",                               color="#ca26d9"]
+    SIM  [label="Simplon-Orient",                       color="#9ebf22"]
+    LOE  [label="Lötschberg",                           color="#1d61a5"]
+    GLA  [label="Glacier Express",                      color="#d9264b"]
+    GOT  [label="Gotthard",                             color="#22bf2f"]
+    CH1  [label="Genève to München",                    color="#501da5"]
+    CAT  [label="Catalan Talgo",                        color="#d99e26"]
+    VAU  [label="Vauban",                               color="#22bfb9"]
+    RJX  [label="Railjet Zürich to Budapest",           color="#a51d82"]
+    BRN  [label="Brenner and the Adriatic",             color="#78d926"]
+    FRC  [label="Frecciarossa",                         color="#223bbf"]
+    TIR  [label="Tirrenica",                            color="#a52e1d"]
+    RHE  [label="Rheingold",                            color="#26d971"]
+    HWI  [label="Hamburg to Wien",                      color="#9122bf"]
+    BMU  [label="Berlin to München",                    color="#a4a51d"]
+    BAM  [label="Berlin to Amsterdam",                  color="#26a4d9"]
+    LDR  [label="Luxembourg to Dresden",                color="#bf2263"]
+    VIN  [label="Vindobona",                            color="#2ea51d"]
+    OSL  [label="Berlin to Oslo",                       color="#4526d9"]
+    NPI  [label="Nordpilen",                            color="#bf6a22"]
+    BAL  [label="Baltic coast",                         color="#1da583"]
+    BER  [label="Bergensbanen",                         color="#d926d1"]
+    NOR2 [label="Norway north to south",                color="#8abf22"]
+    NLD  [label="Norrland",                             color="#1d4fa5"]
+    RBA  [label="Rail Baltica",                         color="#d92634"]
+    HAN  [label="Hańcza",                               color="#22bf43"]
+    KYI  [label="Berlin to Kyiv",                       color="#621da5"]
+    CMK  [label="Gdańsk to Kraków",                     color="#d9b426"]
+    E30  [label="Szczecin to Lviv",                     color="#22b1bf"]
+    BAD  [label="Baltic to Adriatic",                   color="#a51d71"]
+    KOS  [label="Nürnberg to Košice",                   color="#61d926"]
+    TAU  [label="Tauern",                               color="#2227bf"]
+    SPL  [label="Wien to Split",                        color="#a5401d"]
+    AGR  [label="Košice to Rijeka",                     color="#26d988"]
+    BAR  [label="Budapest to the Adriatic",             color="#a522bf"]
+    TRA  [label="Traianus",                             color="#93a51d"]
+    DAC  [label="Dacia",                                color="#268dd9"]
+    PRI  [label="Prietenia",                            color="#bf224e"]
+    HEL  [label="Hellas",                               color="#1da51e"]
+    BLK  [label="Thessaloniki to the Black Sea",        color="#5b26d9"]
+    UKR  [label="Košice to Odesa",                      color="#bf7e22"]
+    NER  [label="Neretva",                              color="#1da595"]
+    AVE  [label="AVE Sevilla to Barcelona",             color="#d926ba"]
+    MDC  [label="Mediterranean corridor",               color="#76bf22"]
+    GAL  [label="Galicia to València",                  color="#1d3ea5"]
+    CAN  [label="Bilbao to Málaga",                     color="#d92f26"]
+    ATL  [label="Atlantic axis",                        color="#22bf57"]
+    LUS  [label="Lusitania",                            color="#731da5"]
+    WCM  [label="West Coast main line",                 color="#d9cb26"]
+    ECM  [label="East Coast main line",                 color="#229dbf"]
+    XCO  [label="Cross Country",                        color="#a51d60"]
+    TPE  [label="TransPennine",                         color="#4ad926"]
+    GWR  [label="Great Western",                        color="#3022bf"]
+    IRM  [label="Irish Mail",                           color="#a5511d"]
+    ENT  [label="Enterprise",                           color="#26d99f"]
+    HIG  [label="Highland",                             color="#ba22bf"]
+    NJP  [label="Nightjet Paris to Wien",               color="#82a51d"]
+    ESL  [label="European Sleeper",                     color="#2676d9"]
+    NJZ  [label="Nightjet Hamburg to Zürich",           color="#bf223a"]
+    NJR  [label="Nightjet Wien to Roma",                color="#1da52f"]
+    SNO  [label="Snälltåget Stockholm to Berlin",       color="#7226d9"]
+    NAR  [label="Night train Stockholm to Narvik",      color="#bf9222"]
+    MAL  [label="Malmbanan",                            color="#1da3a5"]
+    NLB  [label="Nordlandsbanen",                       color="#d926a3"]
+    SCE  [label="Santa Claus Express",                  color="#62bf22"]
+    PMO  [label="Paris to Moskva",                      color="#1d2da5"]
+    ALG  [label="Allegro",                              color="#d94626"]
+    RAR  [label="Red Arrow",                            color="#22bf6b"]
+    LAT  [label="Latvijas Ekspresis",                   color="#841da5"]
+    VMO  [label="Vilnius to Moskva",                    color="#cfd926"]
+    POL  [label="Polonez",                              color="#2289bf"]
+    TSP  [label="Tallinn to Sankt-Peterburg",           color="#a51d4e"]
+    SXL  [label="Sud Express Lisboa to Hendaye",        color="#33d926"]
+    AMA  [label="AVE Madrid to Marseille",              color="#4422bf"]
+    TPB  [label="TGV Paris to Barcelona",               color="#a5621d"]
+    TBL  [label="Le Train Bleu",                        color="#26d9b6"]
+    LYR  [label="TGV Lyria Paris to Zürich",            color="#bf22b0"]
+    PMI  [label="TGV Paris to Milano",                  color="#70a51d"]
+    EMA  [label="Eurostar London to Marseille",         color="#2660d9"]
+    NRV  [label="Night Riviera",                        color="#bf2226"]
+    CAL  [label="Caledonian Sleeper",                   color="#1da541"]
+    XAP  [label="Cross Country Aberdeen to Penzance",   color="#8926d9"]
+    JKI  [label="Jan Kiepura",                          color="#bfa622"]
+    CHO  [label="Chopin",                               color="#1d92a5"]
+    KWI  [label="Kyiv to Wien",                         color="#d9268c"]
+    ICN  [label="Intercity Notte Milano to Palermo",    color="#4dbf22"]
+    ADR  [label="Frecciarossa Milano to Lecce",         color="#1f1da5"]
+    VSO  [label="Venice Simplon-Orient-Express",        color="#d95d26"]
+    ORI  [label="Orient Express",                       color="#22bf7f"]
+    BOS  [label="Bosphorus Express",                    color="#961da5"]
+    IST  [label="Ister",                                color="#b9d926"]
+    OPT  [label="Optima Express",                       color="#2275bf"]
+    BOE  [label="Balt-Orient Express",                  color="#a51d3d"]
+    OSU  [label="Öresundståg",                          color="#26d930"]
+    DKI  [label="Aarhus to København",                  color="#5822bf"]
+    THA  [label="Thalys Paris to Amsterdam",            color="#a5741d"]
+    ICB  [label="ICE Bruxelles to Frankfurt",           color="#26d9cc"]
+    TBM  [label="TGV Bruxelles to Marseille",           color="#bf229c"]
+    RRH  [label="TGV Rhin-Rhône",                       color="#5fa51d"]
+    ABC  [label="Alvia Barcelona to A Coruña",          color="#2649d9"]
+    MNI  [label="Moskva to Nice",                       color="#bf3122"]
+    STR  [label="Strizh",                               color="#1da552"]
+    NJB  [label="Nightjet Berlin to Bruxelles",         color="#a026d9"]
+    KAL  [label="Kálmán Imre",                          color="#bfbb22"]
+    EFM  [label="EuroCity Frankfurt to Milano",         color="#1d81a5"]
+    CIS  [label="Cisalpino Genève to Venezia",          color="#d92675"]
+    ALF  [label="Alfa Pendular",                        color="#39bf22"]
+    WWA  [label="Wiener Walzer",                        color="#301da5"]
+    OWE  [label="Ostend-Wien Express",                  color="#d97326"]
+    VFL  [label="Vogelfluglinie",                       color="#22bf93"]
+    BKO  [label="Bratislava to Košice",                 color="#a51da3"]
+    FIL  [label="Filia-Dostluk Express",                color="#a2d926"]
+    NJG  [label="Nightjet Zürich to Zagreb",            color="#2261bf"]
+    LIS  [label="Lisinski",                             color="#a51d2c"]
+    PMV  [label="Porta Moravica",                       color="#26d947"]
+    AHH  [label="Aarhus to Hamburg",                    color="#6c22bf"]
+    VNA  [label="Frecciarossa Venezia to Napoli",       color="#a5851d"]
+    HCH  [label="Highland Chieftain",                   color="#26ced9"]
+    CEV  [label="Le Cévenol",                           color="#bf2288"]
+    BEX  [label="Bernina Express",                      color="#4ea51d"]
+    BLX  [label="Baltic Express",                       color="#2632d9"]
+    BBA  [label="Bilbao to Barcelona",                  color="#bf4522"]
+  }
+
+  // ---- Cities: one grid cell is 260 x 150 px, about 50 km -----------------------------
+  node [width=1.8, height=0.75]
+
+  // Iberia
+  lisboa       [label="Lisboa",           pos="0,8400"]
+  porto        [label="Porto",            pos="0,7500"]
+  vigo         [label="Vigo",             pos="0,7200"]
+  coruna       [label="A Coruña",         pos="0,6750"]
+  coimbra      [label="Coimbra",          pos="0,7800"]
+  faro         [label="Faro",             pos="260,8850"]
+  badajoz      [label="Badajoz",          pos="260,8250"]
+  madrid       [label="Madrid",           pos="1040,7800"]
+  sevilla      [label="Sevilla",          pos="520,8850"]
+  malaga       [label="Málaga",           pos="1040,9000"]
+  cordoba      [label="Córdoba",          pos="780,8550"]
+  granada      [label="Granada",          pos="1040,8850"]
+  murcia       [label="Murcia",           pos="1560,8550"]
+  alicante     [label="Alicante",         pos="1820,8400"]
+  valencia     [label="València",         pos="1820,8100"]
+  barcelona    [label="Barcelona",        pos="2340,7500"]
+  zaragoza     [label="Zaragoza",         pos="1560,7350"]
+  bilbao       [label="Bilbao",           pos="1300,6900"]
+  valladolid   [label="Valladolid",       pos="780,7350"]
+  leon         [label="León",             pos="520,7050"]
+  irun         [label="Irun",             pos="1560,6900"]
+  salamanca    [label="Salamanca",       pos="520,7650"]
+
+  // France
+  paris        [label="Paris",            pos="2340,4950"]
+  lille        [label="Lille",            pos="2600,4350"]
+  calais       [label="Calais",           pos="2340,4350"]
+  rouen        [label="Rouen",            pos="2080,4800"]
+  lehavre      [label="Le Havre",         pos="1820,4800"]
+  rennes       [label="Rennes",           pos="1560,5250"]
+  brest        [label="Brest",            pos="780,5100"]
+  nantes       [label="Nantes",           pos="1560,5550"]
+  tours        [label="Tours",            pos="2080,5550"]
+  orleans      [label="Orléans",          pos="2340,5250"]
+  bordeaux     [label="Bordeaux",         pos="1820,6300"]
+  toulouse     [label="Toulouse",         pos="2080,6750"]
+  montpellier  [label="Montpellier",      pos="2860,6750"]
+  narbonne     [label="Narbonne",         pos="2600,6900"]
+  perpignan    [label="Perpignan",        pos="2600,7050"]
+  marseille    [label="Marseille",        pos="3120,6900"]
+  nice         [label="Nice",             pos="3380,6750"]
+  lyon         [label="Lyon",             pos="2860,6000"]
+  dijon        [label="Dijon",            pos="2860,5550"]
+  strasbourg   [label="Strasbourg",       pos="3640,5100"]
+  metz         [label="Metz",             pos="3120,4950"]
+  reims        [label="Reims",            pos="2860,4800"]
+  clermont     [label="Clermont-Ferrand", pos="2600,6000"]
+  limoges      [label="Limoges",          pos="2080,6000"]
+  mulhouse     [label="Mulhouse",         pos="3380,5250"]
+  avignon      [label="Avignon",          pos="2860,6600"]
+  chambery     [label="Chambéry",         pos="3120,6000"]
+
+  // Britain and Ireland
+  london       [label="London",           pos="1820,4200"]
+  birmingham   [label="Birmingham",       pos="1560,3750"]
+  manchester   [label="Manchester",       pos="1300,3450"]
+  liverpool    [label="Liverpool",        pos="1040,3450"]
+  leeds        [label="Leeds",            pos="1560,3450"]
+  york         [label="York",             pos="1560,3300"]
+  newcastle    [label="Newcastle",        pos="1560,3000"]
+  edinburgh    [label="Edinburgh",        pos="1300,2700"]
+  glasgow      [label="Glasgow",          pos="1040,2700"]
+  bristol      [label="Bristol",          pos="1300,4200"]
+  cardiff      [label="Cardiff",          pos="1300,4050"]
+  crewe        [label="Crewe",            pos="1300,3600"]
+  inverness    [label="Inverness",        pos="1040,2100"]
+  aberdeen     [label="Aberdeen",         pos="1300,2250"]
+  plymouth     [label="Plymouth",         pos="1040,4500"]
+  holyhead     [label="Holyhead",         pos="780,3600"]
+  dublin       [label="Dublin",           pos="520,3450"]
+  belfast      [label="Belfast",          pos="520,3150"]
+  cork         [label="Cork",             pos="0,4050"]
+  galway       [label="Galway",           pos="0,3600"]
+  penzance     [label="Penzance",        pos="780,4650"]
+  fortwilliam  [label="Fort William",    pos="780,2400"]
+
+  // Benelux
+  bruxelles    [label="Bruxelles",        pos="2860,4350"]
+  antwerpen    [label="Antwerpen",        pos="2860,4200"]
+  liege        [label="Liège",            pos="3120,4350"]
+  luxembourg   [label="Luxembourg",       pos="3120,4800"]
+  amsterdam    [label="Amsterdam",        pos="2860,3750"]
+  rotterdam    [label="Rotterdam",        pos="2860,4050"]
+  utrecht      [label="Utrecht",          pos="2860,3900"]
+  arnhem       [label="Arnhem",           pos="3120,3900"]
+  oostende     [label="Oostende",        pos="2600,4200"]
+
+  // Germany
+  berlin       [label="Berlin",           pos="4680,3750"]
+  hamburg      [label="Hamburg",          pos="3900,3450"]
+  bremen       [label="Bremen",           pos="3900,3600"]
+  hannover     [label="Hannover",         pos="3900,3900"]
+  koeln        [label="Köln",             pos="3380,4350"]
+  duesseldorf  [label="Düsseldorf",       pos="3380,4200"]
+  dortmund     [label="Dortmund",         pos="3640,4200"]
+  frankfurt    [label="Frankfurt",        pos="3640,4650"]
+  mannheim     [label="Mannheim",         pos="3640,4800"]
+  karlsruhe    [label="Karlsruhe",        pos="3640,4950"]
+  stuttgart    [label="Stuttgart",        pos="3900,4950"]
+  muenchen     [label="München",          pos="4160,5250"]
+  nuernberg    [label="Nürnberg",         pos="4160,4800"]
+  wuerzburg    [label="Würzburg",         pos="3900,4650"]
+  leipzig      [label="Leipzig",          pos="4420,4200"]
+  dresden      [label="Dresden",          pos="4680,4200"]
+  erfurt       [label="Erfurt",           pos="4160,4350"]
+  kassel       [label="Kassel",           pos="3900,4200"]
+  fulda        [label="Fulda",            pos="3900,4500"]
+  ulm          [label="Ulm",              pos="3900,5100"]
+  freiburg     [label="Freiburg",         pos="3640,5250"]
+  rostock      [label="Rostock",          pos="4420,3300"]
+  kiel         [label="Kiel",             pos="3900,3150"]
+  muenster     [label="Münster",          pos="3640,4050"]
+  osnabrueck   [label="Osnabrück",        pos="3640,3900"]
+  magdeburg    [label="Magdeburg",        pos="4160,3900"]
+  regensburg   [label="Regensburg",       pos="4420,4950"]
+  saarbruecken [label="Saarbrücken",      pos="3380,4800"]
+  luebeck      [label="Lübeck",           pos="4160,3300"]
+  passau       [label="Passau",           pos="4680,5100"]
+  flensburg    [label="Flensburg",        pos="3900,3000"]
+
+  // Switzerland
+  brig         [label="Brig",             pos="3640,5850"]
+  basel        [label="Basel",            pos="3380,5400"]
+  zuerich      [label="Zürich",           pos="3900,5250"]
+  bern         [label="Bern",             pos="3380,5550"]
+  lausanne     [label="Lausanne",         pos="3380,5700"]
+  geneve       [label="Genève",           pos="3120,5850"]
+  olten        [label="Olten",            pos="3640,5400"]
+  luzern       [label="Luzern",           pos="3640,5550"]
+  chur         [label="Chur",             pos="3900,5700"]
+  lugano       [label="Lugano",           pos="3900,6000"]
+  bellinzona   [label="Bellinzona",       pos="3900,5850"]
+  stgallen     [label="St. Gallen",       pos="3900,5400"]
+  spiez        [label="Spiez",            pos="3640,5700"]
+  andermatt    [label="Andermatt",        pos="3900,5550"]
+  zermatt      [label="Zermatt",          pos="3380,6000"]
+  stmoritz     [label="St. Moritz",       pos="4160,5850"]
+
+  // Italy
+  domodossola  [label="Domodossola",      pos="3640,6000"]
+  milano       [label="Milano",           pos="3900,6150"]
+  torino       [label="Torino",           pos="3640,6300"]
+  genova       [label="Genova",           pos="3900,6450"]
+  venezia      [label="Venezia",          pos="4420,6150"]
+  verona       [label="Verona",           pos="4160,6150"]
+  bologna      [label="Bologna",          pos="4160,6450"]
+  firenze      [label="Firenze",          pos="4160,6600"]
+  roma         [label="Roma",             pos="4420,7350"]
+  napoli       [label="Napoli",           pos="4680,7650"]
+  bari         [label="Bari",             pos="5200,7500"]
+  pisa         [label="Pisa",             pos="4160,6750"]
+  trieste      [label="Trieste",          pos="4680,6000"]
+  bolzano      [label="Bolzano",          pos="4160,5700"]
+  ancona       [label="Ancona",           pos="4680,6750"]
+  pescara      [label="Pescara",          pos="4680,7050"]
+  reggio       [label="Reggio Calabria",  pos="4940,8550"]
+  palermo      [label="Palermo",          pos="4680,8550"]
+  lecce        [label="Lecce",            pos="5460,7800"]
+  tirano       [label="Tirano",          pos="4160,6000"]
+
+  // Austria
+  wien         [label="Wien",             pos="4940,5250"]
+  salzburg     [label="Salzburg",         pos="4420,5400"]
+  innsbruck    [label="Innsbruck",        pos="4160,5550"]
+  linz         [label="Linz",             pos="4680,5250"]
+  graz         [label="Graz",             pos="4940,5550"]
+  villach      [label="Villach",          pos="4680,5700"]
+
+  // Central Europe
+  praha        [label="Praha",            pos="4680,4650"]
+  brno         [label="Brno",             pos="5200,4950"]
+  ostrava      [label="Ostrava",          pos="5460,4650"]
+  plzen        [label="Plzeň",            pos="4680,4800"]
+  bratislava   [label="Bratislava",       pos="5200,5250"]
+  kosice       [label="Košice",           pos="5980,5100"]
+  zilina       [label="Žilina",           pos="5460,4950"]
+  budapest     [label="Budapest",         pos="5460,5400"]
+  szeged       [label="Szeged",           pos="5720,5850"]
+  debrecen     [label="Debrecen",         pos="5980,5400"]
+  warszawa     [label="Warszawa",         pos="5980,3900"]
+  krakow       [label="Kraków",           pos="5720,4650"]
+  katowice     [label="Katowice",         pos="5460,4500"]
+  wroclaw      [label="Wrocław",          pos="5200,4200"]
+  poznan       [label="Poznań",           pos="5200,3900"]
+  gdansk       [label="Gdańsk",           pos="5460,3150"]
+  szczecin     [label="Szczecin",         pos="4680,3450"]
+  lodz         [label="Łódź",             pos="5720,4050"]
+  lublin       [label="Lublin",           pos="6240,4200"]
+  bialystok    [label="Białystok",        pos="6240,3600"]
+
+  // Balkans
+  ljubljana    [label="Ljubljana",        pos="4680,5850"]
+  zagreb       [label="Zagreb",           pos="4940,6000"]
+  rijeka       [label="Rijeka",           pos="4680,6150"]
+  split        [label="Split",            pos="5200,6750"]
+  beograd      [label="Beograd",          pos="5720,6300"]
+  novisad      [label="Novi Sad",         pos="5720,6150"]
+  nis          [label="Niš",              pos="5980,6900"]
+  sarajevo     [label="Sarajevo",         pos="5460,6600"]
+  mostar       [label="Mostar",           pos="5200,6900"]
+  skopje       [label="Skopje",           pos="5980,7200"]
+  thessaloniki [label="Thessaloniki",     pos="6240,7650"]
+  athina       [label="Athina",           pos="6240,8550"]
+  sofia        [label="Sofia",            pos="6240,7050"]
+  plovdiv      [label="Plovdiv",          pos="6500,7200"]
+  varna        [label="Varna",            pos="7020,6900"]
+  podgorica    [label="Podgorica",        pos="5460,7050"]
+  istanbul     [label="İstanbul",         pos="7280,7650"]
+  ruse         [label="Ruse",            pos="6760,6600"]
+  edirne       [label="Edirne",          pos="6760,7350"]
+  alexandroupoli [label="Alexandroupoli",  pos="6760,7650"]
+
+  // East
+  bucuresti    [label="București",        pos="6760,6450"]
+  cluj         [label="Cluj-Napoca",      pos="6240,5700"]
+  timisoara    [label="Timișoara",        pos="5980,6000"]
+  brasov       [label="Brașov",           pos="6760,6000"]
+  constanta    [label="Constanța",        pos="7280,6600"]
+  iasi         [label="Iași",             pos="7020,5550"]
+  craiova      [label="Craiova",          pos="6240,6450"]
+  kyiv         [label="Kyiv",             pos="7540,4500"]
+  lviv         [label="Lviv",             pos="6500,4650"]
+  chisinau     [label="Chișinău",         pos="7280,5550"]
+  odesa        [label="Odesa",            pos="7540,5700"]
+  vilnius      [label="Vilnius",          pos="6500,3000"]
+  kaunas       [label="Kaunas",           pos="6240,3000"]
+  riga         [label="Rīga",             pos="6500,2400"]
+  tallinn      [label="Tallinn",          pos="6500,1500"]
+  tartu        [label="Tartu",            pos="6760,1800"]
+  arad         [label="Arad",            pos="5980,5850"]
+  brestby      [label="Brest (BY)",      pos="6500,3900"]
+  minsk        [label="Minsk",           pos="7020,3300"]
+  smolensk     [label="Smolensk",        pos="7800,3000"]
+  moskva       [label="Moskva",          pos="8580,2700"]
+  peterburg    [label="Sankt-Peterburg", pos="7280,1350"]
+
+  // Nordics
+  kobenhavn    [label="København",        pos="4420,2700"]
+  malmo        [label="Malmö",            pos="4420,2850"]
+  goteborg     [label="Göteborg",         pos="4420,2100"]
+  stockholm    [label="Stockholm",        pos="5460,1500"]
+  oslo         [label="Oslo",             pos="4160,1350"]
+  bergen       [label="Bergen",           pos="3120,1200"]
+  trondheim    [label="Trondheim",        pos="4160,150"]
+  aarhus       [label="Aarhus",           pos="3900,2550"]
+  odense       [label="Odense",           pos="4160,2850"]
+  fredericia   [label="Fredericia",       pos="3900,2850"]
+  helsinki     [label="Helsinki",         pos="6500,1200"]
+  turku        [label="Turku",            pos="5980,1200"]
+  tampere      [label="Tampere",          pos="6240,750"]
+  linkoping    [label="Linköping",        pos="4940,1800"]
+  sundsvall    [label="Sundsvall",        pos="5200,600"]
+  umea         [label="Umeå",             pos="5720,0"]
+  stavanger    [label="Stavanger",        pos="3120,1650"]
+  kristiansand [label="Kristiansand",     pos="3640,1950"]
+  karlstad     [label="Karlstad",         pos="4680,1500"]
+  gavle        [label="Gävle",           pos="5200,1050"]
+  boden        [label="Boden",           pos="5980,-750"]
+  lulea        [label="Luleå",           pos="6240,-600"]
+  kiruna       [label="Kiruna",          pos="5720,-1350"]
+  narvik       [label="Narvik",          pos="5200,-1500"]
+  bodo         [label="Bodø",            pos="4680,-1200"]
+  oulu         [label="Oulu",            pos="6500,-450"]
+  rovaniemi    [label="Rovaniemi",       pos="6500,-900"]
+
+  // ---- Lines: one chain per route. A hop that another line already runs the other way is
+  // written that way round too, so the two share one edge. -----------------------------------
+
+  // Eurostar London to Amsterdam
+  london -> calais -> lille -> bruxelles -> antwerpen -> rotterdam -> amsterdam [lines=ES1]
+
+  // Eurostar London to Paris
+  london -> calais -> paris [lines=ES2]
+
+  // Nord Express
+  paris -> bruxelles -> liege -> koeln -> duesseldorf -> dortmund -> muenster -> osnabrueck -> bremen -> hamburg [lines=NOR]
+
+  // Paris to the Côte d'Azur
+  paris -> dijon -> lyon -> avignon -> marseille -> nice [lines=MED]
+
+  // Sud Express
+  paris -> tours -> bordeaux -> irun -> valladolid -> madrid [lines=SUD]
+
+  // Bretagne
+  paris -> rennes -> brest [lines=BRE]
+
+  // Normandie to the Loire
+  lehavre -> rouen -> paris -> orleans -> tours -> nantes [lines=LOI]
+
+  // Magistrale Paris to München
+  paris -> reims -> metz -> strasbourg -> karlsruhe -> stuttgart -> ulm -> muenchen [lines=EST]
+
+  // Le Capitole
+  paris -> orleans -> limoges -> toulouse -> narbonne -> perpignan -> barcelona [lines=CAP]
+
+  // Grand Sud
+  bordeaux -> toulouse -> narbonne -> montpellier -> marseille [lines=GSU]
+
+  // Fréjus
+  bordeaux -> limoges -> clermont -> lyon -> chambery -> torino [lines=FRE]
+
+  // Simplon-Orient
+  paris -> dijon -> lausanne -> brig -> domodossola -> milano -> verona -> venezia -> trieste -> ljubljana -> zagreb -> beograd -> nis -> sofia -> plovdiv -> edirne -> istanbul [lines=SIM]
+
+  // Lötschberg
+  basel -> olten -> bern -> spiez -> brig -> domodossola -> milano -> genova [lines=LOE]
+
+  // Glacier Express
+  zermatt -> brig -> andermatt -> chur -> stmoritz [lines=GLA]
+
+  // Gotthard
+  basel -> olten -> luzern -> andermatt -> bellinzona -> lugano -> milano [lines=GOT]
+
+  // Genève to München
+  muenchen -> stgallen -> zuerich -> olten -> bern -> lausanne -> geneve [lines=CH1]
+
+  // Catalan Talgo
+  geneve -> lyon -> avignon -> montpellier [lines=CAT]
+  narbonne -> montpellier [lines=CAT]
+  narbonne -> perpignan -> barcelona [lines=CAT]
+
+  // Vauban
+  bruxelles -> luxembourg -> metz -> strasbourg -> mulhouse -> basel -> zuerich -> chur [lines=VAU]
+
+  // Railjet Zürich to Budapest
+  zuerich -> chur -> innsbruck -> salzburg -> linz -> wien -> budapest [lines=RJX]
+
+  // Brenner and the Adriatic
+  muenchen -> innsbruck -> bolzano -> verona -> bologna -> ancona -> pescara -> bari -> lecce [lines=BRN]
+
+  // Frecciarossa
+  torino -> milano -> bologna -> firenze -> roma -> napoli -> reggio -> palermo [lines=FRC]
+
+  // Tirrenica
+  nice -> genova -> pisa -> roma [lines=TIR]
+
+  // Rheingold
+  basel -> freiburg -> karlsruhe -> mannheim -> frankfurt -> koeln -> duesseldorf -> arnhem -> utrecht -> amsterdam [lines=RHE]
+
+  // Hamburg to Wien
+  hamburg -> hannover -> kassel -> fulda -> wuerzburg -> nuernberg -> regensburg -> passau -> linz -> wien [lines=HWI]
+
+  // Berlin to München
+  berlin -> leipzig -> erfurt -> nuernberg -> muenchen [lines=BMU]
+
+  // Berlin to Amsterdam
+  berlin -> magdeburg -> hannover -> osnabrueck -> amsterdam [lines=BAM]
+
+  // Luxembourg to Dresden
+  luxembourg -> metz -> saarbruecken -> mannheim -> frankfurt -> fulda -> erfurt [lines=LDR]
+  leipzig -> erfurt [lines=LDR]
+  leipzig -> dresden -> wroclaw [lines=LDR]
+
+  // Vindobona
+  hamburg -> berlin -> dresden -> praha -> brno -> bratislava -> budapest [lines=VIN]
+
+  // Berlin to Oslo
+  berlin -> rostock -> kobenhavn -> goteborg -> oslo [lines=OSL]
+
+  // Nordpilen
+  hamburg -> flensburg -> fredericia -> odense -> kobenhavn -> malmo -> linkoping -> stockholm [lines=NPI]
+
+  // Baltic coast
+  gdansk -> szczecin -> rostock -> luebeck -> kiel -> flensburg -> fredericia -> aarhus [lines=BAL]
+
+  // Bergensbanen
+  stockholm -> karlstad -> oslo -> bergen [lines=BER]
+
+  // Norway north to south
+  stavanger -> kristiansand -> oslo -> trondheim -> sundsvall [lines=NOR2]
+
+  // Norrland
+  goteborg -> stockholm -> sundsvall -> umea [lines=NLD]
+
+  // Rail Baltica
+  stockholm -> turku -> tampere -> helsinki -> tallinn -> tartu -> riga -> vilnius [lines=RBA]
+
+  // Hańcza
+  vilnius -> kaunas -> bialystok -> warszawa -> lodz -> wroclaw [lines=HAN]
+
+  // Berlin to Kyiv
+  berlin -> poznan -> warszawa -> lublin -> kyiv [lines=KYI]
+
+  // Gdańsk to Kraków
+  gdansk -> warszawa -> krakow [lines=CMK]
+
+  // Szczecin to Lviv
+  szczecin -> poznan -> wroclaw -> katowice -> krakow -> lviv [lines=E30]
+
+  // Baltic to Adriatic
+  gdansk -> lodz -> katowice -> ostrava -> wien -> graz -> villach -> venezia [lines=BAD]
+
+  // Nürnberg to Košice
+  nuernberg -> plzen -> praha -> ostrava -> zilina -> kosice [lines=KOS]
+
+  // Tauern
+  muenchen -> salzburg -> villach -> ljubljana -> rijeka [lines=TAU]
+
+  // Wien to Split
+  wien -> graz -> zagreb -> split [lines=SPL]
+
+  // Košice to Rijeka
+  kosice -> budapest -> zagreb -> rijeka [lines=AGR]
+
+  // Budapest to the Adriatic
+  budapest -> novisad -> beograd -> podgorica [lines=BAR]
+
+  // Traianus
+  budapest -> szeged -> timisoara -> craiova -> bucuresti [lines=TRA]
+
+  // Dacia
+  budapest -> debrecen -> cluj -> brasov -> bucuresti -> constanta [lines=DAC]
+
+  // Prietenia
+  odesa -> chisinau -> iasi -> bucuresti -> varna [lines=PRI]
+
+  // Hellas
+  beograd -> nis -> skopje -> thessaloniki -> athina [lines=HEL]
+
+  // Thessaloniki to the Black Sea
+  thessaloniki -> sofia -> varna [lines=BLK]
+
+  // Košice to Odesa
+  kosice -> lviv -> kyiv -> odesa [lines=UKR]
+
+  // Neretva
+  zagreb -> sarajevo -> mostar [lines=NER]
+
+  // AVE Sevilla to Barcelona
+  sevilla -> cordoba -> madrid -> zaragoza -> barcelona [lines=AVE]
+
+  // Mediterranean corridor
+  barcelona -> valencia -> alicante -> murcia -> granada [lines=MDC]
+
+  // Galicia to València
+  coruna -> leon -> valladolid -> madrid -> valencia [lines=GAL]
+
+  // Bilbao to Málaga
+  malaga -> cordoba -> madrid -> bilbao [lines=CAN]
+
+  // Atlantic axis
+  lisboa -> coimbra -> porto -> vigo -> coruna [lines=ATL]
+
+  // Lusitania
+  faro -> lisboa -> badajoz -> madrid [lines=LUS]
+
+  // West Coast main line
+  london -> birmingham -> crewe -> glasgow [lines=WCM]
+
+  // East Coast main line
+  london -> york -> newcastle -> edinburgh -> aberdeen [lines=ECM]
+
+  // Cross Country
+  plymouth -> bristol -> birmingham -> leeds [lines=XCO]
+
+  // TransPennine
+  liverpool -> manchester -> leeds -> york [lines=TPE]
+
+  // Great Western
+  london -> bristol -> cardiff [lines=GWR]
+
+  // Irish Mail
+  manchester -> crewe -> holyhead -> dublin -> galway [lines=IRM]
+
+  // Enterprise
+  belfast -> dublin -> cork [lines=ENT]
+
+  // Highland
+  glasgow -> edinburgh -> inverness [lines=HIG]
+
+  // Nightjet Paris to Wien
+  paris -> strasbourg -> karlsruhe -> stuttgart -> ulm -> muenchen -> salzburg -> linz -> wien [lines=NJP]
+
+  // European Sleeper
+  bruxelles -> antwerpen -> rotterdam -> amsterdam [lines=ESL]
+  hannover -> osnabrueck -> amsterdam [lines=ESL]
+  hannover -> berlin -> dresden -> praha [lines=ESL]
+
+  // Nightjet Hamburg to Zürich
+  hamburg -> hannover -> kassel -> fulda [lines=NJZ]
+  basel -> freiburg -> karlsruhe -> mannheim -> frankfurt -> fulda [lines=NJZ]
+  basel -> zuerich [lines=NJZ]
+
+  // Nightjet Wien to Roma
+  wien -> villach -> venezia -> bologna -> firenze -> roma [lines=NJR]
+
+  // Snälltåget Stockholm to Berlin
+  hamburg -> flensburg -> fredericia -> odense -> kobenhavn -> malmo -> linkoping -> stockholm [lines=SNO]
+  hamburg -> berlin [lines=SNO]
+
+  // Night train Stockholm to Narvik
+  stockholm -> gavle -> boden -> kiruna -> narvik [lines=NAR]
+
+  // Malmbanan
+  lulea -> boden -> kiruna -> narvik [lines=MAL]
+
+  // Nordlandsbanen
+  trondheim -> bodo [lines=NLB]
+
+  // Santa Claus Express
+  tampere -> helsinki [lines=SCE]
+  tampere -> oulu -> rovaniemi [lines=SCE]
+
+  // Paris to Moskva
+  paris -> strasbourg -> karlsruhe -> mannheim -> frankfurt -> fulda -> erfurt -> berlin -> poznan -> warszawa -> brestby -> minsk -> smolensk -> moskva [lines=PMO]
+
+  // Allegro
+  helsinki -> peterburg [lines=ALG]
+
+  // Red Arrow
+  peterburg -> moskva [lines=RAR]
+
+  // Latvijas Ekspresis
+  riga -> moskva [lines=LAT]
+
+  // Vilnius to Moskva
+  vilnius -> minsk -> smolensk -> moskva [lines=VMO]
+
+  // Polonez
+  warszawa -> brestby -> minsk -> smolensk -> moskva [lines=POL]
+
+  // Tallinn to Sankt-Peterburg
+  tallinn -> peterburg [lines=TSP]
+
+  // Sud Express Lisboa to Hendaye
+  lisboa -> coimbra -> salamanca -> valladolid [lines=SXL]
+  irun -> valladolid [lines=SXL]
+
+  // AVE Madrid to Marseille
+  madrid -> zaragoza -> barcelona [lines=AMA]
+  narbonne -> perpignan -> barcelona [lines=AMA]
+  narbonne -> montpellier [lines=AMA]
+  avignon -> montpellier [lines=AMA]
+  avignon -> marseille [lines=AMA]
+
+  // TGV Paris to Barcelona
+  paris -> montpellier [lines=TPB]
+  narbonne -> montpellier [lines=TPB]
+  narbonne -> perpignan -> barcelona [lines=TPB]
+
+  // Le Train Bleu
+  calais -> paris -> dijon -> lyon -> avignon -> marseille -> nice [lines=TBL]
+
+  // TGV Lyria Paris to Zürich
+  paris -> mulhouse -> basel -> zuerich [lines=LYR]
+
+  // TGV Paris to Milano
+  paris -> lyon -> chambery -> torino -> milano [lines=PMI]
+
+  // Eurostar London to Marseille
+  london -> calais -> lyon -> avignon -> marseille [lines=EMA]
+
+  // Night Riviera
+  london -> plymouth -> penzance [lines=NRV]
+
+  // Caledonian Sleeper
+  london -> crewe -> edinburgh -> inverness [lines=CAL]
+  glasgow -> edinburgh [lines=CAL]
+  glasgow -> fortwilliam [lines=CAL]
+
+  // Cross Country Aberdeen to Penzance
+  plymouth -> bristol -> birmingham -> leeds -> york -> newcastle -> edinburgh -> aberdeen [lines=XAP]
+  plymouth -> penzance [lines=XAP]
+
+  // Jan Kiepura
+  arnhem -> utrecht -> amsterdam [lines=JKI]
+  arnhem -> dortmund -> hannover -> berlin -> poznan -> warszawa [lines=JKI]
+
+  // Chopin
+  warszawa -> katowice -> ostrava -> wien [lines=CHO]
+
+  // Kyiv to Wien
+  lviv -> kyiv [lines=KWI]
+  lviv -> debrecen [lines=KWI]
+  wien -> budapest -> debrecen [lines=KWI]
+
+  // Intercity Notte Milano to Palermo
+  milano -> genova -> pisa -> roma -> napoli -> reggio -> palermo [lines=ICN]
+
+  // Frecciarossa Milano to Lecce
+  milano -> bologna -> ancona -> pescara -> bari -> lecce [lines=ADR]
+
+  // Venice Simplon-Orient-Express
+  london -> calais -> paris -> basel -> zuerich -> innsbruck -> bolzano -> verona -> venezia [lines=VSO]
+
+  // Orient Express
+  paris -> strasbourg -> karlsruhe -> stuttgart -> ulm -> muenchen -> salzburg -> linz -> wien -> budapest -> szeged -> timisoara -> craiova -> bucuresti [lines=ORI]
+
+  // Bosphorus Express
+  bucuresti -> ruse -> edirne -> istanbul [lines=BOS]
+
+  // Ister
+  budapest -> arad -> brasov -> bucuresti [lines=IST]
+
+  // Optima Express
+  villach -> ljubljana -> zagreb -> beograd -> nis -> sofia -> plovdiv -> edirne [lines=OPT]
+
+  // Balt-Orient Express
+  berlin -> dresden -> praha -> brno -> bratislava -> budapest -> arad -> brasov -> bucuresti [lines=BOE]
+
+  // Öresundståg
+  goteborg -> malmo [lines=OSU]
+  kobenhavn -> malmo [lines=OSU]
+
+  // Aarhus to København
+  fredericia -> aarhus [lines=DKI]
+  fredericia -> odense -> kobenhavn [lines=DKI]
+
+  // Thalys Paris to Amsterdam
+  paris -> bruxelles -> antwerpen -> rotterdam -> amsterdam [lines=THA]
+
+  // ICE Bruxelles to Frankfurt
+  bruxelles -> liege -> koeln [lines=ICB]
+  frankfurt -> koeln [lines=ICB]
+
+  // TGV Bruxelles to Marseille
+  lille -> bruxelles [lines=TBM]
+  lille -> lyon -> avignon -> marseille [lines=TBM]
+
+  // TGV Rhin-Rhône
+  strasbourg -> mulhouse -> dijon -> lyon -> avignon -> marseille [lines=RRH]
+
+  // Alvia Barcelona to A Coruña
+  zaragoza -> barcelona [lines=ABC]
+  zaragoza -> leon [lines=ABC]
+  coruna -> leon [lines=ABC]
+
+  // Moskva to Nice
+  warszawa -> brestby -> minsk -> smolensk -> moskva [lines=MNI]
+  warszawa -> katowice -> ostrava -> wien [lines=MNI]
+  innsbruck -> salzburg -> linz -> wien [lines=MNI]
+  innsbruck -> bolzano -> verona [lines=MNI]
+  milano -> verona [lines=MNI]
+  milano -> genova [lines=MNI]
+  nice -> genova [lines=MNI]
+
+  // Strizh
+  berlin -> poznan -> warszawa -> brestby -> minsk -> smolensk -> moskva [lines=STR]
+
+  // Nightjet Berlin to Bruxelles
+  dortmund -> hannover -> berlin [lines=NJB]
+  dortmund -> koeln [lines=NJB]
+  bruxelles -> liege -> koeln [lines=NJB]
+
+  // Kálmán Imre
+  muenchen -> salzburg -> linz -> wien -> budapest [lines=KAL]
+
+  // EuroCity Frankfurt to Milano
+  basel -> freiburg -> karlsruhe -> mannheim -> frankfurt [lines=EFM]
+  basel -> olten -> luzern -> bellinzona -> lugano -> milano [lines=EFM]
+
+  // Cisalpino Genève to Venezia
+  lausanne -> geneve [lines=CIS]
+  lausanne -> brig -> domodossola -> milano -> verona -> venezia [lines=CIS]
+
+  // Alfa Pendular
+  faro -> lisboa -> coimbra -> porto [lines=ALF]
+
+  // Wiener Walzer
+  basel -> zuerich -> innsbruck -> salzburg -> linz -> wien -> budapest [lines=WWA]
+
+  // Ostend-Wien Express
+  oostende -> bruxelles -> liege -> koeln [lines=OWE]
+  frankfurt -> koeln [lines=OWE]
+  frankfurt -> wuerzburg -> nuernberg -> regensburg -> passau -> linz -> wien [lines=OWE]
+
+  // Vogelfluglinie
+  hamburg -> luebeck -> kobenhavn [lines=VFL]
+
+  // Bratislava to Košice
+  bratislava -> zilina -> kosice [lines=BKO]
+
+  // Filia-Dostluk Express
+  thessaloniki -> alexandroupoli -> istanbul [lines=FIL]
+
+  // Nightjet Zürich to Zagreb
+  zuerich -> innsbruck -> salzburg -> villach -> ljubljana -> zagreb [lines=NJG]
+
+  // Lisinski
+  muenchen -> salzburg -> villach -> ljubljana -> zagreb [lines=LIS]
+
+  // Porta Moravica
+  katowice -> ostrava -> wien -> graz [lines=PMV]
+  katowice -> krakow [lines=PMV]
+
+  // Aarhus to Hamburg
+  hamburg -> flensburg -> fredericia -> aarhus [lines=AHH]
+
+  // Frecciarossa Venezia to Napoli
+  venezia -> bologna -> firenze -> roma -> napoli [lines=VNA]
+
+  // Highland Chieftain
+  london -> york -> newcastle -> edinburgh -> inverness [lines=HCH]
+
+  // Le Cévenol
+  paris -> clermont -> marseille [lines=CEV]
+
+  // Bernina Express
+  chur -> stmoritz -> tirano [lines=BEX]
+
+  // Baltic Express
+  tallinn -> tartu -> riga -> kaunas -> bialystok -> warszawa [lines=BLX]
+
+  // Bilbao to Barcelona
+  bilbao -> zaragoza -> barcelona [lines=BBA]
+}
