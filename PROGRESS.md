@@ -192,8 +192,17 @@ Each is one edit and one undo; the new or kept container's members stay selected
     their centre). A click on a selected box no longer shrinks the selection. Undo clears the
     selection (`step()`); container actions go in the `nodes` branch of `tools()` / `tool(act)`;
     `membersOf(group)` exists. A full smoke run takes 3–5 min.
+  - unit 8 (925efd6, core): ops `moveTo {ids, group}`, `addGroup {id, label, parent}`,
+    `group {id, label, ids, parent}` (id gets `cluster_` prefix), `removeGroup {id}` (drops
+    edges to its box; keeps a plain `subgraph {}` if it set defaults). Ops may return `{ ops }`.
+    Fixed: `rewriteEdges` left a container id as a bare node. Limits: a comment above a moved
+    declaration stays behind; `moveTo` doesn't validate (studio shows parseFlow's error).
+    For unit 9: Merge = `moveTo` members into the kept container (+ `moveEdge` edges to the
+    others' boxes onto it) then `removeGroup` each, one ops array; Split = `group` with the old
+    container's parent; Ungroup = `removeGroup`. Unit 10: `addGroup` quotes labels.
 - Subagents must not use `git stash` or stage examples/ (the user edits them live in `pnpm studio`) (subagent #2 once stashed and popped the whole tree to run
   a check; nothing was lost).
-- In flight: unit 8, then unit 9, with implementer subagent #4 (id below). Subagent #3
-  (a697cb31be7aba239) retired at ~125k after unit 7 (units 8+9 are large).
-- Next: unit 10.
+- Paused 2026-11-21 at the user's request (end of day). Nothing in flight; no subagent or
+  background process running. Subagent #4 (ae4aac41ee91da6fe, ~75k tokens) could be resumed
+  for unit 9 if this session continues; otherwise spawn a fresh one from this file.
+- Next: unit 9, then 10, 11.
