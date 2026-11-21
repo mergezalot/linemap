@@ -9,6 +9,11 @@
 // another box, and Delete takes only it off the edge). Lines… picks the lines of the edge.
 // Several boxes: Shift+click adds or removes one, Shift+drag on the background adds those in the
 // rectangle, a click on a container selects the boxes in it; dragging one of them moves them all.
+// Their adorner sits above them all: Delete · Pin/Unpin all (unpin when every box is pinned,
+// else pin them all) · Resize. A click on one of them (or Resize) resizes them all: the handles
+// are on that box, the others are outlined; while it is dragged every box takes its width and
+// height around its own centre (the dragged one keeps its opposite side, as for one box), and
+// all are pinned, in one edit. Another click on one of them, or Escape, goes back to moving.
 // A plain drag on the background pans (viewport.mjs), as do the middle button (over boxes too),
 // the wheel and one finger on a touch screen.
 // Every change is an editDot op on the flow's text, laid out by check(text) (an error refuses it)
@@ -49,7 +54,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   let on = false;
   let svg = null, model = null;
   // { kind: 'node', id, mode: 'move' | 'size' } | { kind: 'edge', from, to, line? } (line: that
-  // line alone, not the bundle) | { kind: 'via', from, to, i } | { kind: 'nodes', ids } (two or more)
+  // line alone, not the bundle) | { kind: 'via', from, to, i } | { kind: 'nodes', ids, mode?, main? }
+  // (two or more; mode 'size': all take one size, the handles are on box `main`)
   let sel = null;
   let drag = null;
   let adding = false; // Add node: the next click on the map places one
@@ -310,14 +316,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const sizing = sel.mode === 'size';
       const pad = (sizing ? 0 : 6) * u;
       el('rect', { class: `lm-edit-sel${sizing ? ' sizing' : ''}`, x: n.x - n.w / 2 - pad, y: n.y - n.h / 2 - pad, width: n.w + 2 * pad, height: n.h + 2 * pad, rx: sizing ? 0 : 8 * u }, g);
-      if (sizing) {
-        const s = r * 0.85;
-        for (const dir of SIZE_DIRS) {
-          const x = n.x + (dir.includes('w') ? -1 : dir.includes('e') ? 1 : 0) * n.w / 2;
-          const y = n.y + (dir.includes('n') ? -1 : dir.includes('s') ? 1 : 0) * n.h / 2;
-          el('rect', { x: x - s, y: y - s, width: 2 * s, height: 2 * s, class: `lm-edit-handle lm-edit-size lm-edit-size-${dir}`, 'data-handle': 'size', 'data-dir': dir }, g);
-        }
-      } else if (n.kind !== 'legend') {
+      if (sizing) sizeHandles(g, n, r);
+      else if (n.kind !== 'legend') {
         const c = el('g', { class: 'lm-edit-handle lm-edit-connect', 'data-handle': 'connect' }, g);
         const cx = n.x + n.w / 2 + pad + 14 * u;
         el('circle', { cx, cy: n.y, r: r * 1.5 }, c);
@@ -325,11 +325,19 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       }
     }
     if (sel?.kind === 'nodes') {
-      const pad = 6 * u;
+      // in size mode: each box outlined, the handles on the main one; while resized, each at the
+      // dragged size around its own centre (the main one where the pointer has it)
+      const sizing = sel.mode === 'size';
+      const pad = (sizing ? 0 : 6) * u;
       const moving = drag?.kind === 'move' && drag.moved;
+      const resized = drag?.kind === 'size' && drag.moved && drag.size;
       for (const id of sel.ids) {
-        const n = moving && drag.orig.has(id) ? { ...itemOf(id), ...dragAt(drag, id) } : itemOf(id);
-        if (n) el('rect', { class: 'lm-edit-sel', x: n.x - n.w / 2 - pad, y: n.y - n.h / 2 - pad, width: n.w + 2 * pad, height: n.h + 2 * pad, rx: 8 * u }, g);
+        let n = itemOf(id);
+        if (!n) continue;
+        if (moving && drag.orig.has(id)) n = { ...n, ...dragAt(drag, id) };
+        if (resized && drag.ids.includes(id)) n = { ...n, ...drag.size, ...(id === drag.id ? drag.at : {}) };
+        el('rect', { class: `lm-edit-sel${sizing ? ' sizing' : ''}`, x: n.x - n.w / 2 - pad, y: n.y - n.h / 2 - pad, width: n.w + 2 * pad, height: n.h + 2 * pad, rx: sizing ? 0 : 8 * u }, g);
+        if (sizing && id === sel.main) sizeHandles(g, n, r);
       }
     }
     if (drag?.kind === 'box' && drag.moved) {
@@ -368,12 +376,21 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (!drag?.moved) adorner(g, u);
   }
 
+  // the eight size handles on a box's corners and sides
+  function sizeHandles(g, n, r) {
+    const s = r * 0.85;
+    for (const dir of SIZE_DIRS) {
+      const x = n.x + (dir.includes('w') ? -1 : dir.includes('e') ? 1 : 0) * n.w / 2;
+      const y = n.y + (dir.includes('n') ? -1 : dir.includes('s') ? 1 : 0) * n.h / 2;
+      el('rect', { x: x - s, y: y - s, width: 2 * s, height: 2 * s, class: `lm-edit-handle lm-edit-size lm-edit-size-${dir}`, 'data-handle': 'size', 'data-dir': dir }, g);
+    }
+  }
   // A pin mark on every pinned box, under the other handles: where a drag has the box now.
   function pinMarks(g, u) {
     const pr = PIN * u, inset = PIN_IN * u;
     for (const n of model.items.values()) {
       if (!n.pinned || n.kind === 'legend') continue;
-      if ((sel?.kind === 'node' && sel.id === n.id && sel.mode === 'size') || (drag?.kind === 'size' && drag.id === n.id)) continue;
+      if ((sel?.mode === 'size' && selectedIds().includes(n.id)) || (drag?.kind === 'size' && drag.ids.includes(n.id))) continue;
       // too small on screen: the mark would cover it
       if (n.w < 2 * (PIN_IN + PIN) * u || n.h < 2 * (PIN_IN + PIN) * u) continue;
       const at = drag?.kind === 'move' && drag.moved && drag.orig.has(n.id) ? dragAt(drag, n.id) : n;
@@ -402,6 +419,26 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
             : { act: 'pin', icon: 'i-unpin', title: 'Not pinned: click to pin it where it is (P)' },
           { act: 'resize', icon: 'i-resize', on: sizing, title: sizing ? 'Resizing: click to move it again (or click the box)' : 'Resize (or click the box again)' },
           ...(n.kind === 'node' ? [{ act: 'note', icon: 'i-note-add', title: 'Add a note to this box' }] : []),
+        ],
+      };
+    }
+    if (sel?.kind === 'nodes') {
+      // above the bounding box of the boxes
+      const ns = sel.ids.map(itemOf).filter(Boolean);
+      if (!ns.length) return null;
+      const sizing = sel.mode === 'size';
+      const pad = sizing ? 0 : 6 * unit();
+      const all = ns.every((n) => n.pinned);
+      return {
+        at: {
+          x0: Math.min(...ns.map((n) => n.x - n.w / 2)) - pad, y0: Math.min(...ns.map((n) => n.y - n.h / 2)) - pad,
+          x1: Math.max(...ns.map((n) => n.x + n.w / 2)) + pad, y1: Math.max(...ns.map((n) => n.y + n.h / 2)) + pad,
+        },
+        list: [
+          { act: 'delete', icon: 'i-trash', title: `Delete the ${ns.length} boxes and their edges (Del)` },
+          all ? { act: 'unpin', icon: 'i-pin', on: true, title: 'All pinned: click to unpin them, so the layout places them (P)' }
+            : { act: 'pin', icon: 'i-unpin', title: `${ns.some((n) => n.pinned) ? 'Not all' : 'None'} pinned: click to pin them all where they are (P)` },
+          { act: 'resize', icon: 'i-resize', on: sizing, title: sizing ? 'Resizing all to one size: click to move them again (or click one of them)' : 'Resize them all to one size (or click one of them again)' },
         ],
       };
     }
@@ -463,17 +500,20 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (act === 'lines') return editLines();
     if (act === 'note') return addNote();
     if (act === 'pin' || act === 'unpin') return togglePin();
-    if (act === 'resize' && sel?.kind === 'node') {
-      sel = { ...sel, mode: sel.mode === 'size' ? 'move' : 'size' };
+    if (act === 'resize' && sel?.kind === 'node') sel = { ...sel, mode: sel.mode === 'size' ? 'move' : 'size' };
+    if (act === 'resize' && sel?.kind === 'nodes') sel = sel.mode === 'size' ? { kind: 'nodes', ids: sel.ids } : { ...sel, mode: 'size', main: sel.ids[0] };
+    if (act === 'resize') {
       draw();
       onChange?.();
     }
   }
-  // pin the selected box where it is, or unpin it; false when nothing pinnable is selected
+  // pin the selected boxes where they are, or unpin them when all are pinned; false when nothing
+  // pinnable is selected
   function togglePin() {
-    const n = sel?.kind === 'node' && itemOf(sel.id);
-    if (!n || n.kind === 'legend') return false;
-    apply(n.pinned ? { op: 'unpin', id: n.id } : { op: 'pos', id: n.id, x: n.x, y: n.y });
+    const ns = selectedIds().map(itemOf).filter((n) => n && n.kind !== 'legend');
+    if (!ns.length) return false;
+    apply(ns.every((n) => n.pinned) ? ns.map((n) => ({ op: 'unpin', id: n.id }))
+      : ns.filter((n) => !n.pinned).map((n) => ({ op: 'pos', id: n.id, x: n.x, y: n.y })));
     draw();
     onChange?.();
     return true;
@@ -484,7 +524,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function staleEdges() {
     const out = [];
     if (drag.kind === 'move' || drag.kind === 'size') {
-      const at = (id) => (drag.kind === 'size' ? (id === drag.id ? drag.at : null) : drag.orig.has(id) ? dragAt(drag, id) : null);
+      const at = (id) => (drag.kind === 'size' ? (id === drag.id ? drag.at : drag.ids.includes(id) ? itemOf(id) : null) : drag.orig.has(id) ? dragAt(drag, id) : null);
       for (const e of model.edges) {
         const af = at(e.from), bt = at(e.to);
         if (!af && !bt) continue;
@@ -531,9 +571,11 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const ed = edgeOf(handle.dataset.from, handle.dataset.to);
       if (!ed) return;
       drag = { kind: 'via', start, base, from: ed.from, to: ed.to, i: Number(handle.dataset.i), points: ed.via.map((q) => [...q]) };
-    } else if (handle?.dataset.handle === 'size' && sel?.kind === 'node') {
-      const n = itemOf(sel.id);
-      drag = { kind: 'size', start, base, id: sel.id, dir: handle.dataset.dir, rect: { x0: n.x - n.w / 2, y0: n.y - n.h / 2, x1: n.x + n.w / 2, y1: n.y + n.h / 2 } };
+    } else if (handle?.dataset.handle === 'size' && (sel?.kind === 'node' || (sel?.kind === 'nodes' && sel.mode === 'size'))) {
+      // (several boxes: the main one is dragged, the others take its size)
+      const id = sel.kind === 'node' ? sel.id : sel.main, n = itemOf(id);
+      if (!n) return;
+      drag = { kind: 'size', start, base, id, ids: sel.kind === 'nodes' ? [...sel.ids] : [id], dir: handle.dataset.dir, rect: { x0: n.x - n.w / 2, y0: n.y - n.h / 2, x1: n.x + n.w / 2, y1: n.y + n.h / 2 } };
     } else if (handle?.dataset.handle === 'end') {
       const ed = edgeOf(handle.dataset.from, handle.dataset.to);
       if (!ed) return;
@@ -626,7 +668,11 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     }
   });
 
-  const sizeOps = (d) => [{ op: 'size', id: d.id, w: d.size.w, h: d.size.h }, { op: 'pos', id: d.id, x: d.at.x, y: d.at.y }];
+  // every box resized is pinned: the dragged one where the pointer has it, the others at their centres
+  const sizeOps = (d) => d.ids.filter((id) => itemOf(id)).flatMap((id) => {
+    const at = id === d.id ? d.at : { x: Math.round(itemOf(id).x), y: Math.round(itemOf(id).y) };
+    return [{ op: 'size', id, w: d.size.w, h: d.size.h }, { op: 'pos', id, x: at.x, y: at.y }];
+  });
   function end(e) {
     if (!drag) return;
     clearTimeout(previewTimer);
@@ -661,6 +707,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         // Shift+click: the box joins the selection, or leaves it
         const ids = selectedIds();
         selectIds(ids.includes(d.id) ? ids.filter((x) => x !== d.id) : [...ids, d.id]);
+      } else if (d.kind === 'move' && sel?.kind === 'nodes' && sel.ids.includes(d.id)) {
+        // a box of the selection: all of them to size mode (handles on this one), or back to moving
+        sel = sel.mode === 'size' ? { kind: 'nodes', ids: sel.ids } : { kind: 'nodes', ids: sel.ids, mode: 'size', main: d.id };
       } else if (d.kind === 'move' && sel?.kind === 'nodes') {
         sel = { kind: 'node', id: d.id, mode: 'move' };
       } else if (d.kind === 'move') {
@@ -751,7 +800,12 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       model = m;
       // a selection whose node or edge is gone
       if (sel?.kind === 'node' && !itemOf(sel.id)) sel = null;
-      if (sel?.kind === 'nodes') selectIds(sel.ids);
+      if (sel?.kind === 'nodes') {
+        // boxes gone leave the selection; size mode stays (on the first box when the main one went)
+        const { mode, main } = sel;
+        selectIds(sel.ids);
+        if (mode === 'size' && sel) sel = sel.kind === 'nodes' ? { ...sel, mode, main: sel.ids.includes(main) ? main : sel.ids[0] } : { ...sel, mode };
+      }
       if (sel && sel.kind !== 'node' && sel.kind !== 'nodes' && !edgeOf(sel.from, sel.to)) sel = null;
       if (sel?.line && !edgeOf(sel.from, sel.to)?.lines.some((l) => l.id === sel.line)) sel = { kind: 'edge', from: sel.from, to: sel.to };
       if (sel?.kind === 'via' && !edgeOf(sel.from, sel.to)?.via[sel.i]) sel = { kind: 'edge', from: sel.from, to: sel.to };
@@ -807,7 +861,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (drag) { clearTimeout(previewTimer); const d = drag; drag = null; host.classList.remove('dragging'); if (d.base && d.moved) cancelPreview(); draw(); return true; }
       if (adding) { adding = false; host.classList.remove('adding'); onChange?.(); return true; }
       // a mode of the selection: back to the plain one
-      if (sel?.line || sel?.mode === 'size') { sel = sel.line ? { kind: 'edge', from: sel.from, to: sel.to } : { ...sel, mode: 'move' }; draw(); onChange?.(); return true; }
+      if (sel?.line || sel?.mode === 'size') {
+        sel = sel.line ? { kind: 'edge', from: sel.from, to: sel.to } : sel.kind === 'nodes' ? { kind: 'nodes', ids: sel.ids } : { ...sel, mode: 'move' };
+        draw(); onChange?.(); return true;
+      }
       if (sel) { sel = null; draw(); onChange?.(); return true; }
       return false;
     },

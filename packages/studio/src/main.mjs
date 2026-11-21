@@ -293,7 +293,8 @@ function setEditing(on) {
 }
 const HINTS = {
   none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box · Shift+drag the background or click a container to select several · drag the background to pan',
-  nodes: 'Drag one to move them all · Shift+click adds or removes a box · Del removes them',
+  nodes: 'Drag one to move them all · click one again to resize them all · Shift+click adds or removes a box · Del removes them',
+  nodesSize: 'Drag a handle: every box takes that size, each around its centre · click one to move them again · Del removes them',
   node: 'Drag to move · click again to resize · drag the + onto another box to connect them · Del removes the box and its edges',
   size: 'Drag a handle to resize · click again to move · Del removes the box and its edges',
   edge: 'Drag an end onto another box to reattach · click again for the line under the pointer · Lines… picks its lines · Del removes the edge',
@@ -312,8 +313,8 @@ function updateEditBar() {
   el.editDelete.disabled = !sel;
   el.editLines.hidden = !(sel?.kind === 'edge' || sel?.kind === 'via');
   el.editAdd.setAttribute('aria-pressed', String(editor.adding()));
-  const mode = sel?.mode === 'size' ? 'size' : sel?.line ? 'line' : sel?.kind ?? 'none';
-  el.editHint.textContent = (mode === 'line' ? `Line ${editor.lineLabel(sel.line)}: ` : mode === 'nodes' ? `${sel.ids.length} boxes: ` : '') + HINTS[editor.adding() ? 'adding' : mode];
+  const mode = sel?.mode === 'size' ? (sel.kind === 'nodes' ? 'nodesSize' : 'size') : sel?.line ? 'line' : sel?.kind ?? 'none';
+  el.editHint.textContent = (mode === 'line' ? `Line ${editor.lineLabel(sel.line)}: ` : sel?.kind === 'nodes' ? `${sel.ids.length} boxes: ` : '') + HINTS[editor.adding() ? 'adding' : mode];
   const cur = source.current();
   el.editPage.hidden = !(pageHtml && cur?.flow !== null && cur?.flow !== undefined);
   // where the edits go: the file (served by linemap studio), or only this page

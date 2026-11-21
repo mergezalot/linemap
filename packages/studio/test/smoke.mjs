@@ -1153,6 +1153,102 @@ console.log('edit mode, saving to the file (linemap studio)');
     const [a1, b1] = [posOf(text, 'a'), posOf(text, 'b')];
     check(a1[0] === a0[0] && b1[0] === b0[0] && a1[1] - a0[1] === -100 && b1[1] - b0[1] === -100, `dragging one moves both by as much (a ${a0} -> ${a1}, b ${b0} -> ${b1})`);
     await shot(page, 'edit-2d-multi');
+
+    // their adorner, above both: Delete · Unpin all · Resize; Unpin all and Pin all, one undo each
+    const attr = (t, id, k) => new RegExp(`\\n\\s*${id} \\[[^\\]]*\\b${k}=("[^"]*"|[\\d.]+)`).exec(t)?.[1];
+    check(await tools() === 'delete unpin* resize', `two pinned boxes have the adorner Delete · Unpin all · Resize (${await tools()})`);
+    {
+      const r = await page.evaluate(() => {
+        const ad = document.querySelector('#map .lm-edit-adorner').getBoundingClientRect();
+        const sels = [...document.querySelectorAll('#map .lm-edit-sel')].map((x) => x.getBoundingClientRect());
+        const x0 = Math.min(...sels.map((q) => q.left)), x1 = Math.max(...sels.map((q) => q.right));
+        const side = ad.bottom <= Math.min(...sels.map((q) => q.top)) ? 'above' : ad.top >= Math.max(...sels.map((q) => q.bottom)) ? 'below' : 'over';
+        return { side, centred: Math.abs((ad.left + ad.right) / 2 - (x0 + x1) / 2) < 2 };
+      });
+      check(r.side !== 'over' && r.centred, `the adorner of several boxes sits by their bounding box, centred (${JSON.stringify(r)})`);
+    }
+    const pinned = text;
+    await click(await handle('#map .lm-edit-tool[data-act="unpin"]'));
+    text = await changed(pinned, 'unpinning a and b');
+    check(!attr(text, 'a', 'pos') && !attr(text, 'b', 'pos') && await tools() === 'delete pin resize', `Unpin all takes the pos of a and b (${await tools()})`);
+    await page.keyboard.press('Control+z');
+    text = await changed(text, 'undoing unpin all');
+    check(text === pinned, 'one undo pins both again');
+    // only a unpinned: Pin all pins it again, b stays (an undo clears the selection)
+    // (a is under the edit bar now: the wheel brings the boxes down)
+    const mid = await page.evaluate(() => { const r = document.getElementById('map').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+    await page.mouse.move(mid.x, mid.y);
+    await page.mouse.wheel(0, -200);
+    await page.waitForTimeout(400);
+    await click(await nodeAt('a'));
+    await page.keyboard.press('p');
+    text = await changed(pinned, 'unpinning a alone');
+    await page.keyboard.down('Shift');
+    await click(await nodeAt('b'));
+    await page.keyboard.up('Shift');
+    check(/^2 boxes:/.test(await page.textContent('#edit-hint')) && await tools() === 'delete pin resize', `some pinned: the adorner offers Pin all (${await tools()})`);
+    const half = text;
+    await click(await handle('#map .lm-edit-tool[data-act="pin"]'));
+    text = await changed(half, 'pinning all');
+    check(!!attr(text, 'a', 'pos') && attr(text, 'b', 'pos') === attr(pinned, 'b', 'pos') && await tools() === 'delete unpin* resize', `Pin all pins a, b stays (${attr(text, 'a', 'pos')}, ${attr(text, 'b', 'pos')})`);
+    await page.keyboard.press('Control+z');
+    await changed(text, 'undoing pin all');
+    await page.keyboard.press('Control+z');
+    text = await changed(half, 'undoing the unpin of a');
+    check(text === pinned, 'undo twice: as before');
+    await click(await nodeAt('a'));
+    await page.keyboard.down('Shift');
+    await click(await nodeAt('b'));
+    await page.keyboard.up('Shift');
+    check(/^2 boxes:/.test(await page.textContent('#edit-hint')), 'a and b selected again');
+
+    // resize several: a click on a selected box puts them all in size mode, handles on that box
+    await click(await nodeAt('a'));
+    const sizeMode = () => page.evaluate(() => ({
+      handles: document.querySelectorAll('#map .lm-edit-size').length,
+      outlined: document.querySelectorAll('#map .lm-edit-sel.sizing').length,
+      marks: [...document.querySelectorAll('#map .lm-edit-pin')].map((m) => m.dataset.id).sort().join(' '),
+    }));
+    let m = await sizeMode();
+    check(m.handles === 8 && m.outlined === 2 && m.marks === 'c d' && /^2 boxes: Drag a handle/.test(await page.textContent('#edit-hint')) && await tools() === 'delete unpin* resize*',
+      `a click on a selected box: all in size mode, 8 handles, both outlined, no pin marks on them (${JSON.stringify(m)}, ${await tools()})`);
+    before = read();
+    const bPos = attr(before, 'b', 'pos');
+    const se = await handle('#map .lm-edit-size-se'), nw = await handle('#map .lm-edit-size-nw');
+    const step = (await scr(100, 0)).x - (await scr(0, 0)).x;
+    await drag(se, { x: se.x + 0.6 * step, y: se.y + 0.3 * step });
+    text = await changed(before, 'resizing a and b');
+    const nw2 = await handle('#map .lm-edit-size-nw');
+    const same = ['width', 'height'].every((k) => attr(text, 'a', k) && attr(text, 'a', k) === attr(text, 'b', k));
+    check(same && attr(text, 'b', 'pos') === bPos && Math.abs(nw2.x - nw.x) < 4 && Math.abs(nw2.y - nw.y) < 4,
+      `dragging a's se handle gives a and b one size; b keeps its centre, a its nw corner (a ${attr(text, 'a', 'width')}x${attr(text, 'a', 'height')} at ${attr(text, 'a', 'pos')}, b ${attr(text, 'b', 'width')}x${attr(text, 'b', 'height')} at ${attr(text, 'b', 'pos')})`);
+    m = await sizeMode();
+    check(m.handles === 8 && m.outlined === 2, `still in size mode after the resize (${JSON.stringify(m)})`);
+    await page.keyboard.press('Control+z');
+    await changed(text, 'undoing the resize');
+    check(read() === before, 'one undo takes both sizes back');
+    await page.waitForTimeout(300);
+    // a click on one of them: back to moving; Resize in the adorner, then Escape, likewise
+    // (an undo clears the selection: a and b again, in size mode)
+    await click(await nodeAt('a'));
+    await page.keyboard.down('Shift');
+    await click(await nodeAt('b'));
+    await page.keyboard.up('Shift');
+    await click(await nodeAt('a'));
+    check((await sizeMode()).handles === 8, 'a and b in size mode again');
+    await click(await nodeAt('b'));
+    m = await sizeMode();
+    check(m.handles === 0 && /^2 boxes: Drag one/.test(await page.textContent('#edit-hint')), `a click on one of them: back to moving, both still selected (${JSON.stringify(m)})`);
+    await click(await handle('#map .lm-edit-tool[data-act="resize"]'));
+    m = await sizeMode();
+    check(m.handles === 8 && m.outlined === 2, `Resize in the adorner: all in size mode (${JSON.stringify(m)})`);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+    m = await sizeMode();
+    check(m.handles === 0 && /^2 boxes:/.test(await page.textContent('#edit-hint')), `Escape: back to moving, both still selected (${JSON.stringify(m)})`);
+    await page.mouse.move(mid.x, mid.y);
+    await page.mouse.wheel(0, 200);
+    await page.waitForTimeout(400);
     // a click on a container: its boxes (Shift: added)
     await page.keyboard.press('Escape');
     await click(await nodeAt('c'));
