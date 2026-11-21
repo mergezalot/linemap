@@ -1,9 +1,11 @@
 // Pan and zoom by rewriting the SVG's viewBox, so the map stays crisp at every zoom level.
 // The view is a centre (cx, cy, in map units) and a scale s (screen px per map unit); the viewBox
 // always has the stage's aspect ratio, so nothing is letterboxed and the maths stays simple.
-// Panning: a left drag on the map (the edit mode takes the left button for itself, except for
-// touch), the middle button anywhere on the map, or a left drag while Space is held, also over
-// boxes and links. Those two are taken in the capture phase, before anything on the map sees them.
+// Panning: a left drag on the map (in edit mode on the background only: boxes and lines are
+// dragged there, and Shift+drag selects), the middle button anywhere on the map, also over boxes
+// and links (taken in the capture phase, before anything on the map sees it), a plain wheel or a
+// two-finger touchpad scroll (Shift+wheel: sideways). Zooming: Ctrl+wheel (how browsers report a
+// touchpad pinch too), a two-finger pinch on a touch screen, double-click.
 
 const MAX_SCALE = 8;   // 8x of 1:1
 const FIT_PAD = 28;    // screen px around the map when fitting
@@ -122,25 +124,29 @@ export function createViewport({ stage, onChange, avoid = () => null }) {
     animate((t) => { cx = c0.x + (dx / s) * t; cy = c0.y + (dy / s) * t; }, ms);
   }
 
-  // ---- wheel: zoom at the cursor; events within one frame are merged ----
+  // ---- wheel: Ctrl (or Cmd) zooms at the cursor, else it pans; events within one frame are merged ----
   let wheel = null;
   stage.addEventListener('wheel', (e) => {
     if (!svg) return;
     e.preventDefault();
     stop();
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H : 1;
-    // ctrl+wheel is how browsers report a trackpad pinch: small deltas, so a stronger factor
-    const k = e.ctrlKey ? 0.012 : 0.0018;
+    let dx = e.deltaX * unit, dy = e.deltaY * unit;
+    // Shift+wheel: sideways, for a mouse with one wheel (some browsers turn it into deltaX already)
+    if (e.shiftKey && !dx) [dx, dy] = [dy, 0];
     const p = local(e);
     if (!wheel) {
-      wheel = { dy: 0, p };
+      wheel = { dx: 0, dy: 0, zoom: 0, p };
       requestAnimationFrame(() => {
-        const { dy, p: at } = wheel;
+        const { dx, dy, zoom, p: at } = wheel;
         wheel = null;
-        zoomAt(Math.exp(-Math.max(-300, Math.min(300, dy)) * k), at);
+        // a touchpad pinch sends small deltas, a mouse wheel ~100 a notch: at most x1.65 a frame
+        if (zoom) zoomAt(Math.exp(-Math.max(-50, Math.min(50, zoom)) * 0.01), at);
+        if (dx || dy) panBy(dx, dy);
       });
     }
-    wheel.dy += e.deltaY * unit;
+    if (e.ctrlKey || e.metaKey) wheel.zoom += dy;
+    else { wheel.dx += dx; wheel.dy += dy; }
     wheel.p = p;
   }, { passive: false });
 
@@ -153,28 +159,10 @@ export function createViewport({ stage, onChange, avoid = () => null }) {
   const mid = () => { const [a, b] = [...pointers.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
   const dist = () => { const [a, b] = [...pointers.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
 
-  // Space held: the next left press pans, wherever it lands
-  let space = false;
-  let overStage = false;
-  const setSpace = (on) => { space = on; stage.classList.toggle('space-pan', on); };
-  stage.addEventListener('pointerenter', () => { overStage = true; });
-  stage.addEventListener('pointerleave', () => { overStage = false; });
-  window.addEventListener('keydown', (e) => {
-    if (e.key !== ' ' || e.ctrlKey || e.metaKey || e.altKey || !svg) return;
-    if (document.querySelector('dialog[open]') || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
-    // a focused button keeps its Space, unless the pointer is over the map
-    if (!overStage && e.target.closest?.('button, a, [role=button], [role=menuitem]')) return;
-    e.preventDefault();
-    if (!space) setSpace(true);
-  });
-  window.addEventListener('keyup', (e) => { if (e.key === ' ' && space) { e.preventDefault(); setSpace(false); } });
-  window.addEventListener('blur', () => setSpace(false));
-
-  // middle button, or Space + left: a pan, taken before the map (edit mode, links, hover) sees it
+  // the middle button: a pan, taken before the map (edit mode, links, hover) sees it
   stage.addEventListener('pointerdown', (e) => {
     if (!svg || pointers.size || e.target.closest('button, input, .empty')) return;
-    const middle = e.pointerType === 'mouse' && e.button === 1;
-    if (!middle && !(space && e.button === 0)) return;
+    if (e.pointerType !== 'mouse' || e.button !== 1) return;
     e.stopPropagation();
     e.preventDefault();
     press(e, true);
@@ -199,7 +187,7 @@ export function createViewport({ stage, onChange, avoid = () => null }) {
     if (e.target.closest('a, button, input, .empty')) return;
     press(e, false);
   });
-  // forced: a pan press (middle, Space); a click after it is not a click, even without a move
+  // forced: a pan press (the middle button); a click after it is not a click, even without a move
   function press(e, forced) {
     stop();
     pointers.set(e.pointerId, local(e));

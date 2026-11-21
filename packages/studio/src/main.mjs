@@ -291,7 +291,7 @@ function setEditing(on) {
   if (on && innerWidth < 860) setMenu(false);
 }
 const HINTS = {
-  none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box · drag the background or click a container to select several · middle button or Space+drag pans',
+  none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box · Shift+drag the background or click a container to select several · drag the background to pan',
   nodes: 'Drag one to move them all · Shift+click adds or removes a box · Del removes them',
   node: 'Drag to move · click again to resize · drag the + onto another box to connect them · Del removes the box and its edges',
   size: 'Drag a handle to resize · click again to move · Del removes the box and its edges',

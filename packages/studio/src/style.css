@@ -140,8 +140,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 
 /* ---------- stage and map ---------- */
 #stage { position: fixed; inset: var(--tb-h) 0 0 0; touch-action: none; cursor: grab; outline: none; }
-/* Space held: a left drag pans, over anything on the map; while any pan runs, the cursor grabs */
-#stage.space-pan, #stage.space-pan * { cursor: grab !important; }
+/* while any pan runs, the cursor grabs */
 #stage.panning, #stage.panning * { cursor: grabbing !important; }
 #map, #map > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #map > svg { overflow: hidden; user-select: none; -webkit-user-select: none; }
@@ -306,7 +305,6 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .help .copyright { margin-top: 6px; }
 
 /* ---------- edit mode ---------- */
-#map.editing { cursor: default; } /* a drag on the background selects; it does not pan */
 #map.editing g.node, #map.editing g.node *, #map.editing g.note:not(.lm-note-folded), #map.editing g.note:not(.lm-note-folded) * { cursor: move; }
 #map.editing g.edge, #map.editing g.edge * { cursor: crosshair; }
 #map.editing.adding, #map.editing.adding * { cursor: copy !important; }

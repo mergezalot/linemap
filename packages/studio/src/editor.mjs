@@ -7,10 +7,10 @@
 // its corners and sides; the side across from the one dragged stays put, and the node is pinned),
 // an edge between its whole bundle and the one line clicked (whose ends move only that line to
 // another box, and Delete takes only it off the edge). Lines… picks the lines of the edge.
-// Several boxes: Shift+click adds or removes one, a drag on the background selects those in the
-// rectangle (with Shift: adds them), a click on a container selects the boxes in it; dragging one
-// of them moves them all. The background is not dragged to pan here: the middle button, or a left
-// drag with Space held, pans (viewport.mjs), as does one finger on a touch screen.
+// Several boxes: Shift+click adds or removes one, Shift+drag on the background adds those in the
+// rectangle, a click on a container selects the boxes in it; dragging one of them moves them all.
+// A plain drag on the background pans (viewport.mjs), as do the middle button (over boxes too),
+// the wheel and one finger on a touch screen.
 // Every change is an editDot op on the flow's text, laid out by check(text) (an error refuses it)
 // and handed to commit(text); while something is dragged, preview(text) draws the map as it would
 // be, without keeping it: only once the pointer rests (a layout of a big map takes ~100 ms), and
@@ -539,11 +539,11 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         drag = { kind: 'move', start, base, id: g.id, ids, orig, shift: e.shiftKey, off: { x: p.x - n.x, y: p.y - n.y }, at: { x: n.x, y: n.y }, unpin };
       } else if (edge) {
         drag = { kind: 'bend', start, base, from: edge.dataset.from, to: edge.dataset.to, p, line: lineAt(edge, e) };
-      } else if (e.pointerType !== 'touch') {
-        // the background: select a rectangle (a click clears the selection, or picks a container)
-        drag = { kind: 'box', start, a: p, b: p, shift: e.shiftKey };
+      } else if (e.shiftKey && e.pointerType !== 'touch') {
+        // Shift on the background: select a rectangle (a click adds a container's boxes)
+        drag = { kind: 'box', start, a: p, b: p, shift: true };
       } else {
-        return; // a finger on the background: a pan
+        return; // the background: a pan (a click clears the selection, or picks a container)
       }
     }
     e.stopPropagation(); // no pan
