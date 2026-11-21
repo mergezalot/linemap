@@ -38,6 +38,14 @@
     <symbol id="i-merge" viewBox="0 0 16 16"><rect x="1.4" y="2" width="5" height="5" rx="1"/><rect x="9.6" y="2" width="5" height="5" rx="1"/><path d="M3.9 7v1.6L8 11.6l4.1-3V7M8 11.6v2.8"/></symbol>
     <symbol id="i-split" viewBox="0 0 16 16"><rect x="1.4" y="1.6" width="7.4" height="12.8" rx="1.2"/><rect x="3.4" y="6.4" width="3.4" height="3.2" rx=".6"/><path d="M9.4 8h4.6M12 6l2 2-2 2"/></symbol>
     <symbol id="i-ungroup" viewBox="0 0 16 16"><path d="M1.6 5V1.6H5M11 1.6h3.4V5M14.4 11v3.4H11M5 14.4H1.6V11"/><rect x="4" y="4.4" width="4" height="3.2" rx=".6"/><rect x="8" y="8.4" width="4" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-align-left" viewBox="0 0 16 16"><path d="M2.4 1.8v12.4"/><rect x="4.6" y="3.6" width="8.6" height="3.2" rx=".6"/><rect x="4.6" y="9.2" width="5.4" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-align-center" viewBox="0 0 16 16"><path d="M8 1.8v1.8M8 6.8v2.4M8 12.4v1.8"/><rect x="3.4" y="3.6" width="9.2" height="3.2" rx=".6"/><rect x="5.2" y="9.2" width="5.6" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-align-right" viewBox="0 0 16 16"><path d="M13.6 1.8v12.4"/><rect x="2.8" y="3.6" width="8.6" height="3.2" rx=".6"/><rect x="6" y="9.2" width="5.4" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-align-top" viewBox="0 0 16 16"><path d="M1.8 2.4h12.4"/><rect x="3.6" y="4.6" width="3.2" height="8.6" rx=".6"/><rect x="9.2" y="4.6" width="3.2" height="5.4" rx=".6"/></symbol>
+    <symbol id="i-align-middle" viewBox="0 0 16 16"><path d="M1.8 8h1.8M6.8 8h2.4M12.4 8h1.8"/><rect x="3.6" y="3.4" width="3.2" height="9.2" rx=".6"/><rect x="9.2" y="5.2" width="3.2" height="5.6" rx=".6"/></symbol>
+    <symbol id="i-align-bottom" viewBox="0 0 16 16"><path d="M1.8 13.6h12.4"/><rect x="3.6" y="2.8" width="3.2" height="8.6" rx=".6"/><rect x="9.2" y="6" width="3.2" height="5.4" rx=".6"/></symbol>
+    <symbol id="i-space-h" viewBox="0 0 16 16"><path d="M1.8 2v12M14.2 2v12"/><rect x="5.6" y="4.4" width="4.8" height="7.2" rx=".6"/></symbol>
+    <symbol id="i-space-v" viewBox="0 0 16 16"><path d="M2 1.8h12M2 14.2h12"/><rect x="4.4" y="5.6" width="7.2" height="4.8" rx=".6"/></symbol>
     <symbol id="i-node" viewBox="0 0 16 16"><rect x="1.8" y="3.8" width="9.4" height="7" rx="1.6"/><path d="M13 9.6v4.8M10.6 12h4.8"/></symbol>
   </defs>
 </svg>
@@ -134,6 +142,7 @@
 <div id="edit-bar" class="panel edit-bar" role="toolbar" aria-label="Edit" hidden>
   <button id="edit-add" class="btn" aria-pressed="false" title="Add a node: click where it goes (or double-click the map)"><svg class="icon"><use href="#i-node"/></svg><span class="lbl">Node</span></button>
   <button id="edit-lines" class="btn" title="Pick the lines the selected edge carries (L)" hidden><svg class="icon"><use href="#i-menu"/></svg><span class="lbl">Lines…</span></button>
+  <button id="edit-align" class="btn" aria-haspopup="menu" aria-expanded="false" aria-controls="align-menu" title="Align or distribute the boxes selected" hidden><svg class="icon"><use href="#i-align-left"/></svg><span class="lbl">Align</span><svg class="icon small"><use href="#i-chevron"/></svg></button>
   <button id="edit-group" class="btn" title="Group: a new container around the boxes selected" hidden><svg class="icon"><use href="#i-group"/></svg><span class="lbl">Group</span></button>
   <button id="edit-merge" class="btn" title="Merge the containers of the boxes selected into the one clicked first" hidden><svg class="icon"><use href="#i-merge"/></svg><span class="lbl">Merge</span></button>
   <button id="edit-split" class="btn" title="Split: the boxes selected leave their container for a new one beside it" hidden><svg class="icon"><use href="#i-split"/></svg><span class="lbl">Split</span></button>
@@ -152,6 +161,19 @@
   <button id="edit-done" class="btn primary" title="Leave edit mode (E)">Done</button>
 </div>
 <div id="edit-hint" class="edit-hint" hidden></div>
+<!-- Align / distribute, opened from the edit bar or a multi-selection's toolbar (put by its button) -->
+<div id="align-menu" class="popover menu align-menu" role="menu" aria-label="Align or distribute" hidden>
+  <button class="item" role="menuitem" data-how="left"><svg class="icon"><use href="#i-align-left"/></svg><span class="nm">Align left sides</span></button>
+  <button class="item" role="menuitem" data-how="center"><svg class="icon"><use href="#i-align-center"/></svg><span class="nm">Align centres</span></button>
+  <button class="item" role="menuitem" data-how="right"><svg class="icon"><use href="#i-align-right"/></svg><span class="nm">Align right sides</span></button>
+  <hr>
+  <button class="item" role="menuitem" data-how="top"><svg class="icon"><use href="#i-align-top"/></svg><span class="nm">Align tops</span></button>
+  <button class="item" role="menuitem" data-how="middle"><svg class="icon"><use href="#i-align-middle"/></svg><span class="nm">Align middles</span></button>
+  <button class="item" role="menuitem" data-how="bottom"><svg class="icon"><use href="#i-align-bottom"/></svg><span class="nm">Align bottoms</span></button>
+  <hr>
+  <button class="item" role="menuitem" data-how="hspace" title="Equal gaps from left to right; the outermost two stay (three or more boxes)"><svg class="icon"><use href="#i-space-h"/></svg><span class="nm">Distribute horizontally</span></button>
+  <button class="item" role="menuitem" data-how="vspace" title="Equal gaps from top to bottom; the outermost two stay (three or more boxes)"><svg class="icon"><use href="#i-space-v"/></svg><span class="nm">Distribute vertically</span></button>
+</div>
 
 <div class="panel zoom" role="group" aria-label="Zoom">
   <button id="zoom-in" class="btn" title="Zoom in (+)"><svg class="icon"><use href="#i-plus"/></svg></button>
@@ -246,7 +268,7 @@
       <tr><th>Search</th><td><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>F</kbd></td></tr>
       <tr><th>Next theme</th><td><kbd>T</kbd></td></tr>
       <tr><th>Notes on / off</th><td><kbd>N</kbd>; off draws the map without them and puts a badge for each in its node: hover it to read the note, click it to keep the note open, click again to close it. Remembered for your next visit</td></tr>
-      <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; click one of several selected boxes again to give them all one size; their toolbar (and the edit bar) groups them in a new container, merges their containers into the one clicked first, splits them off into a new container, or ungroups a container (click it to select its boxes); a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels; &lt;b&gt; &lt;i&gt; &lt;u&gt; &lt;s&gt; &lt;font color&gt; style its text); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
+      <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; click one of several selected boxes again to give them all one size; Align in their toolbar (and the edit bar) lines them up on a side or centre, or spaces them evenly (the outermost two stay), and pins them; their toolbar (and the edit bar) groups them in a new container, merges their containers into the one clicked first, splits them off into a new container, or ungroups a container (click it to select its boxes); a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels; &lt;b&gt; &lt;i&gt; &lt;u&gt; &lt;s&gt; &lt;font color&gt; style its text); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
       <tr><th>Reload</th><td><kbd>R</kbd></td></tr>
       <tr><th>Open / paste</th><td>drop a file, or paste DOT text anywhere</td></tr>
     </table>

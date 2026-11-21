@@ -27,6 +27,12 @@
 //   Ungroup  they are exactly a container's boxes (the one clicked; else the innermost): it goes,
 //            the boxes stay where they are. Edges to its box go with it.
 // A note moves with the node it is attached to. No drag changes which container a box is in.
+// Align… in that adorner (and the edit bar) opens a small menu (main.mjs; Escape, a click
+// elsewhere or a choice closes it): align their left sides, centres, right sides, tops, middles or
+// bottoms on that line of their bounding box (the line on the grid), or distribute them
+// horizontally or vertically (three or more: the outermost two stay, the others go between them
+// with equal gaps, in the order of their centres). Every box selected is pinned where it ends up
+// (also those that did not move, so the line holds), in one edit (one undo); they stay selected.
 // A plain drag on the background pans (viewport.mjs), as do the middle button (over boxes too),
 // the wheel and one finger on a touch screen.
 // Every change is an editDot op on the flow's text, laid out by check(text) (an error refuses it)
@@ -51,6 +57,7 @@
 // The overlay (selection, handles, adorner, pin marks) is drawn into the map's SVG in map units, after every
 // render; it keeps its size on screen.
 import { editDot, parseFlow } from '@linemap/core';
+import { arrange, DISTRIBUTES } from './arrange.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 const SNAP = 10;        // positions snap to this grid (Alt: no snapping)
@@ -64,7 +71,7 @@ const TOOL_GAP = 8;     // adorner to the selection, screen px (keeps clear of t
 const PIN = 8;          // pin mark radius, screen px
 const PIN_IN = 13;      // pin mark centre from the box's top and right sides, screen px (clear of the corner handles)
 
-export function createEditor({ host, getText, commit, check, preview, cancelPreview, toast, askLabel, askLines, askNote, onChange }) {
+export function createEditor({ host, getText, commit, check, preview, cancelPreview, toast, askLabel, askLines, askNote, openAlign, onChange }) {
   let on = false;
   let svg = null, model = null;
   // { kind: 'node', id, mode: 'move' | 'size' } | { kind: 'edge', from, to, line? } (line: that
@@ -430,6 +437,18 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   }
   const containerActs = { group: groupSel, merge: mergeSel, split: splitSel, ungroup: ungroupSel };
 
+  // Align / distribute (arrange.mjs): every box of the selection is pinned where it ends up (the
+  // aligned line on the grid), in one edit; the selection stays
+  const arrangeable = () => (sel?.kind === 'nodes' ? sel.ids.map(itemOf).filter((n) => n && n.kind !== 'legend') : []);
+  function alignSel(how) {
+    const ns = arrangeable();
+    if (ns.length < (DISTRIBUTES.includes(how) ? 3 : 2)) return false;
+    const ids = [...sel.ids], group = sel.group;
+    const ops = arrange(ns, how, SNAP).map(({ id, x, y }) => ({ op: 'pos', id, x, y }));
+    if (apply(ops)) selectAfter(ids, group);
+    return true;
+  }
+
   // ---------- overlay ----------
   const el = (tag, attrs, parent) => {
     const n = document.createElementNS(NS, tag);
@@ -583,6 +602,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
           all ? { act: 'unpin', icon: 'i-pin', on: true, title: 'All pinned: click to unpin them, so the layout places them (P)' }
             : { act: 'pin', icon: 'i-unpin', title: `${ns.some((n) => n.pinned) ? 'Not all' : 'None'} pinned: click to pin them all where they are (P)` },
           { act: 'resize', icon: 'i-resize', on: sizing, title: sizing ? 'Resizing all to one size: click to move them again (or click one of them)' : 'Resize them all to one size (or click one of them again)' },
+          ...(openAlign ? [{ act: 'align', icon: 'i-align-left', title: 'Align or distribute them…' }] : []),
           ...containerTools(),
         ],
       };
@@ -654,6 +674,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (act === 'delete') return remove();
     if (act === 'lines') return editLines();
     if (act === 'note') return addNote();
+    // the menu (main.mjs) is put by the button
+    if (act === 'align') return openAlign?.(svg.querySelector('.lm-edit-tool[data-act="align"]'));
     if (act === 'pin' || act === 'unpin') return togglePin();
     if (act === 'resize' && sel?.kind === 'node') sel = { ...sel, mode: sel.mode === 'size' ? 'move' : 'size' };
     if (act === 'resize' && sel?.kind === 'nodes') sel = sel.mode === 'size' ? { kind: 'nodes', ids: sel.ids } : { ...sel, mode: 'size', main: sel.ids[0] };
@@ -1005,6 +1027,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     // the container actions that apply to the selection (group, merge, split, ungroup), and one done
     containerActions: () => Object.keys(containerPlan()),
     containerAction: (act) => containerActs[act]?.(),
+    // align ('left', 'center', 'right', 'top', 'middle', 'bottom') or distribute ('hspace',
+    // 'vspace') the boxes selected; how many boxes that takes (0: no several boxes selected)
+    align: alignSel,
+    arrangeable: () => (arrangeable().length >= 2 ? arrangeable().length : 0),
     // unpin every node and note: the layout places them
     unpinAll() {
       const ops = [...model.items.values()].filter((n) => n.pinned && n.kind !== 'legend').map((n) => ({ op: 'unpin', id: n.id }));

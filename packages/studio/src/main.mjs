@@ -28,7 +28,7 @@ const el = {
   flows: $('linemap-flows'),
   edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editLines: $('edit-lines'),
   editPin: $('edit-pin'), editUnpin: $('edit-unpin'),
-  editGroup: $('edit-group'), editMerge: $('edit-merge'), editSplit: $('edit-split'), editUngroup: $('edit-ungroup'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
+  editAlign: $('edit-align'), alignMenu: $('align-menu'), editGroup: $('edit-group'), editMerge: $('edit-merge'), editSplit: $('edit-split'), editUngroup: $('edit-ungroup'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
   editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'), editDone: $('edit-done'),
   labelDialog: $('label-dialog'), noteDialog: $('note-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'),
 };
@@ -94,7 +94,7 @@ const viewport = createViewport({
     const r = el.legend.getBoundingClientRect(), st = el.stage.getBoundingClientRect();
     return { x0: r.left - st.left, y0: r.top - st.top, x1: r.right - st.left, y1: r.bottom - st.top };
   },
-  onChange: () => { highlight?.leave(); syncHash(); editor?.view(); },
+  onChange: () => { highlight?.leave(); syncHash(); editor?.view(); closeAlign(); },
 });
 const highlight = createHighlight({
   host: el.map, tooltip,
@@ -129,6 +129,7 @@ const editor = createEditor({
   askLabel: (opts) => askLabel(el.labelDialog, opts),
   askLines: (lines, checked, title, opts) => askLines(el.linesDialog, lines, checked, title, opts),
   askNote: (title) => askNote(el.noteDialog, `A note on ${title}`),
+  openAlign: (anchor) => toggleAlign(anchor),
   onChange: () => updateEditBar(),
 });
 
@@ -294,7 +295,7 @@ function setEditing(on) {
 }
 const HINTS = {
   none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box · Shift+drag the background or click a container to select several · drag the background to pan',
-  nodes: 'Drag one to move them all · click one again to resize them all · Shift+click adds or removes a box · Del removes them',
+  nodes: 'Drag one to move them all · click one again to resize them all · Align… lines them up · Shift+click adds or removes a box · Del removes them',
   nodesSize: 'Drag a handle: every box takes that size, each around its centre · click one to move them again · Del removes them',
   node: 'Drag to move · click again to resize · drag the + onto another box to connect them · Del removes the box and its edges',
   size: 'Drag a handle to resize · click again to move · Del removes the box and its edges',
@@ -316,6 +317,8 @@ function updateEditBar() {
   // the container actions, where they apply to the boxes selected
   const acts = editor.containerActions();
   for (const [act, b] of [['group', el.editGroup], ['merge', el.editMerge], ['split', el.editSplit], ['ungroup', el.editUngroup]]) b.hidden = !acts.includes(act);
+  el.editAlign.hidden = !editor.arrangeable();
+  if (el.editAlign.hidden) closeAlign();
   el.editAdd.setAttribute('aria-pressed', String(editor.adding()));
   const mode = sel?.mode === 'size' ? (sel.kind === 'nodes' ? 'nodesSize' : 'size') : sel?.line ? 'line' : sel?.kind ?? 'none';
   el.editHint.textContent = (mode === 'line' ? `Line ${editor.lineLabel(sel.line)}: ` : sel?.kind === 'nodes' ? `${sel.ids.length} boxes: ` : '') + HINTS[editor.adding() ? 'adding' : mode];
@@ -344,6 +347,59 @@ el.editLines.addEventListener('click', () => editor.editLines());
 el.editPin.addEventListener('click', () => editor.pinAll());
 el.editUnpin.addEventListener('click', () => editor.unpinAll());
 for (const act of ['group', 'merge', 'split', 'ungroup']) el[`edit${act[0].toUpperCase()}${act.slice(1)}`].addEventListener('click', () => editor.containerAction(act));
+// Align / distribute: a menu by its button (the edit bar's, or the one in the selection's toolbar
+// on the map); Escape, a click elsewhere, a change of the view or a choice closes it. Arrow keys,
+// Home and End move between its items.
+let alignFrom = null; // the button it was opened from
+function closeAlign({ focus = false } = {}) {
+  if (el.alignMenu.hidden) return;
+  el.alignMenu.hidden = true;
+  el.editAlign.setAttribute('aria-expanded', 'false');
+  if (focus && alignFrom === el.editAlign) el.editAlign.focus();
+  alignFrom = null;
+}
+function toggleAlign(anchor) {
+  if (!el.alignMenu.hidden) {
+    // open from the same button (the toolbar's is drawn anew every time): it closes
+    const same = (anchor === el.editAlign) === (alignFrom === el.editAlign);
+    closeAlign();
+    if (same) return;
+  }
+  const n = editor.arrangeable();
+  if (!n || !anchor) return;
+  for (const b of el.alignMenu.querySelectorAll('[data-how$="space"]')) b.disabled = n < 3;
+  alignFrom = anchor;
+  el.alignMenu.hidden = false;
+  el.editAlign.setAttribute('aria-expanded', String(anchor === el.editAlign));
+  // below the button, else above it; within the window sideways
+  const r = anchor.getBoundingClientRect(), m = el.alignMenu.getBoundingClientRect();
+  const top = r.bottom + 6 + m.height <= innerHeight - 4 ? r.bottom + 6 : Math.max(4, r.top - 6 - m.height);
+  el.alignMenu.style.left = `${Math.max(4, Math.min(r.left, innerWidth - 4 - m.width))}px`;
+  el.alignMenu.style.top = `${top}px`;
+  el.alignMenu.querySelector('.item:not(:disabled)')?.focus();
+}
+el.editAlign.addEventListener('click', () => toggleAlign(el.editAlign));
+el.alignMenu.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-how]');
+  if (!b || b.disabled) return;
+  closeAlign({ focus: true });
+  editor.align(b.dataset.how);
+});
+el.alignMenu.addEventListener('keydown', (e) => {
+  const items = [...el.alignMenu.querySelectorAll('.item:not(:disabled)')];
+  const i = items.indexOf(document.activeElement);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: items.length - 1 }[e.key];
+  if (to !== undefined) items[(to + items.length) % items.length]?.focus();
+  else if (e.key === 'Escape' || e.key === 'Tab') closeAlign({ focus: e.key === 'Escape' });
+  else return;
+  if (e.key !== 'Tab') e.preventDefault();
+  e.stopPropagation(); // Escape keeps the selection
+});
+// a press elsewhere closes it (its own button toggles it on the click that follows)
+document.addEventListener('pointerdown', (e) => {
+  if (el.alignMenu.hidden || el.alignMenu.contains(e.target) || e.target.closest?.('#edit-align, [data-act="align"]')) return;
+  closeAlign();
+}, true);
 el.editUndo.addEventListener('click', () => editor.undo());
 el.editRedo.addEventListener('click', () => editor.redo());
 const dotName = () => `${baseName()}.dot`;

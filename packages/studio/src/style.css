@@ -119,6 +119,8 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .menu .head { padding: 6px 8px 4px; color: var(--faint); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
 .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .menu .empty-note { padding: 8px; color: var(--muted); }
+.menu .item:disabled { opacity: .45; cursor: default; background: none; }
+.align-menu { position: fixed; top: 0; left: 0; min-width: 220px; }
 .results { right: 0; width: 320px; max-height: 60vh; overflow-y: auto; }
 .results .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .results mark { background: #fff0b3; color: inherit; border-radius: 2px; }

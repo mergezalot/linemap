@@ -185,7 +185,7 @@ The studio remembers notes on or off for your next visit. **Edit** (or `E`) chan
 place: drag boxes, bend lines, add, connect, reattach and delete boxes and edges, then undo with
 `Ctrl Z`. Click a selected box again to resize it, a selected edge again to work on the one line
 you clicked instead of the whole bundle. Shift+click, Shift+drag or a click on a container
-selects several boxes, to move together, or to group them in a new container, merge their
+selects several boxes, to move together, align or distribute evenly (Align), or to group them in a new container, merge their
 containers, split them off into a new one, or ungroup a container. A note's text may use `<b>`,
 `<i>`, `<u>`, `<s>` and `<font color>`. Under `linemap studio` each edit is saved to the DOT file, changing only the lines it
 must; elsewhere download or copy the edited DOT text, or the page with it baked in. The SVG download is the map as shown:

@@ -1169,7 +1169,7 @@ console.log('edit mode, saving to the file (linemap studio)');
 
     // their adorner, above both: Delete · Unpin all · Resize; Unpin all and Pin all, one undo each
     const attr = (t, id, k) => new RegExp(`\\n\\s*${id} \\[[^\\]]*\\b${k}=("[^"]*"|[\\d.]+)`).exec(t)?.[1];
-    check(await tools() === 'delete unpin* resize', `two pinned boxes have the adorner Delete · Unpin all · Resize (${await tools()})`);
+    check(await tools() === 'delete unpin* resize align', `two pinned boxes have the adorner Delete · Unpin all · Resize (${await tools()})`);
     {
       const r = await page.evaluate(() => {
         const ad = document.querySelector('#map .lm-edit-adorner').getBoundingClientRect();
@@ -1183,7 +1183,7 @@ console.log('edit mode, saving to the file (linemap studio)');
     const pinned = text;
     await click(await handle('#map .lm-edit-tool[data-act="unpin"]'));
     text = await changed(pinned, 'unpinning a and b');
-    check(!attr(text, 'a', 'pos') && !attr(text, 'b', 'pos') && await tools() === 'delete pin resize', `Unpin all takes the pos of a and b (${await tools()})`);
+    check(!attr(text, 'a', 'pos') && !attr(text, 'b', 'pos') && await tools() === 'delete pin resize align', `Unpin all takes the pos of a and b (${await tools()})`);
     await page.keyboard.press('Control+z');
     text = await changed(text, 'undoing unpin all');
     check(text === pinned, 'one undo pins both again');
@@ -1199,11 +1199,11 @@ console.log('edit mode, saving to the file (linemap studio)');
     await page.keyboard.down('Shift');
     await click(await nodeAt('b'));
     await page.keyboard.up('Shift');
-    check(/^2 boxes:/.test(await page.textContent('#edit-hint')) && await tools() === 'delete pin resize', `some pinned: the adorner offers Pin all (${await tools()})`);
+    check(/^2 boxes:/.test(await page.textContent('#edit-hint')) && await tools() === 'delete pin resize align', `some pinned: the adorner offers Pin all (${await tools()})`);
     const half = text;
     await click(await handle('#map .lm-edit-tool[data-act="pin"]'));
     text = await changed(half, 'pinning all');
-    check(!!attr(text, 'a', 'pos') && attr(text, 'b', 'pos') === attr(pinned, 'b', 'pos') && await tools() === 'delete unpin* resize', `Pin all pins a, b stays (${attr(text, 'a', 'pos')}, ${attr(text, 'b', 'pos')})`);
+    check(!!attr(text, 'a', 'pos') && attr(text, 'b', 'pos') === attr(pinned, 'b', 'pos') && await tools() === 'delete unpin* resize align', `Pin all pins a, b stays (${attr(text, 'a', 'pos')}, ${attr(text, 'b', 'pos')})`);
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing pin all');
     await page.keyboard.press('Control+z');
@@ -1223,7 +1223,7 @@ console.log('edit mode, saving to the file (linemap studio)');
       marks: [...document.querySelectorAll('#map .lm-edit-pin')].map((m) => m.dataset.id).sort().join(' '),
     }));
     let m = await sizeMode();
-    check(m.handles === 8 && m.outlined === 2 && m.marks === 'c d' && /^2 boxes: Drag a handle/.test(await page.textContent('#edit-hint')) && await tools() === 'delete unpin* resize*',
+    check(m.handles === 8 && m.outlined === 2 && m.marks === 'c d' && /^2 boxes: Drag a handle/.test(await page.textContent('#edit-hint')) && await tools() === 'delete unpin* resize* align',
       `a click on a selected box: all in size mode, 8 handles, both outlined, no pin marks on them (${JSON.stringify(m)}, ${await tools()})`);
     before = read();
     const bPos = attr(before, 'b', 'pos');
@@ -1371,7 +1371,7 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   subgraph lines { A }
   a [pos="0,0"]
   b [pos="300,0"]
-  subgraph cluster_x { label="X"; c [pos="0,300"]; d [pos="300,300"]; g [pos="600,300"] }
+  subgraph cluster_x { label="X"; c [pos="0,300"]; d [pos="300,300"]; g [pos="500,300"] }
   subgraph cluster_y { label="Y"; e [pos="0,600"]; f [pos="300,600"] }
   a -> b [lines=A]
   b -> c [lines=A]
@@ -1425,7 +1425,7 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
 
   // two top-level boxes: only Group; then exactly a container's boxes: Ungroup
   await pick('a', 'b');
-  check(await tools() === 'delete unpin* resize group' && await bar() === 'group', `two boxes at the top: the adorner offers Group (${await tools()}; bar: ${await bar()})`);
+  check(await tools() === 'delete unpin* resize align group' && await bar() === 'group', `two boxes at the top: the adorner offers Group (${await tools()}; bar: ${await bar()})`);
   let before = read();
   await click(await handle('#map .lm-edit-tool[data-act="group"]'));
   await page.waitForSelector('#label-dialog[open]');
@@ -1435,7 +1435,7 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   let text = await changed(before, 'grouping a and b');
   const pair = body(text, 'cluster_pair');
   check(has(pair, 'a') && has(pair, 'b') && /label = "Pair"/.test(pair), `Group writes a new container around a and b (${pair?.replace(/\s+/g, ' ')})`);
-  check(/^2 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize ungroup' && await bar() === 'ungroup', `its boxes stay selected; now exactly its boxes: Ungroup (${await tools()})`);
+  check(/^2 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize align ungroup' && await bar() === 'ungroup', `its boxes stay selected; now exactly its boxes: Ungroup (${await tools()})`);
   const grouped = text;
   await click(await handle('#map .lm-edit-tool[data-act="ungroup"]'));
   text = await changed(grouped, 'ungrouping Pair');
@@ -1444,7 +1444,7 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
 
   // boxes from X (clicked first) and Y: Merge into X; edges to Y move onto X
   await pick('c', 'e');
-  check(await tools() === 'delete unpin* resize group merge' && await bar() === 'group merge', `boxes from two containers: Group and Merge (${await tools()})`);
+  check(await tools() === 'delete unpin* resize align group merge' && await bar() === 'group merge', `boxes from two containers: Group and Merge (${await tools()})`);
   before = read();
   await click(await handle('#map .lm-edit-tool[data-act="merge"]'));
   text = await changed(before, 'merging Y into X');
@@ -1456,7 +1456,7 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
 
   // two of X's three boxes: Group (inside X) and Split (beside X)
   await pick('c', 'd');
-  check(await tools() === 'delete unpin* resize group split' && await bar() === 'group split', `two of a container's boxes: Group and Split (${await tools()})`);
+  check(await tools() === 'delete unpin* resize align group split' && await bar() === 'group split', `two of a container's boxes: Group and Split (${await tools()})`);
   before = read();
   await click(await handle('#map .lm-edit-tool[data-act="split"]'));
   await page.waitForSelector('#label-dialog[open]');
@@ -1484,7 +1484,7 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   await page.keyboard.press('Escape');
   const corner = await page.evaluate(() => { const r = document.querySelector('#map g.group#cluster_x > rect').getBoundingClientRect(); return { x: r.x + 10, y: r.y + r.height - 10 }; });
   await click(corner);
-  check(/^3 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize ungroup' && await bar() === 'ungroup', `a click on X: its boxes, Ungroup offered (${await tools()})`);
+  check(/^3 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize align ungroup' && await bar() === 'ungroup', `a click on X: its boxes, Ungroup offered (${await tools()})`);
   before = read();
   await page.click('#edit-ungroup');
   text = await changed(before, 'ungrouping X');
@@ -1497,6 +1497,48 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   await page.keyboard.press('Escape');
   await page.waitForTimeout(400);
   check(read() === FLOW, 'Escape in the label dialog groups nothing');
+
+  // Align: a menu from the adorner (and the edit bar); distribute needs three boxes
+  const menu = () => page.evaluate(() => {
+    const m = document.getElementById('align-menu');
+    return m.hidden ? null : { focus: document.activeElement?.dataset.how ?? document.activeElement?.id ?? '', off: [...m.querySelectorAll('[data-how]:disabled')].map((b) => b.dataset.how).join(' ') };
+  });
+  const posOf = (t, id) => { const m = new RegExp(`\\b${id} \\[[^\\]]*pos="(-?[\\d.]+),(-?[\\d.]+)"`).exec(t); return m ? [Number(m[1]), Number(m[2])] : null; };
+  await page.keyboard.press('Escape');
+  await pick('a', 'd');
+  check(await page.isVisible('#edit-align'), 'two boxes: the edit bar offers Align');
+  await click(await handle('#map .lm-edit-tool[data-act="align"]'));
+  let m = await menu();
+  check(m?.focus === 'left' && m.off === 'hspace vspace', `Align in the adorner opens the menu, distribute off for two boxes (${JSON.stringify(m)})`);
+  await page.keyboard.press('Escape');
+  check(!(await menu()) && /^2 boxes:/.test(await hint()), 'Escape closes the menu, the boxes stay selected');
+  await click(await handle('#map .lm-edit-tool[data-act="align"]'));
+  before = read();
+  await page.click('#align-menu [data-how="top"]');
+  text = await changed(before, 'aligning a and d at the top');
+  check(!(await menu()) && posOf(text, 'a')?.[1] === posOf(text, 'd')?.[1] && posOf(text, 'd')?.[0] === 300, `Align tops: one menu choice, a and d on one line (${posOf(text, 'a')}; ${posOf(text, 'd')})`);
+  check(/^2 boxes:/.test(await hint()), 'they stay selected');
+  await undoTo(FLOW, 'undo align');
+  // a press elsewhere closes it
+  await click(await handle('#map .lm-edit-tool[data-act="align"]'));
+  await page.mouse.click(5, 300);
+  await page.waitForTimeout(200);
+  check(!(await menu()), 'a click elsewhere closes the menu');
+  // from the edit bar, by keyboard: distribute c, d, g horizontally (c and g stay)
+  await pick('c', 'd', 'g');
+  await page.focus('#edit-align');
+  await page.keyboard.press('Enter');
+  m = await menu();
+  check(m?.focus === 'left' && m.off === '' && await page.getAttribute('#edit-align', 'aria-expanded') === 'true', `Enter on the edit bar's Align opens the menu, all choices on (${JSON.stringify(m)})`);
+  await page.keyboard.press('End');
+  await page.keyboard.press('ArrowUp');
+  check((await menu())?.focus === 'hspace', 'End and the arrow keys move through the menu');
+  before = read();
+  await page.keyboard.press('Enter');
+  text = await changed(before, 'distributing c, d, g');
+  check(String(posOf(text, 'd')) === '250,300' && String(posOf(text, 'c')) === '0,300' && String(posOf(text, 'g')) === '500,300', `Distribute horizontally: d halfway, c and g stay (${/subgraph cluster_x[^}]*/.exec(text)?.[0].replace(/\s+/g, ' ')})`);
+  check(!(await menu()) && await page.evaluate(() => document.activeElement?.id) === 'edit-align' && /^3 boxes:/.test(await hint()), 'the menu closes, focus back on Align, the boxes stay selected');
+  await undoTo(FLOW, 'undo distribute');
 
   check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join('; ')}` : ''}`);
   await page.close();
