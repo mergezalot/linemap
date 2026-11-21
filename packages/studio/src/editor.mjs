@@ -13,8 +13,9 @@
 // and handed to commit(text); while something is dragged, preview(text) draws the map as it would
 // be, without keeping it: only once the pointer rests (a layout of a big map takes ~100 ms), and
 // meanwhile dashed stand-ins run straight from the dragged box (or through the via points) and
-// the routes they stand in for fade. A box may not land on another box, nor on a container it is not in. Undo and redo step through the texts committed here; any other change of the text
-// (a reload, another file) forgets them.
+// the routes they stand in for fade. Boxes may overlap each other and containers they are not in;
+// a drag never changes which container a box is in. Undo and redo step through the texts committed
+// here; any other change of the text (a reload, another file) forgets them.
 // The overlay (selection, handles) is drawn into the map's SVG in map units, after every render;
 // handles keep their size on screen.
 import { editDot, parseFlow } from '@linemap/core';
@@ -117,30 +118,6 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (!best || b.width * b.height < best.area) best = { id: g.id, area: b.width * b.height };
     }
     return best?.id ?? null;
-  }
-
-  // Would item `id` at `at` sit on another box, or on a container it is not in? Its rectangle with
-  // a margin, against the boxes and containers drawn now.
-  // the containers as drawn now: { id, x0, y0, x1, y1 }
-  const groupBoxes = () => [...svg.querySelectorAll('g.group')].map((g) => {
-    const b = g.querySelector('rect')?.getBBox();
-    return b && { id: g.id, x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height };
-  }).filter(Boolean);
-  function blocked(id, at, size = itemOf(id), moving = new Set([id]), boxes = groupBoxes()) {
-    const n = itemOf(id);
-    const m = 8;
-    const r = { x0: at.x - size.w / 2 - m, y0: at.y - size.h / 2 - m, x1: at.x + size.w / 2 + m, y1: at.y + size.h / 2 + m };
-    const hit = (b) => r.x0 < b.x1 && b.x0 < r.x1 && r.y0 < b.y1 && b.y0 < r.y1;
-    for (const o of model.items.values()) {
-      if (moving.has(o.id) || o.kind === 'legend') continue;
-      if (hit({ x0: o.x - o.w / 2, y0: o.y - o.h / 2, x1: o.x + o.w / 2, y1: o.y + o.h / 2 })) return true;
-    }
-    const homes = new Set();
-    for (let g = n.group; g; g = model.groups.find((x) => x.id === g)?.parent) homes.add(g);
-    // a note may sit inside the containers of its node
-    if (n.kind === 'note' && n.attach) for (let g = itemOf(n.attach)?.group; g; g = model.groups.find((x) => x.id === g)?.parent) homes.add(g);
-    for (const b of boxes) if (!homes.has(b.id) && hit(b)) return true;
-    return false;
   }
 
   // ---------- changes ----------
@@ -386,7 +363,6 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (!n || !g) continue;
       const at = dragAt(drag, id);
       g.setAttribute('transform', `translate(${at.x - n.x} ${at.y - n.y})`);
-      g.classList.toggle('lm-edit-bad', !!drag.bad);
     }
   }
   const moveOps = (d) => d.ids.map((id) => ({ op: 'pos', id, ...dragAt(d, id) }));
@@ -461,15 +437,12 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const at = snap({ x: p.x - drag.off.x, y: p.y - drag.off.y }, e);
       if (at.x === drag.at.x && at.y === drag.at.y) return;
       drag.at = at;
-      const moving = new Set(drag.ids);
-      const boxes = groupBoxes();
-      drag.bad = drag.ids.some((id) => blocked(id, dragAt(drag, id), itemOf(id), moving, boxes));
       moved();
       if (drag.ids.length > 1) { if (sel?.kind !== 'nodes' || sel.ids.length !== drag.ids.length) selectIds(drag.ids); }
       else if (sel?.kind !== 'node' || sel.id !== drag.id) sel = { kind: 'node', id: drag.id, mode: 'move' };
       placeDragged();
       draw();
-      if (!drag.bad) tryPreview(moveOps(drag));
+      tryPreview(moveOps(drag));
     } else if (drag.kind === 'size') {
       // the sides the handle names follow the pointer; the others stay
       const q = snap(p, e), r = { ...drag.rect }, dir = drag.dir;
@@ -480,10 +453,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const size = { w: Math.round(r.x1 - r.x0), h: Math.round(r.y1 - r.y0) };
       const at = { x: Math.round((r.x0 + r.x1) / 2), y: Math.round((r.y0 + r.y1) / 2) };
       if (drag.size && size.w === drag.size.w && size.h === drag.size.h && at.x === drag.at.x && at.y === drag.at.y) return;
-      Object.assign(drag, { size, at, bad: blocked(drag.id, at, size) });
+      Object.assign(drag, { size, at });
       moved();
       draw();
-      if (!drag.bad) tryPreview(sizeOps(drag));
+      tryPreview(sizeOps(drag));
     } else if (drag.kind === 'via') {
       const at = snap(p, e);
       const [x, y] = drag.points[drag.i];
@@ -545,11 +518,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const inside = [...model.items.values()].filter((n) => n.kind !== 'legend' && n.x >= x0 && n.x <= x1 && n.y >= y0 && n.y <= y1).map((n) => n.id);
       selectIds([...selectedIds(), ...inside]);
     } else if (d.kind === 'move') {
-      if (d.bad) toast('A box cannot sit on another box, or on a container it is not part of');
-      if (d.bad || !apply(moveOps(d))) cancelPreview();
+      if (!apply(moveOps(d))) cancelPreview();
     } else if (d.kind === 'size') {
-      if (d.bad) toast('A box cannot sit on another box, or on a container it is not part of');
-      if (!d.size || d.bad || !apply(sizeOps(d))) cancelPreview();
+      if (!d.size || !apply(sizeOps(d))) cancelPreview();
     } else if (d.kind === 'via') {
       if (apply({ op: 'via', from: d.from, to: d.to, points: d.points })) sel = { kind: 'via', from: d.from, to: d.to, i: d.i };
       else cancelPreview();

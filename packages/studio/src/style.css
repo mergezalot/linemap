@@ -427,5 +427,3 @@ body.ui-dark .results mark { background: #5b4a12; }
 body.ui-dark .btn.primary { color: #0b0e13; }
 body.ui-dark .btn.primary:hover { background: #8ab0f4; }
 body.ui-dark .search input:focus { border-color: #3d5a8a; box-shadow: 0 0 0 3px rgba(108, 156, 240, .18); }
-#map g.lm-edit-bad { opacity: .55; }
-#map g.lm-edit-bad :is(rect, path, polygon, circle) { stroke: var(--danger) !important; stroke-width: 3px; }

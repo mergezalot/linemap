@@ -907,11 +907,14 @@ console.log('edit mode, saving to the file (linemap studio)');
     check(read() === kept, 'Esc during the drag keeps the file');
   }
 
-  // a box dropped on another one: refused
+  // a box dropped on another one: boxes may overlap, so it is pinned there; undo takes it back
   before = read();
   await drag(await nodeAt('c'), await nodeAt('b'));
-  await page.waitForTimeout(600);
-  check(read() === before && /cannot sit on another box/.test(await page.textContent('#toast')), 'a box dropped on another box is refused');
+  text = await changed(before, 'dropping c on b');
+  check(/c \[[^\]]*pos="/.test(text) && text !== before, `a box dropped on another box is pinned there (${/c \[[^\]]*\]/.exec(text)?.[0]})`);
+  await page.keyboard.press('Control+z');
+  await changed(text, 'undoing the drop');
+  check(read() === before, 'undo takes the drop back');
 
   // bend an edge: a via point where it was pressed
   before = read();
