@@ -249,6 +249,13 @@ export function route(model) {
     }
     shapes.push(s);
   }
+  // MSAGL hulls a shape that is not a rectangle together with any shape it overlaps, and its hull
+  // code throws; so a diamond that comes near another box (padding included) is handed over as its
+  // bounding box. Its corners, where it connects, lie on that box.
+  const close = (a, b) => Math.abs(a.x - b.x) < (a.w + b.w) / 2 + 2 * padding && Math.abs(a.y - b.y) < (a.h + b.h) / 2 + 2 * padding;
+  for (const s of shapes) {
+    if (s.diamond && shapes.some((o) => o !== s && close(s, o))) s.outline = outline({ ...s, shape: 'box' });
+  }
   for (const c of containers.values()) {
     const children = [...model.items.values()].filter((n) => n.group === c.id).map((n) => n.id)
       .concat(model.groups.filter((g) => g.parent === c.id && containers.has(g.id)).map((g) => g.id));
@@ -302,6 +309,8 @@ export function route(model) {
     });
     e.path = clip(orthogonal(pts), shapeOf(e.from), shapeOf(e.to));
     e.path = slideEnds(e.path, shapeOf(e.from), shapeOf(e.to));
+    // ends on one point (boxes pinned on top of each other): a path of no length, still two points
+    if (e.path.length === 1) e.path.push({ ...e.path[0] });
   }
   model.noteLinks = notes.map(({ note, index }) => {
     const { path, pins } = routes[index];
@@ -310,7 +319,9 @@ export function route(model) {
       if (pins?.[0]) snap(pts, 0, 1, pins[0]);
       if (pins?.[1]) snap(pts, pts.length - 1, pts.length - 2, pins[1]);
     }
-    return { from: note.id, to: note.attach, path: clip(pts, note, model.items.get(note.attach)) };
+    const cut = clip(pts, note, model.items.get(note.attach));
+    if (cut.length === 1) cut.push({ ...cut[0] });
+    return { from: note.id, to: note.attach, path: cut };
   });
   return model;
 }

@@ -252,3 +252,21 @@ test('a container with an empty or blank label has no title; one with no label i
   }
   assert.equal(parseFlow(flow('label=""')).groups[0].label, '');
 });
+
+// Boxes may overlap (the studio lets one be dropped on another), even on the very same point.
+test('boxes pinned on top of each other lay out and render', () => {
+  const flow = (b, at) => `digraph { subgraph lines { A B }
+  a [pos="0,0"]; b [pos="${at}"; shape=${b}]; c [pos="600,300"]; n [shape=note; label="hi"; pos="0,0"]
+  a -> b [lines="A B"]; b -> c [lines=A]; a -> c [lines=B; via="0,0 0,0"]; n -> a }`;
+  for (const shape of ['box', 'diamond', 'cylinder', 'person']) {
+    for (const at of ['0,0', '10,5']) {
+      const model = layout(parseFlow(flow(shape, at)));
+      for (const e of model.edges) {
+        assert.ok(e.path.length >= 2, `${shape} at ${at}: ${e.id} has a path`);
+        assert.ok(e.path.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y)), `${shape} at ${at}: ${e.id} ${JSON.stringify(e.path)}`);
+      }
+      const svg = render(model);
+      assert.doesNotMatch(svg, /NaN|undefined/, `${shape} at ${at}`);
+    }
+  }
+});

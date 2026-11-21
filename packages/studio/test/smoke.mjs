@@ -907,15 +907,15 @@ console.log('edit mode, saving to the file (linemap studio)');
     check(read() === kept, 'Esc during the drag keeps the file');
   }
 
-  // a box dropped on another one: boxes may overlap, so it is pinned there; undo takes it back
-  // (not on the very centre of b: two connected boxes on one point break the layout in core)
+  // a box dropped on another one: boxes may overlap, even on the very same point, so it is pinned
+  // there; undo takes it back
   before = read();
-  {
-    const bc = await nodeAt('b');
-    await drag(await nodeAt('c'), { x: bc.x + 24, y: bc.y + 12 });
-  }
+  await drag(await nodeAt('c'), await nodeAt('b'));
   text = await changed(before, 'dropping c on b');
-  check(/c \[[^\]]*pos="/.test(text) && text !== before, `a box dropped on another box is pinned there (${/c \[[^\]]*\]/.exec(text)?.[0]})`);
+  {
+    const pos = (id) => new RegExp(`\\b${id} \\[[^\\]]*pos="([^"]*)"`).exec(text)?.[1];
+    check(pos('c') && pos('c') === pos('b'), `a box dropped on the centre of another box is pinned there (c ${pos('c')}, b ${pos('b')})`);
+  }
   await page.keyboard.press('Control+z');
   await changed(text, 'undoing the drop');
   check(read() === before, 'undo takes the drop back');
