@@ -1033,14 +1033,33 @@ console.log('edit mode, saving to the file (linemap studio)');
     check(/^2 boxes:/.test(await page.textContent('#edit-hint')), `Shift+click on a container adds its boxes (${(await page.textContent('#edit-hint')).slice(0, 12)})`);
     await click(corner);
     check(!/boxes/.test(await page.textContent('#edit-hint')) && /click again to resize/.test(await page.textContent('#edit-hint')), 'a click on a container selects its boxes (here: d alone)');
-    // Shift+drag on the map: the boxes in the rectangle
+    // a drag on the background: the boxes in the rectangle (no Shift needed)
     await page.keyboard.press('Escape');
     const r0 = await scr(-200, 650), r1 = await scr(720, 250);
-    await page.keyboard.down('Shift');
+    const vbSel = await page.evaluate(() => document.querySelector('#map svg').getAttribute('viewBox'));
     await drag(r0, r1);
-    await page.keyboard.up('Shift');
-    check(/^2 boxes:/.test(await page.textContent('#edit-hint')), 'Shift+drag selects the boxes in the rectangle (c and d)');
+    check(/^2 boxes:/.test(await page.textContent('#edit-hint')), 'a drag on the background selects the boxes in the rectangle (c and d)');
+    check(await page.evaluate(() => document.querySelector('#map svg').getAttribute('viewBox')) === vbSel, 'a drag on the background in edit mode does not pan');
     await page.keyboard.press('Escape');
+
+    // the middle button pans, also over a box, and moves nothing; so does Space + drag
+    const file = read();
+    const vb = () => page.evaluate(() => document.querySelector('#map svg').getAttribute('viewBox'));
+    const v0 = await vb(), c = await nodeAt('c');
+    await page.mouse.move(c.x, c.y);
+    await page.mouse.down({ button: 'middle' });
+    for (let i = 1; i <= 6; i++) { await page.mouse.move(c.x + i * 10, c.y + i * 5); await page.waitForTimeout(20); }
+    await page.mouse.up({ button: 'middle' });
+    const v1 = await vb();
+    check(v1 !== v0 && read() === file, `a middle-button drag over a box pans and moves nothing (${v0} -> ${v1})`);
+    const c1 = await nodeAt('c');
+    await page.keyboard.down(' ');
+    check(await page.evaluate(() => document.getElementById('stage').classList.contains('space-pan')), 'Space held shows the grab cursor');
+    await drag(c1, { x: c1.x - 60, y: c1.y - 30 });
+    await page.keyboard.up(' ');
+    check(await vb() !== v1 && read() === file, 'Space + drag over a box pans and moves nothing');
+    await page.keyboard.press('0');
+    await page.waitForTimeout(300);
   }
 
   // a new box: double-click the map, name it

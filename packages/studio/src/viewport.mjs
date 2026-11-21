@@ -1,6 +1,9 @@
 // Pan and zoom by rewriting the SVG's viewBox, so the map stays crisp at every zoom level.
 // The view is a centre (cx, cy, in map units) and a scale s (screen px per map unit); the viewBox
 // always has the stage's aspect ratio, so nothing is letterboxed and the maths stays simple.
+// Panning: a left drag on the map (the edit mode takes the left button for itself, except for
+// touch), the middle button anywhere on the map, or a left drag while Space is held, also over
+// boxes and links. Those two are taken in the capture phase, before anything on the map sees them.
 
 const MAX_SCALE = 8;   // 8x of 1:1
 const FIT_PAD = 28;    // screen px around the map when fitting
@@ -150,20 +153,57 @@ export function createViewport({ stage, onChange, avoid = () => null }) {
   const mid = () => { const [a, b] = [...pointers.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
   const dist = () => { const [a, b] = [...pointers.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
 
+  // Space held: the next left press pans, wherever it lands
+  let space = false;
+  let overStage = false;
+  const setSpace = (on) => { space = on; stage.classList.toggle('space-pan', on); };
+  stage.addEventListener('pointerenter', () => { overStage = true; });
+  stage.addEventListener('pointerleave', () => { overStage = false; });
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== ' ' || e.ctrlKey || e.metaKey || e.altKey || !svg) return;
+    if (document.querySelector('dialog[open]') || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    // a focused button keeps its Space, unless the pointer is over the map
+    if (!overStage && e.target.closest?.('button, a, [role=button], [role=menuitem]')) return;
+    e.preventDefault();
+    if (!space) setSpace(true);
+  });
+  window.addEventListener('keyup', (e) => { if (e.key === ' ' && space) { e.preventDefault(); setSpace(false); } });
+  window.addEventListener('blur', () => setSpace(false));
+
+  // middle button, or Space + left: a pan, taken before the map (edit mode, links, hover) sees it
+  stage.addEventListener('pointerdown', (e) => {
+    if (!svg || pointers.size || e.target.closest('button, input, .empty')) return;
+    const middle = e.pointerType === 'mouse' && e.button === 1;
+    if (!middle && !(space && e.button === 0)) return;
+    e.stopPropagation();
+    e.preventDefault();
+    press(e, true);
+  }, true);
+  // no autoscroll (or paste, on Linux) from the middle button, and no link opened by it after a pan
+  stage.addEventListener('mousedown', (e) => { if (e.button === 1 && svg) e.preventDefault(); });
+  stage.addEventListener('auxclick', (e) => {
+    if (e.button === 1 && suppressClick) { e.preventDefault(); e.stopPropagation(); suppressClick = false; }
+  }, true);
+
   stage.addEventListener('pointerdown', (e) => {
     if (!svg || (e.pointerType === 'mouse' && e.button !== 0)) return;
     if (e.target.closest('a, button, input, .empty')) return;
+    press(e, false);
+  });
+  // forced: a pan press (middle, Space); a click after it is not a click, even without a move
+  function press(e, forced) {
     stop();
     pointers.set(e.pointerId, local(e));
     if (pointers.size === 1) {
-      drag = { start: local(e), c0: { x: cx, y: cy }, moved: false };
+      drag = { start: local(e), c0: { x: cx, y: cy }, moved: false, forced };
+      if (forced) setPanning(true);
     } else if (pointers.size === 2) {
       drag = null;
       const m = mid();
       pinch = { d0: dist(), s0: s, anchor: toMap(m.x, m.y) };
       setPanning(true);
     }
-  });
+  }
   window.addEventListener('pointermove', (e) => {
     if (!pointers.has(e.pointerId)) return;
     const p = local(e);
@@ -187,7 +227,7 @@ export function createViewport({ stage, onChange, avoid = () => null }) {
   const up = (e) => {
     if (!pointers.has(e.pointerId)) return;
     pointers.delete(e.pointerId);
-    if (drag?.moved || pinch) suppressClick = true;
+    if (drag?.moved || drag?.forced || pinch) suppressClick = true;
     if (pointers.size < 2) pinch = null;
     if (pointers.size === 1) {
       // the finger left down continues as a pan
@@ -239,7 +279,7 @@ export function createViewport({ stage, onChange, avoid = () => null }) {
     // the visible map rectangle
     getView: () => ({ x: cx - W / 2 / s, y: cy - H / 2 / s, w: W / s, h: H / s }),
     setView,
-    isPanning: () => pointers.size > 0 && (!!pinch || !!drag?.moved),
+    isPanning: () => pointers.size > 0 && (!!pinch || !!drag?.moved || !!drag?.forced),
     size: () => ({ w: W, h: H }),
   };
 }

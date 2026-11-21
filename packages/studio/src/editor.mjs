@@ -7,8 +7,10 @@
 // its corners and sides; the side across from the one dragged stays put, and the node is pinned),
 // an edge between its whole bundle and the one line clicked (whose ends move only that line to
 // another box, and Delete takes only it off the edge). Lines… picks the lines of the edge.
-// Several boxes: Shift+click adds or removes one, Shift+drag on the map selects those in the
-// rectangle, a click on a container selects the boxes in it; dragging one of them moves them all.
+// Several boxes: Shift+click adds or removes one, a drag on the background selects those in the
+// rectangle (with Shift: adds them), a click on a container selects the boxes in it; dragging one
+// of them moves them all. The background is not dragged to pan here: the middle button, or a left
+// drag with Space held, pans (viewport.mjs), as does one finger on a touch screen.
 // Every change is an editDot op on the flow's text, laid out by check(text) (an error refuses it)
 // and handed to commit(text); while something is dragged, preview(text) draws the map as it would
 // be, without keeping it: only once the pointer rests (a layout of a big map takes ~100 ms), and
@@ -407,10 +409,11 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         drag = { kind: 'move', start, base, id: g.id, ids, orig, shift: e.shiftKey, off: { x: p.x - n.x, y: p.y - n.y }, at: { x: n.x, y: n.y } };
       } else if (edge) {
         drag = { kind: 'bend', start, base, from: edge.dataset.from, to: edge.dataset.to, p, line: lineAt(edge, e) };
-      } else if (e.shiftKey) {
-        drag = { kind: 'box', start, a: p, b: p }; // Shift on the map: select a rectangle
+      } else if (e.pointerType !== 'touch') {
+        // the background: select a rectangle (a click clears the selection, or picks a container)
+        drag = { kind: 'box', start, a: p, b: p, shift: e.shiftKey };
       } else {
-        return; // the background: a pan, and a click clears the selection
+        return; // a finger on the background: a pan
       }
     }
     e.stopPropagation(); // no pan
@@ -516,7 +519,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (d.kind === 'box') {
       const x0 = Math.min(d.a.x, d.b.x), x1 = Math.max(d.a.x, d.b.x), y0 = Math.min(d.a.y, d.b.y), y1 = Math.max(d.a.y, d.b.y);
       const inside = [...model.items.values()].filter((n) => n.kind !== 'legend' && n.x >= x0 && n.x <= x1 && n.y >= y0 && n.y <= y1).map((n) => n.id);
-      selectIds([...selectedIds(), ...inside]);
+      selectIds([...(d.shift ? selectedIds() : []), ...inside]);
+      // the click that ends this drag selects nothing else, nor clears the selection
+      swallowClick = true;
+      setTimeout(() => { swallowClick = false; }, 0);
     } else if (d.kind === 'move') {
       if (!apply(moveOps(d))) cancelPreview();
     } else if (d.kind === 'size') {
@@ -551,10 +557,12 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   window.addEventListener('pointercancel', end);
 
   // in edit mode a click never pins lines or follows a node's link
+  let swallowClick = false;
   host.addEventListener('click', (e) => {
     if (!on) return;
     e.preventDefault();
     e.stopPropagation();
+    if (swallowClick) { swallowClick = false; return; }
     if (!(e.target instanceof Element)) return;
     const hit = e.target.closest('[data-handle], g.node, g.note, g.edge');
     if (hit) return;
