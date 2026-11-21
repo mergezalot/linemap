@@ -16,16 +16,33 @@
 //   { op: 'moveEdge', from, to, newFrom, newTo }      the same edge (lines, label, via), new ends
 //   { op: 'size', id, w, h }                          a node's or note's size, px (written in inches)
 //   { op: 'lines', from, to, lines: [ids] }           the lines the edge carries, at least one
+// Containers (cluster subgraphs). A node is in the deepest cluster it is mentioned in, so moving
+// it moves its mentions: its node statements go into the new container, and its edges written in
+// a container it leaves go to the deepest container both ends share (an end that stays keeps a bare
+// mention where it was). A note moves with the node it is attached to. Node and edge defaults
+// (`node [...]`) are those where the statement is written now.
+//   { op: 'addGroup', id, label, parent }             an empty container (id starts with `cluster`)
+//                                                     at the end of container `parent`, or the top
+//   { op: 'group', id, label, ids, parent }           a new container holding the nodes `ids`; id:
+//                                                     `cluster_<id>`, unless it starts with cluster
+//   { op: 'moveTo', ids, group }                      the nodes into container `group` (none: the
+//                                                     top of the graph); a container left empty stays
+//   { op: 'removeGroup', id }                         the container goes, its statements are written
+//                                                     in its parent (members and nested containers
+//                                                     move there); edges to its box go. If it sets
+//                                                     node or edge defaults it stays a plain subgraph
 // editDot checks only what it needs to place a change; parseFlow on the result says whether the
 // flow is still valid (a loop, a label conflict, an unknown line).
 import { parse } from '@ts-graphviz/ast';
+import { readDot } from './dot.mjs';
 
 export function editDot(text, ops) {
   for (const op of Array.isArray(ops) ? ops : [ops]) {
     const fn = OPS[op?.op];
     if (!fn) throw new Error(`editDot: unknown op "${op?.op}"`);
-    const doc = scan(text);
-    text = apply(text, fn(doc, op));
+    const out = fn(scan(text), op);
+    // an op may be made of other ops, each applied to the text the one before left
+    text = out.ops ? editDot(text, out.ops) : apply(text, out);
   }
   return text;
 }
@@ -139,24 +156,32 @@ function afterStmt(text, s, piece) {
   const end = L.own && L.comment >= 0 ? L.eol : L.semi ? text.indexOf(';', L.end) + 1 : L.end;
   return { at: end, end, text: L.own ? `\n${L.indent}${piece}` : ` ${piece};` };
 }
-// Put statements at the end of a body (the graph or a subgraph).
-function appendTo(text, body, pieces) {
+// Put statements at the end of a body (the graph or a subgraph). A piece may be a function of the
+// indent its lines get (null: the body is on one line). `gone`: statements other changes remove,
+// so the new ones do not go after them.
+function appendTo(text, body, pieces, gone = new Set()) {
   pieces = [pieces].flat();
   const n = body.node;
   let close = n.location.end.offset;
   while (close > 0 && text[close - 1] !== '}') close--;
   close--; // the closing brace
   const open = text.indexOf('{', n.id?.location?.end.offset ?? n.location.start.offset);
-  const last = n.children.at(-1);
+  const last = n.children.filter((c) => !gone.has(c)).at(-1);
   let at = last ? endOf(text, last) : open + 1;
   if (last && /^[ \t]*;/.test(text.slice(at))) at = text.indexOf(';', at) + 1;
   const multiline = text.slice(open, close).includes('\n');
   if (multiline) {
     const indent = last ? text.slice(lineStart(text, last.location.start.offset), last.location.start.offset).match(/^[ \t]*/)[0]
       : `${text.slice(lineStart(text, n.location.start.offset)).match(/^[ \t]*/)[0]}  `;
-    return { at, end: at, text: pieces.map((p) => `\n${indent}${p}`).join('') };
+    return { at, end: at, text: pieces.map((p) => `\n${indent}${typeof p === 'function' ? p(indent) : p}`).join('') };
   }
-  return last ? { at, end: at, text: pieces.map((p) => `; ${p}`).join('') } : { at: open + 1, end: close, text: ` ${pieces.join('; ')} ` };
+  pieces = pieces.map((p) => (typeof p === 'function' ? p(null) : p));
+  // the parser takes no `;` after a subgraph
+  const sep = (prev) => (/}\s*$/.test(prev) ? ' ' : '; ');
+  const joined = pieces.map((p, i) => (i ? sep(pieces[i - 1]) : '') + p).join('');
+  if (last) return { at, end: at, text: `${last.type === 'Subgraph' ? ' ' : '; '}${joined}` };
+  if (n.children.length) return { at, end: at, text: ` ${joined}${sep(joined).trim() ? ';' : ''}` };
+  return { at: open + 1, end: close, text: ` ${joined} ` };
 }
 
 // The attribute lists of a statement: from the first `[` after its id or targets, to its end.
@@ -223,7 +248,7 @@ function removeAttr(text, st, key) {
 
 // ---------- rewriting edge statements ----------
 
-// Rewrites every edge statement without the pairs `dropPair` names and the nodes `dropNode` names,
+// Rewrites every edge statement without the pairs `dropPair` names and the nodes `dropNode(id, st)` names,
 // and puts `extra(st)` (more statement texts) in place of each statement it touched. A node that
 // loses its last mention in a container (or anywhere, at the top) keeps a bare mention there, so
 // removing an edge never removes a node or moves it out of its container.
@@ -232,7 +257,7 @@ function rewriteEdges(doc, { dropPair = () => false, dropNode = () => false, ext
   const plans = [];
   for (const st of doc.stmts) {
     if (st.kind !== 'edge') continue;
-    const ends = st.ends.map((ids) => ids.filter((id) => !dropNode(id)));
+    const ends = st.ends.map((ids) => ids.filter((id) => !dropNode(id, st)));
     const pairs = pairsOf(st);
     const keptPairs = pairsOf({ ends }).filter(([a, b]) => !dropPair(a, b, st));
     if (keptPairs.length === pairs.length) continue;
@@ -269,7 +294,7 @@ function rewriteEdges(doc, { dropPair = () => false, dropNode = () => false, ext
     const seen = new Set();
     for (const ids of p.st.ends) {
       for (const id of ids) {
-        if (seen.has(id) || dropNode(id)) continue;
+        if (seen.has(id) || dropNode(id, p.st) || clusterBody(doc, id)) continue; // a container's box is no node
         seen.add(id);
         if (!stillThere(id, p.st.body.cluster)) {
           p.pieces.push(idText(id));
@@ -299,6 +324,16 @@ const known = (doc, id) => doc.stmts.some((st) => mentions(st, id));
 // The clusters a node is in, outermost first: those around its deepest mention.
 const chainOf = (doc, id) => doc.stmts.filter((st) => mentions(st, id)).map((st) => st.body.chain)
   .reduce((a, b) => (b.length > a.length ? b : a), []);
+
+// The body a cluster is written in (the first, if it is written in several places).
+const clusterBody = (doc, id) => doc.bodies.find((b) => b.node.type === 'Subgraph' && b.node.id?.value === id && b.cluster === id);
+const isPrefix = (a, b) => a.length <= b.length && a.every((x, i) => x === b[i]);
+const commonChain = (a, b) => {
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  return a.slice(0, i);
+};
+const bodyOf = (doc, chain) => (chain.length ? clusterBody(doc, chain.at(-1)) : doc.graph);
 
 const OPS = {
   pos(doc, { id, x, y }) {
@@ -443,5 +478,121 @@ const OPS = {
     });
     if (outside.length) out.push(appendTo(doc.text, doc.graph, outside));
     return out;
+  },
+
+  // An empty container, at the end of `parent` (or of the graph).
+  addGroup(doc, { id, label, parent = null }) {
+    if (clusterBody(doc, id) || known(doc, id)) throw new Error(`there is a ${id} already`);
+    if (!String(id).startsWith('cluster')) throw new Error(`a container id starts with "cluster": ${id}`);
+    const body = parent ? clusterBody(doc, parent) : doc.graph;
+    if (!body) throw new Error(`no container ${parent}`);
+    const head = `subgraph ${idText(id)} {`;
+    const lab = label != null ? `label = ${quote(label)}` : null;
+    return [appendTo(doc.text, body, (indent) => (indent == null ? `${head}${lab ? ` ${lab}` : ''} }`
+      : `${head}${lab ? `\n${indent}  ${lab}` : ''}\n${indent}}`))];
+  },
+
+  group(doc, { id, label, ids, parent = null }) {
+    const cid = String(id).startsWith('cluster') ? id : `cluster_${id}`;
+    return { ops: [{ op: 'addGroup', id: cid, label, parent }, { op: 'moveTo', ids, group: cid }] };
+  },
+
+  // Every node statement of a node goes to the new container; its edges written in bodies outside
+  // the new container's chain leave them, for the deepest container both ends share. The other
+  // ends keep a mention where they were.
+  moveTo(doc, { ids, group = null }) {
+    const target = group ? clusterBody(doc, group) : doc.graph;
+    if (!target) throw new Error(`no container ${group}`);
+    const to = target.chain;
+    for (const id of ids) if (!known(doc, id) || clusterBody(doc, id)) throw new Error(`no node ${id}`);
+    // a note goes with the node it is attached to
+    const moved = new Set(ids);
+    const flow = readDot(doc.text);
+    const notes = new Set(flow.nodes.filter((n) => n.attrs.shape === 'note').map((n) => n.id));
+    for (const { from, to: t } of flow.edges) {
+      if (moved.has(from) && notes.has(t) && !notes.has(from)) moved.add(t);
+      if (moved.has(t) && notes.has(from) && !notes.has(t)) moved.add(from);
+    }
+    const left = new Map();
+    for (const id of moved) {
+      const chain = chainOf(doc, id);
+      if (chain.length === to.length && isPrefix(chain, to)) moved.delete(id);
+      else left.set(id, chain.at(-1) ?? null);
+    }
+    if (!moved.size) return [];
+    const bad = (body) => !isPrefix(body.chain, to);
+    const out = [], gone = new Set(), nodes = [], edges = [];
+    for (const st of doc.stmts) {
+      if (st.kind !== 'node' || !moved.has(st.id) || st.body.cluster === group) continue;
+      const L = layoutOf(doc.text, st.s);
+      nodes.push(doc.text.slice(L.start, L.end));
+      gone.add(st.s);
+      out.push(replaceStmt(doc.text, st.s, []));
+    }
+    const drop = (id, st) => moved.has(id) && bad(st.body);
+    const endChain = (id) => {
+      if (moved.has(id)) return to;
+      const box = clusterBody(doc, id); // an edge to a container's box
+      return box ? box.chain.slice(0, -1) : chainOf(doc, id);
+    };
+    for (const st of doc.stmts) {
+      if (st.kind !== 'edge' || !bad(st.body)) continue;
+      const attrs = attrsText(doc.text, st);
+      for (const [a, b] of pairsOf(st)) {
+        if (drop(a, st) || drop(b, st)) edges.push({ body: bodyOf(doc, commonChain(endChain(a), endChain(b))), piece: `${idText(a)} -> ${idText(b)}${attrs}` });
+      }
+    }
+    out.push(...rewriteEdges(doc, { dropNode: drop }));
+    // a node mentioned nowhere in its new container yet gets a bare mention there
+    const bare = [];
+    if (group) {
+      const there = [...nodes, ...edges.filter((e) => e.body === target).map((e) => e.piece)].map(scanPiece);
+      for (const id of moved) {
+        if (doc.stmts.some((st) => st.body.cluster === group && !gone.has(st.s) && mentions(st, id)) || there.some((x) => x.includes(id))) continue;
+        bare.push(idText(id));
+      }
+    }
+    const adds = new Map([[target, [...nodes, ...bare]]]);
+    for (const { body, piece } of edges) adds.set(body, [...(adds.get(body) ?? []), piece]);
+    for (const [body, pieces] of adds) if (pieces.length) out.push(appendTo(doc.text, body, pieces, gone));
+    return out;
+  },
+
+  // Edges to or from the container's box go (it is no box any more), then the container itself.
+  removeGroup(doc, { id }) {
+    if (!clusterBody(doc, id)) throw new Error(`no container ${id}`);
+    return { ops: [{ op: '_dropBox', id }, { op: '_unwrap', id }] };
+  },
+  _dropBox(doc, { id }) {
+    return rewriteEdges(doc, { dropNode: (n) => n === id });
+  },
+  // The cluster's statements are written in its parent, one indent less; its own attributes go.
+  // If it sets node or edge defaults, it stays as an anonymous subgraph, so they keep their scope.
+  _unwrap(doc, { id }) {
+    const { text } = doc;
+    return doc.bodies.filter((b) => b.node.type === 'Subgraph' && b.node.id?.value === id).flatMap(({ node: n }) => {
+      const own = n.children.filter((c) => c.type === 'Attribute' || (c.type === 'AttributeList' && c.kind === 'Graph'));
+      const removals = own.map((c) => replaceStmt(text, c, []));
+      const open = text.indexOf('{', n.id.location.end.offset);
+      if (n.children.some((c) => c.type === 'AttributeList' && c.kind !== 'Graph')) {
+        return [...removals, { at: n.id.location.start.offset, end: open, text: '' }];
+      }
+      let close = n.location.end.offset;
+      while (text[close - 1] !== '}') close--;
+      close--;
+      const L = layoutOf(text, n);
+      const cut = apply(text, removals);
+      const inner = cut.slice(open + 1, close - (text.length - cut.length));
+      if (!inner.trim()) return [replaceStmt(text, n, [])];
+      if (!inner.includes('\n')) return [{ at: L.start, end: close + 1, text: inner.trim() }];
+      const lines = inner.split('\n');
+      const first = lines.shift().trim();
+      if (!lines.at(-1).trim()) lines.pop();
+      const ind = (l) => l.match(/^[ \t]*/)[0].length;
+      const step = Math.max(0, Math.min(...lines.filter((l) => l.trim()).map(ind)) - L.indent.length);
+      const body = lines.map((l) => (l.trim() ? l.slice(Math.min(step, ind(l))) : ''));
+      if (first) body.unshift(L.indent + first);
+      return [{ at: L.start, end: close + 1, text: body.join('\n').replace(/^[ \t]*/, '') }];
+    });
   },
 };

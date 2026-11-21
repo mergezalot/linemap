@@ -177,6 +177,139 @@ test('lines: set on the edge, or split out of a chain with its other attributes'
   assert.throws(() => editDot(FLOW, { op: 'lines', from: 'a', to: 'c', lines: [] }), /needs a line/);
 });
 
+// membership after an edit: id -> container, and container -> parent
+const groupsOf = (t) => {
+  const m = parseFlow(t);
+  return { items: Object.fromEntries([...m.items.values()].map((i) => [i.id, i.group])), groups: Object.fromEntries(m.groups.map((g) => [g.id, g.parent])) };
+};
+const NOTE = `${FLOW.slice(0, FLOW.lastIndexOf('}'))}  n [shape=note, label="hi"]
+  c -> n
+}
+`;
+const NEST = `digraph g {
+  subgraph lines { A }
+  subgraph cluster_x {
+    label = "X"
+    subgraph cluster_y {
+      p -> q [lines=A]   // inner
+    }
+    q -> r [lines=A]
+  }
+  r -> s [lines=A]
+}
+`;
+
+test('group: a new container around nodes, their declarations moved into it', () => {
+  const r = edit({ op: 'group', id: 'y', label: 'Y', ids: ['b', 'e'] });
+  assert.deepEqual(diff(FLOW, r), ['  b\n  subgraph cluster_x {\n    label = "X"\n    c [label="C"]\n    a -> c [lines=A]\n  }\n  a -> b -> d [lines="A B"]   // a chain\n  {b d} -> e [lines=B]',
+    '  subgraph cluster_x {\n    label = "X"\n    c [label="C"]\n    a -> c [lines=A]\n  }\n  a -> b -> d [lines="A B"]   // a chain\n  {b d} -> e [lines=B]\n  subgraph cluster_y {\n    label = "Y"\n    b\n    e\n  }']);
+  const g = groupsOf(r);
+  assert.deepEqual(g.items, { a: 'cluster_x', b: 'cluster_y', c: 'cluster_x', d: null, e: 'cluster_y' });
+  assert.deepEqual(g.groups, { cluster_x: null, cluster_y: null });
+  assert.equal(parseFlow(r).groupById.get('cluster_y').label, 'Y');
+  // on one line, inside a container; a full id is taken as it is
+  const one = 'digraph g { subgraph lines { A } subgraph cluster_x { a -> b [lines=A] } }';
+  const o = edit({ op: 'group', id: 'cluster_in', label: 'In', ids: ['a'], parent: 'cluster_x' }, one);
+  assert.equal(o, 'digraph g { subgraph lines { A } subgraph cluster_x { a -> b [lines=A]; subgraph cluster_in { label = "In"; a } } }');
+  assert.deepEqual(groupsOf(o).items, { a: 'cluster_in', b: 'cluster_x' });
+  assert.throws(() => editDot(FLOW, { op: 'group', id: 'x', ids: ['b'] }), /there is a cluster_x already/);
+  assert.throws(() => editDot(FLOW, { op: 'group', id: 'y', ids: ['b'], parent: 'cluster_q' }), /no container cluster_q/);
+  assert.throws(() => editDot(FLOW, { op: 'group', id: 'y', ids: ['zz'] }), /no node zz/);
+});
+
+test('moveTo: a node mentioned only in edges inside a container leaves it, the other end stays', () => {
+  // a is in cluster_x through `a -> c` alone
+  const r = edit({ op: 'moveTo', ids: ['a'] });
+  assert.deepEqual(diff(FLOW, r), ['    a -> c [lines=A]\n  }\n  a -> b -> d [lines="A B"]   // a chain\n  {b d} -> e [lines=B]',
+    '  }\n  a -> b -> d [lines="A B"]   // a chain\n  {b d} -> e [lines=B]\n  a -> c [lines=A]']);
+  assert.deepEqual(groupsOf(r).items, { a: null, b: null, c: 'cluster_x', d: null, e: null });
+  // c leaves: a keeps a mention in cluster_x, the comment after c's declaration stays in place
+  const t = FLOW.replace('c [label="C"]', 'c [label="C"]   // see c');
+  const c = edit({ op: 'moveTo', ids: ['c'] }, t);
+  assert.deepEqual(diff(t, c), ['    c [label="C"]   // see c\n    a -> c [lines=A]\n  }\n  a -> b -> d [lines="A B"]   // a chain\n  {b d} -> e [lines=B]',
+    '    // see c\n    a\n  }\n  a -> b -> d [lines="A B"]   // a chain\n  {b d} -> e [lines=B]\n  c [label="C"]\n  a -> c [lines=A]']);
+  assert.deepEqual(groupsOf(c).items, { a: 'cluster_x', b: null, c: null, d: null, e: null });
+  // a node only mentioned in edges goes into a container as a bare mention; its edges stay
+  const d = edit({ op: 'moveTo', ids: ['d'], group: 'cluster_x' });
+  assert.deepEqual(diff(FLOW, d), ['', '    d']);
+  assert.equal(groupsOf(d).items.d, 'cluster_x');
+  // already there: nothing changes
+  assert.equal(edit({ op: 'moveTo', ids: ['c'], group: 'cluster_x' }), FLOW);
+  assert.throws(() => editDot(FLOW, { op: 'moveTo', ids: ['b'], group: 'cluster_q' }), /no container cluster_q/);
+});
+
+test('moveTo: edges between moved nodes go with them; nested containers', () => {
+  // out of a nested container to the top: p -> q goes too, q -> r leaves cluster_x
+  const top = edit({ op: 'moveTo', ids: ['p', 'q'] }, NEST);
+  assert.deepEqual(diff(NEST, top), ['      p -> q [lines=A]   // inner\n    }\n    q -> r [lines=A]\n  }\n  r -> s [lines=A]',
+    '      // inner\n    }\n    r\n  }\n  r -> s [lines=A]\n  p -> q [lines=A]\n  q -> r [lines=A]']);
+  assert.deepEqual(groupsOf(top).items, { p: null, q: null, r: 'cluster_x', s: null });
+  // one level up: the edge between them is written in cluster_x, where both now are
+  const up = edit({ op: 'moveTo', ids: ['p', 'q'], group: 'cluster_x' }, NEST);
+  assert.deepEqual(diff(NEST, up), ['      p -> q [lines=A]   // inner\n    }\n    q -> r [lines=A]', '      // inner\n    }\n    q -> r [lines=A]\n    p -> q [lines=A]']);
+  assert.deepEqual(groupsOf(up).items, { p: 'cluster_x', q: 'cluster_x', r: 'cluster_x', s: null });
+  // one leaves the inner container: the other keeps its mention there
+  const q = edit({ op: 'moveTo', ids: ['q'], group: 'cluster_x' }, NEST);
+  assert.deepEqual(diff(NEST, q), ['      p -> q [lines=A]   // inner\n    }\n    q -> r [lines=A]', '      p   // inner\n    }\n    q -> r [lines=A]\n    p -> q [lines=A]']);
+  assert.deepEqual(groupsOf(q).items, { p: 'cluster_y', q: 'cluster_x', r: 'cluster_x', s: null });
+  // down into the nested one, from the top
+  const s = edit({ op: 'moveTo', ids: ['s'], group: 'cluster_y' }, NEST);
+  assert.deepEqual(diff(NEST, s), ['', '      s']);
+  assert.deepEqual(groupsOf(s).items, { p: 'cluster_y', q: 'cluster_y', r: 'cluster_x', s: 'cluster_y' });
+  // a new container inside the nested one
+  const z = edit({ op: 'group', id: 'z', label: 'Z', ids: ['p'], parent: 'cluster_y' }, NEST);
+  assert.deepEqual(diff(NEST, z), ['', '      subgraph cluster_z {\n        label = "Z"\n        p\n      }']);
+  assert.deepEqual(groupsOf(z), { items: { p: 'cluster_z', q: 'cluster_y', r: 'cluster_x', s: null }, groups: { cluster_x: null, cluster_y: 'cluster_x', cluster_z: 'cluster_y' } });
+});
+
+test('moveTo and group take the notes attached to the nodes along', () => {
+  const r = edit({ op: 'moveTo', ids: ['c'] }, NOTE);
+  assert.deepEqual(groupsOf(r).items, { a: 'cluster_x', b: null, c: null, d: null, e: null, n: null });
+  const into = edit({ op: 'moveTo', ids: ['c'], group: 'cluster_x' }, r);
+  assert.deepEqual(groupsOf(into).items, { a: 'cluster_x', b: null, c: 'cluster_x', d: null, e: null, n: 'cluster_x' });
+  const g = edit({ op: 'group', id: 'y', ids: ['c'], parent: 'cluster_x' }, NOTE);
+  assert.deepEqual(diff(NOTE, g), ['    c [label="C"]\n    a -> c [lines=A]\n  }\n  a -> b -> d [lines="A B"]   // a chain\n  {b d} -> e [lines=B]\n  n [shape=note, label="hi"]',
+    '    a -> c [lines=A]\n    subgraph cluster_y {\n      c [label="C"]\n      n [shape=note, label="hi"]\n    }\n  }\n  a -> b -> d [lines="A B"]   // a chain\n  {b d} -> e [lines=B]']);
+  assert.deepEqual(groupsOf(g).items, { a: 'cluster_x', b: null, c: 'cluster_y', d: null, e: null, n: 'cluster_y' });
+  // no label: none written, so the id names it
+  assert.equal(parseFlow(g).groupById.get('cluster_y').label, 'y');
+  // a note moved on its own leaves its node where it is
+  const n = edit({ op: 'moveTo', ids: ['n'], group: 'cluster_x' }, NOTE);
+  assert.deepEqual(groupsOf(n).items, { a: 'cluster_x', b: null, c: 'cluster_x', d: null, e: null, n: 'cluster_x' });
+});
+
+test('removeGroup: members and nested containers go to its parent, one indent less', () => {
+  const y = edit({ op: 'removeGroup', id: 'cluster_y' }, NEST);
+  assert.deepEqual(diff(NEST, y), ['    subgraph cluster_y {\n      p -> q [lines=A]   // inner\n    }', '    p -> q [lines=A]   // inner']);
+  assert.deepEqual(groupsOf(y), { items: { p: 'cluster_x', q: 'cluster_x', r: 'cluster_x', s: null }, groups: { cluster_x: null } });
+  const x = edit({ op: 'removeGroup', id: 'cluster_x' }, NEST);
+  assert.equal(x, `digraph g {
+  subgraph lines { A }
+  subgraph cluster_y {
+    p -> q [lines=A]   // inner
+  }
+  q -> r [lines=A]
+  r -> s [lines=A]
+}
+`);
+  assert.deepEqual(groupsOf(x), { items: { p: 'cluster_y', q: 'cluster_y', r: null, s: null }, groups: { cluster_y: null } });
+  // edges to its box go; on one line; an empty one
+  const box = 'digraph g { subgraph lines { A } subgraph cluster_x { label=X; a -> b [lines=A] } c -> cluster_x [lines=A]; c -> a [lines=A] }';
+  assert.equal(edit({ op: 'removeGroup', id: 'cluster_x' }, box), 'digraph g { subgraph lines { A } a -> b [lines=A] c -> a [lines=A] }');
+  assert.equal(edit({ op: 'removeGroup', id: 'cluster_e' }, 'digraph g { a\n  subgraph cluster_e {\n    label = "E"\n  }\n}'), 'digraph g { a\n}');
+  // node or edge defaults keep their scope in a plain subgraph
+  const scoped = 'digraph g { subgraph lines { A } subgraph cluster_x { node [shape=box]; label=X; a -> b [lines=A] } }';
+  const s = edit({ op: 'removeGroup', id: 'cluster_x' }, scoped);
+  assert.equal(s, 'digraph g { subgraph lines { A } subgraph { node [shape=box]; a -> b [lines=A] } }');
+  assert.deepEqual(groupsOf(s), { items: { a: null, b: null }, groups: {} });
+  // an edge from another container's box to it goes without leaving that box behind as a node
+  const boxes = 'digraph g { subgraph lines { A } subgraph cluster_x { a } subgraph cluster_y { b } subgraph cluster_z { c; cluster_x -> cluster_y [lines=A] } }';
+  const bx = edit({ op: 'removeGroup', id: 'cluster_y' }, boxes);
+  assert.equal(bx, 'digraph g { subgraph lines { A } subgraph cluster_x { a } b subgraph cluster_z { c; } }');
+  assert.deepEqual(groupsOf(bx).items, { a: 'cluster_x', b: null, c: 'cluster_z' });
+  assert.throws(() => editDot(FLOW, { op: 'removeGroup', id: 'cluster_q' }), /no container cluster_q/);
+});
+
 test('every example takes a round of edits and stays valid', () => {
   for (const f of ['examples/webshop.dot', 'examples/platform.dot', 'examples/postal.dot', 'docs/pipeline.dot']) {
     const text = fs.readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
@@ -188,5 +321,23 @@ test('every example takes a round of edits and stays valid', () => {
     const after = parseFlow(t);
     assert.ok(!after.items.has(n.id), f);
     assert.equal(after.items.size, model.items.size - 1, `${f}: only ${n.id} goes`);
+  }
+});
+
+test('every example takes container edits and stays valid', () => {
+  for (const f of ['examples/webshop.dot', 'examples/platform.dot', 'examples/postal.dot', 'docs/pipeline.dot']) {
+    const text = fs.readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
+    const model = parseFlow(text);
+    for (const g of model.groups) {
+      const after = parseFlow(editDot(text, { op: 'removeGroup', id: g.id }));
+      assert.ok(!after.groupById.has(g.id), `${f}: ${g.id}`);
+      for (const n of model.nodes) assert.equal(after.items.get(n.id).group, n.group === g.id ? g.parent : n.group, `${f}: ${n.id} after ${g.id} goes`);
+    }
+    const ids = model.nodes.slice(0, 3).map((n) => n.id);
+    const grouped = parseFlow(editDot(text, { op: 'group', id: 'cluster_new', label: 'New', ids }));
+    for (const id of ids) assert.equal(grouped.items.get(id).group, 'cluster_new', `${f}: ${id}`);
+    for (const n of model.nodes.slice(3)) assert.equal(grouped.items.get(n.id).group, n.group, `${f}: ${n.id} stays`);
+    const out = parseFlow(editDot(text, { op: 'moveTo', ids }));
+    for (const id of ids) assert.equal(out.items.get(id).group, null, `${f}: ${id}`);
   }
 });
