@@ -179,8 +179,17 @@ export function createViewport({ stage, onChange, avoid = () => null }) {
     e.preventDefault();
     press(e, true);
   }, true);
-  // no autoscroll (or paste, on Linux) from the middle button, and no link opened by it after a pan
+  // no autoscroll from the middle button, and no link opened by it after a pan
   stage.addEventListener('mousedown', (e) => { if (e.button === 1 && svg) e.preventDefault(); });
+  // nor the paste of the primary selection that Linux browsers fire on its release (the page
+  // would open pasted DOT text): a paste right after a middle button let go over the map is dropped
+  let middleUp = -Infinity;
+  window.addEventListener('pointerup', (e) => { if (e.button === 1 && pointers.has(e.pointerId)) middleUp = performance.now(); }, true);
+  window.addEventListener('paste', (e) => {
+    if (performance.now() - middleUp > 500 || e.target.closest?.('input, textarea, [contenteditable]')) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
   stage.addEventListener('auxclick', (e) => {
     if (e.button === 1 && suppressClick) { e.preventDefault(); e.stopPropagation(); suppressClick = false; }
   }, true);
