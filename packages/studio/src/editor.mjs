@@ -14,6 +14,19 @@
 // are on that box, the others are outlined; while it is dragged every box takes its width and
 // height around its own centre (the dragged one keeps its opposite side, as for one box), and
 // all are pinned, in one edit. Another click on one of them, or Escape, goes back to moving.
+// Container actions follow in that adorner (and the edit bar), each only where it applies; each is
+// one edit (one undo), and afterwards the boxes of the new or kept container are selected:
+//   Group    a new container (asks its label) around them, inside the innermost container they
+//            all share; not when they are all of that one. Containers left empty go.
+//   Merge    they come from two or more containers (one inside another counts as the outer one):
+//            the container of the box selected first keeps its id and label, the boxes of the
+//            others (at any depth: containers inside them are flattened) move into it, and the
+//            others go; edges to their boxes move onto the one kept where that is still valid.
+//   Split    all from one container, not all of it: they leave it for a new container (asks its
+//            label) beside it, in the same parent.
+//   Ungroup  they are exactly a container's boxes (the one clicked; else the innermost): it goes,
+//            the boxes stay where they are. Edges to its box go with it.
+// A note moves with the node it is attached to. No drag changes which container a box is in.
 // A plain drag on the background pans (viewport.mjs), as do the middle button (over boxes too),
 // the wheel and one finger on a touch screen.
 // Every change is an editDot op on the flow's text, laid out by check(text) (an error refuses it)
@@ -227,9 +240,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   }
 
   // an id from a label: lower case, words joined by _, unique among nodes, containers and lines
-  function newId(label) {
+  // (prefix: put before it, as `cluster_` for a container)
+  function newId(label, prefix = '') {
     const base = label.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'node';
-    const stem = /^[a-z_]/.test(base) ? base : `n_${base}`;
+    const stem = prefix + (/^[a-z_]/.test(base) ? base : `n_${base}`);
     const taken = new Set([...model.items.keys(), ...model.hiddenNotes.map((n) => n.id), ...model.groups.map((g) => g.id), ...model.lines.map((l) => l.id)]);
     let id = stem;
     for (let i = 2; taken.has(id); i++) id = `${stem}_${i}`;
@@ -285,6 +299,135 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     draw();
     onChange?.();
   }
+
+  // ---------- containers ----------
+  const parentOf = (g) => model.groups.find((x) => x.id === g)?.parent ?? null;
+  // container g is container `outer` or inside it
+  const within = (g, outer) => { for (; g; g = parentOf(g)) if (g === outer) return true; return false; };
+  const chainOf = (g) => { const c = []; for (; g; g = parentOf(g)) c.unshift(g); return c; };
+  const groupLabel = (g) => model.groups.find((x) => x.id === g)?.label || g;
+  // the boxes a move takes along: a note goes with the node it is attached to, and that node's
+  // other notes with it (as editDot's moveTo does)
+  function withNotes(ids) {
+    const out = new Set(ids);
+    for (let more = true; more;) {
+      more = false;
+      for (const n of model.items.values()) {
+        if (n.kind !== 'note' || !n.attach) continue;
+        if (out.has(n.id) && !out.has(n.attach) && itemOf(n.attach)) { out.add(n.attach); more = true; }
+        if (out.has(n.attach) && !out.has(n.id)) { out.add(n.id); more = true; }
+      }
+    }
+    return out;
+  }
+  // What the container actions would do with the boxes selected (two or more), each only where it
+  // applies: { group: { parent }, merge: { keep, others }, split: { from }, ungroup: { id } }.
+  function containerPlan() {
+    if (sel?.kind !== 'nodes' || !model) return {};
+    const ids = sel.ids.filter((id) => itemOf(id) && itemOf(id).kind !== 'legend');
+    if (ids.length < 2) return {};
+    const moved = withNotes(ids);
+    const all = (g) => { const m = membersOf(g); return m.length > 0 && m.every((id) => moved.has(id)); };
+    const plan = {};
+    // Group: inside the innermost container they all share (not when they are all of it: that
+    // would only wrap it again)
+    const chains = [...moved].map((id) => chainOf(itemOf(id)?.group ?? null));
+    let shared = chains[0];
+    for (const c of chains) shared = shared.slice(0, [...shared, null].findIndex((g, i) => g !== c[i]));
+    const parent = shared.at(-1) ?? null;
+    if (!parent || !all(parent)) plan.group = { parent };
+    // Merge: the boxes come from two or more containers (a container inside another one of them
+    // counts as that one); the one of the box clicked first stays
+    const direct = ids.map((id) => itemOf(id).group);
+    if (direct.every(Boolean)) {
+      const tops = [...new Set(direct)].filter((g, _, gs) => !gs.some((h) => h !== g && within(g, h)));
+      if (tops.length > 1) {
+        const keep = tops.find((t) => within(direct[0], t));
+        plan.merge = { keep, others: tops.filter((t) => t !== keep) };
+      }
+    }
+    // Split: all from one container, not all of it
+    if (direct[0] && direct.every((g) => g === direct[0]) && !all(direct[0])) plan.split = { from: direct[0] };
+    // Ungroup: exactly a container's boxes (the one clicked, else the innermost such one)
+    const same = (g) => { const m = membersOf(g); return m.length === ids.length && m.every((id) => ids.includes(id)); };
+    const ung = sel.group && model.groups.some((g) => g.id === sel.group) && same(sel.group) ? sel.group
+      : model.groups.filter((g) => same(g.id)).sort((a, b) => chainOf(b.id).length - chainOf(a.id).length)[0]?.id;
+    if (ung) plan.ungroup = { id: ung };
+    return plan;
+  }
+  // Edges to the boxes of containers that go are moved onto container `to`, where they still make
+  // sense (not a loop, nor a link between a container and something inside it); the rest go with
+  // the containers. inside(id): the box or container ends up inside `to`.
+  function edgesOnto(gone, to, inside) {
+    const above = chainOf(parentOf(to));
+    const ops = [];
+    for (const e of model.edges) {
+      const [a, b] = [gone.has(e.from), gone.has(e.to)];
+      if (a === b) continue;
+      const other = a ? e.to : e.from;
+      if (other === to || inside(other) || above.includes(other)) continue;
+      ops.push({ op: 'moveEdge', from: e.from, to: e.to, newFrom: a ? to : e.from, newTo: a ? e.to : to });
+    }
+    return ops;
+  }
+  // after the change: `ids` selected, `group` the container they are (for Ungroup)
+  function selectAfter(ids, group) {
+    selectIds(ids);
+    if (sel?.kind === 'nodes' && group) sel.group = group;
+    draw();
+    onChange?.();
+  }
+  // Group: a new container around the boxes; containers they leave empty go (edges to those
+  // containers move onto the new one)
+  async function groupSel() {
+    const p = containerPlan().group;
+    if (!p) return;
+    const ids = [...sel.ids], moved = withNotes(ids);
+    const label = await askLabel({ heading: 'New container', ok: 'Group', placeholder: 'Its label' });
+    if (!label) return;
+    const id = newId(label, 'cluster_');
+    const emptied = new Set(model.groups.map((g) => g.id).filter((g) => g !== p.parent && within(g, p.parent) && membersOf(g).length && membersOf(g).every((m) => moved.has(m))));
+    const ops = [
+      { op: 'group', id, label, ids: [...moved], parent: p.parent ?? undefined },
+      ...edgesOnto(emptied, id, (x) => moved.has(x) || emptied.has(x)),
+      ...[...emptied].map((g) => ({ op: 'removeGroup', id: g })),
+    ];
+    if (apply(ops)) selectAfter([...ids, ...moved], id);
+  }
+  // Split: the boxes leave their container for a new one beside it
+  async function splitSel() {
+    const p = containerPlan().split;
+    if (!p) return;
+    const ids = [...sel.ids], moved = withNotes(ids);
+    const label = await askLabel({ heading: 'Split into a new container', ok: 'Split', placeholder: 'Its label', hint: `Out of ${groupLabel(p.from)}, beside it` });
+    if (!label) return;
+    const id = newId(label, 'cluster_');
+    if (apply({ op: 'group', id, label, ids: [...moved], parent: parentOf(p.from) ?? undefined })) selectAfter([...ids, ...moved], id);
+  }
+  // Merge: the other containers' boxes (at any depth) move into the one kept; they and the
+  // containers in them go, and edges to them move onto the one kept
+  function mergeSel() {
+    const p = containerPlan().merge;
+    if (!p) return;
+    const ids = [...sel.ids];
+    const gone = new Set(model.groups.map((g) => g.id).filter((g) => p.others.some((o) => within(g, o))));
+    const moving = withNotes(p.others.flatMap(membersOf));
+    const ops = [
+      ...edgesOnto(gone, p.keep, (x) => moving.has(x) || within(itemOf(x)?.group ?? null, p.keep) || (x !== p.keep && within(x, p.keep))),
+      { op: 'moveTo', ids: [...moving], group: p.keep },
+      ...[...gone].sort((a, b) => chainOf(a).length - chainOf(b).length).map((g) => ({ op: 'removeGroup', id: g })),
+    ];
+    const keep = membersOf(p.keep);
+    if (apply(ops)) selectAfter([...ids, ...keep, ...moving], p.keep);
+  }
+  // Ungroup: the container goes, its boxes stay where they are (and selected)
+  function ungroupSel() {
+    const p = containerPlan().ungroup;
+    if (!p) return;
+    const ids = [...sel.ids];
+    if (apply({ op: 'removeGroup', id: p.id })) selectAfter(ids, null);
+  }
+  const containerActs = { group: groupSel, merge: mergeSel, split: splitSel, ungroup: ungroupSel };
 
   // ---------- overlay ----------
   const el = (tag, attrs, parent) => {
@@ -439,6 +582,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
           all ? { act: 'unpin', icon: 'i-pin', on: true, title: 'All pinned: click to unpin them, so the layout places them (P)' }
             : { act: 'pin', icon: 'i-unpin', title: `${ns.some((n) => n.pinned) ? 'Not all' : 'None'} pinned: click to pin them all where they are (P)` },
           { act: 'resize', icon: 'i-resize', on: sizing, title: sizing ? 'Resizing all to one size: click to move them again (or click one of them)' : 'Resize them all to one size (or click one of them again)' },
+          ...containerTools(),
         ],
       };
     }
@@ -495,7 +639,17 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       el('use', { href: `#${tl.icon}`, x: bx + (b - s) / 2, y: by + (b - s) / 2, width: s, height: s }, btn);
     });
   }
+  // the container actions that apply to the selection, as adorner buttons
+  function containerTools() {
+    const p = containerPlan(), out = [];
+    if (p.group) out.push({ act: 'group', icon: 'i-group', title: `Group: a new container around them${p.group.parent ? `, in ${groupLabel(p.group.parent)}` : ''}` });
+    if (p.merge) out.push({ act: 'merge', icon: 'i-merge', title: `Merge their containers into ${groupLabel(p.merge.keep)} (the one clicked first)` });
+    if (p.split) out.push({ act: 'split', icon: 'i-split', title: `Split: they leave ${groupLabel(p.split.from)} for a new container beside it` });
+    if (p.ungroup) out.push({ act: 'ungroup', icon: 'i-ungroup', title: `Ungroup: ${groupLabel(p.ungroup.id)} goes, its boxes stay` });
+    return out;
+  }
   function tool(act) {
+    if (containerActs[act]) return containerActs[act]();
     if (act === 'delete') return remove();
     if (act === 'lines') return editLines();
     if (act === 'note') return addNote();
@@ -780,6 +934,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     const id = group?.classList.contains('group-tab') ? group.dataset.group : group?.id;
     if (id && model.groups.some((x) => x.id === id)) {
       selectIds([...(e.shiftKey ? selectedIds() : []), ...membersOf(id)]);
+      if (!e.shiftKey && sel?.kind === 'nodes') sel.group = id;
       draw();
       onChange?.();
     } else if (sel && !e.shiftKey) { sel = null; draw(); onChange?.(); }
@@ -802,9 +957,11 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (sel?.kind === 'node' && !itemOf(sel.id)) sel = null;
       if (sel?.kind === 'nodes') {
         // boxes gone leave the selection; size mode stays (on the first box when the main one went)
-        const { mode, main } = sel;
+        // (and the container they were selected as, for Ungroup)
+        const { mode, main, group } = sel;
         selectIds(sel.ids);
         if (mode === 'size' && sel) sel = sel.kind === 'nodes' ? { ...sel, mode, main: sel.ids.includes(main) ? main : sel.ids[0] } : { ...sel, mode };
+        if (group && sel?.kind === 'nodes') sel.group = group;
       }
       if (sel && sel.kind !== 'node' && sel.kind !== 'nodes' && !edgeOf(sel.from, sel.to)) sel = null;
       if (sel?.line && !edgeOf(sel.from, sel.to)?.lines.some((l) => l.id === sel.line)) sel = { kind: 'edge', from: sel.from, to: sel.to };
@@ -844,6 +1001,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       onChange?.();
     },
     togglePin,
+    // the container actions that apply to the selection (group, merge, split, ungroup), and one done
+    containerActions: () => Object.keys(containerPlan()),
+    containerAction: (act) => containerActs[act]?.(),
     // unpin every node and note: the layout places them
     unpinAll() {
       const ops = [...model.items.values()].filter((n) => n.pinned && n.kind !== 'legend').map((n) => ({ op: 'unpin', id: n.id }));

@@ -27,7 +27,8 @@ const el = {
   pasteDialog: $('paste-dialog'), positionsDialog: $('positions-dialog'), help: $('help'),
   flows: $('linemap-flows'),
   edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editLines: $('edit-lines'),
-  editPin: $('edit-pin'), editUnpin: $('edit-unpin'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
+  editPin: $('edit-pin'), editUnpin: $('edit-unpin'),
+  editGroup: $('edit-group'), editMerge: $('edit-merge'), editSplit: $('edit-split'), editUngroup: $('edit-ungroup'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
   editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'), editDone: $('edit-done'),
   labelDialog: $('label-dialog'), noteDialog: $('note-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'),
 };
@@ -125,7 +126,7 @@ const editor = createEditor({
   check: (text) => pipeline.check(text, state.get()),
   cancelPreview: () => run({ carry: true }),
   toast: (msg) => toast(msg),
-  askLabel: () => askLabel(el.labelDialog),
+  askLabel: (opts) => askLabel(el.labelDialog, opts),
   askLines: (lines, checked, title, opts) => askLines(el.linesDialog, lines, checked, title, opts),
   askNote: (title) => askNote(el.noteDialog, `A note on ${title}`),
   onChange: () => updateEditBar(),
@@ -312,6 +313,9 @@ function updateEditBar() {
   el.editRedo.disabled = !editor.canRedo();
   el.editDelete.disabled = !sel;
   el.editLines.hidden = !(sel?.kind === 'edge' || sel?.kind === 'via');
+  // the container actions, where they apply to the boxes selected
+  const acts = editor.containerActions();
+  for (const [act, b] of [['group', el.editGroup], ['merge', el.editMerge], ['split', el.editSplit], ['ungroup', el.editUngroup]]) b.hidden = !acts.includes(act);
   el.editAdd.setAttribute('aria-pressed', String(editor.adding()));
   const mode = sel?.mode === 'size' ? (sel.kind === 'nodes' ? 'nodesSize' : 'size') : sel?.line ? 'line' : sel?.kind ?? 'none';
   el.editHint.textContent = (mode === 'line' ? `Line ${editor.lineLabel(sel.line)}: ` : sel?.kind === 'nodes' ? `${sel.ids.length} boxes: ` : '') + HINTS[editor.adding() ? 'adding' : mode];
@@ -339,6 +343,7 @@ el.editDelete.addEventListener('click', () => editor.remove());
 el.editLines.addEventListener('click', () => editor.editLines());
 el.editPin.addEventListener('click', () => editor.pinAll());
 el.editUnpin.addEventListener('click', () => editor.unpinAll());
+for (const act of ['group', 'merge', 'split', 'ungroup']) el[`edit${act[0].toUpperCase()}${act.slice(1)}`].addEventListener('click', () => editor.containerAction(act));
 el.editUndo.addEventListener('click', () => editor.undo());
 el.editRedo.addEventListener('click', () => editor.redo());
 const dotName = () => `${baseName()}.dot`;

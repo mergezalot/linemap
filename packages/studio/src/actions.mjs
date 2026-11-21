@@ -53,9 +53,16 @@ export function toaster(el) {
   };
 }
 
-// New node dialog: resolves with the label typed, or null. Enter adds.
-export function askLabel(dialog) {
+// A label: resolves with the label typed, or null. Enter adds. heading, ok, placeholder: the
+// dialog's title, button and empty field (else those for a new node); hint: a line under the title.
+export function askLabel(dialog, { heading = 'New node', ok = 'Add', placeholder = 'Label', hint = '' } = {}) {
   const input = dialog.querySelector('input');
+  dialog.querySelector('h2').textContent = heading;
+  dialog.querySelector('button[value="ok"]').textContent = ok;
+  const note = dialog.querySelector('.hint');
+  note.textContent = hint;
+  note.hidden = !hint;
+  input.placeholder = placeholder;
   return new Promise((resolve) => {
     const enter = (e) => { if (e.key === 'Enter') { e.preventDefault(); dialog.close('ok'); } };
     input.addEventListener('keydown', enter);

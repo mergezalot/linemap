@@ -34,6 +34,10 @@
     <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.8 4.4h10.4M6.4 4.4V2.8h3.2v1.6M4.2 4.4l.7 8.8h6.2l.7-8.8M6.8 7v4M9.2 7v4"/></symbol>
     <symbol id="i-undo" viewBox="0 0 16 16"><path d="M5.6 3.4 2.6 6.4l3 3M2.8 6.4h6.6a3.6 3.6 0 0 1 0 7.2H6.8"/></symbol>
     <symbol id="i-redo" viewBox="0 0 16 16"><path d="m10.4 3.4 3 3-3 3M13.2 6.4H6.6a3.6 3.6 0 0 0 0 7.2h2.6"/></symbol>
+    <symbol id="i-group" viewBox="0 0 16 16"><rect x="1.6" y="1.6" width="12.8" height="12.8" rx="1.6" stroke-dasharray="2 1.6"/><rect x="4" y="4.4" width="4" height="3.2" rx=".6"/><rect x="8" y="8.4" width="4" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-merge" viewBox="0 0 16 16"><rect x="1.4" y="2" width="5" height="5" rx="1"/><rect x="9.6" y="2" width="5" height="5" rx="1"/><path d="M3.9 7v1.6L8 11.6l4.1-3V7M8 11.6v2.8"/></symbol>
+    <symbol id="i-split" viewBox="0 0 16 16"><rect x="1.4" y="1.6" width="7.4" height="12.8" rx="1.2"/><rect x="3.4" y="6.4" width="3.4" height="3.2" rx=".6"/><path d="M9.4 8h4.6M12 6l2 2-2 2"/></symbol>
+    <symbol id="i-ungroup" viewBox="0 0 16 16"><path d="M1.6 5V1.6H5M11 1.6h3.4V5M14.4 11v3.4H11M5 14.4H1.6V11"/><rect x="4" y="4.4" width="4" height="3.2" rx=".6"/><rect x="8" y="8.4" width="4" height="3.2" rx=".6"/></symbol>
     <symbol id="i-node" viewBox="0 0 16 16"><rect x="1.8" y="3.8" width="9.4" height="7" rx="1.6"/><path d="M13 9.6v4.8M10.6 12h4.8"/></symbol>
   </defs>
 </svg>
@@ -130,6 +134,10 @@
 <div id="edit-bar" class="panel edit-bar" role="toolbar" aria-label="Edit" hidden>
   <button id="edit-add" class="btn" aria-pressed="false" title="Add a node: click where it goes (or double-click the map)"><svg class="icon"><use href="#i-node"/></svg><span class="lbl">Node</span></button>
   <button id="edit-lines" class="btn" title="Pick the lines the selected edge carries (L)" hidden><svg class="icon"><use href="#i-menu"/></svg><span class="lbl">Lines…</span></button>
+  <button id="edit-group" class="btn" title="Group: a new container around the boxes selected" hidden><svg class="icon"><use href="#i-group"/></svg><span class="lbl">Group</span></button>
+  <button id="edit-merge" class="btn" title="Merge the containers of the boxes selected into the one clicked first" hidden><svg class="icon"><use href="#i-merge"/></svg><span class="lbl">Merge</span></button>
+  <button id="edit-split" class="btn" title="Split: the boxes selected leave their container for a new one beside it" hidden><svg class="icon"><use href="#i-split"/></svg><span class="lbl">Split</span></button>
+  <button id="edit-ungroup" class="btn" title="Ungroup: the container goes, its boxes stay" hidden><svg class="icon"><use href="#i-ungroup"/></svg><span class="lbl">Ungroup</span></button>
   <button id="edit-delete" class="btn" title="Delete the selection (Del)"><svg class="icon"><use href="#i-trash"/></svg></button>
   <button id="edit-pin" class="btn" title="Pin every node and note where it is now"><svg class="icon"><use href="#i-pin"/></svg><span class="lbl">Pin all</span></button>
   <button id="edit-unpin" class="btn" title="Unpin every node and note: the layout places them"><svg class="icon"><use href="#i-unpin"/></svg><span class="lbl">Unpin all</span></button>
@@ -179,6 +187,7 @@
 <dialog id="label-dialog" class="dialog small">
   <form method="dialog">
     <h2>New node</h2>
+    <p class="hint" hidden></p>
     <input name="label" class="field" type="text" placeholder="Label" autocomplete="off" spellcheck="false" aria-label="Label">
     <div class="dialog-actions">
       <button type="button" class="btn" data-close>Cancel</button>
@@ -236,7 +245,7 @@
       <tr><th>Search</th><td><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>F</kbd></td></tr>
       <tr><th>Next theme</th><td><kbd>T</kbd></td></tr>
       <tr><th>Notes on / off</th><td><kbd>N</kbd>; off draws the map without them and puts a badge for each in its node: hover it to read the note, click it to keep the note open, click again to close it. Remembered for your next visit</td></tr>
-      <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; click one of several selected boxes again to give them all one size; a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
+      <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; click one of several selected boxes again to give them all one size; their toolbar (and the edit bar) groups them in a new container, merges their containers into the one clicked first, splits them off into a new container, or ungroups a container (click it to select its boxes); a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
       <tr><th>Reload</th><td><kbd>R</kbd></td></tr>
       <tr><th>Open / paste</th><td>drop a file, or paste DOT text anywhere</td></tr>
     </table>

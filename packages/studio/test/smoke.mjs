@@ -1349,6 +1349,148 @@ console.log('edit mode, saving to the file (linemap studio)');
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+console.log('edit mode, container actions: group, ungroup, merge, split');
+{
+  const os = await import('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'linemap-groups-'));
+  const file = path.join(dir, 'g.dot');
+  const FLOW = `digraph g {
+  subgraph lines { A }
+  a [pos="0,0"]
+  b [pos="300,0"]
+  subgraph cluster_x { label="X"; c [pos="0,300"]; d [pos="300,300"]; g [pos="600,300"] }
+  subgraph cluster_y { label="Y"; e [pos="0,600"]; f [pos="300,600"] }
+  a -> b [lines=A]
+  b -> c [lines=A]
+  d -> e [lines=A]
+  a -> cluster_y [lines=A]
+}
+`;
+  fs.writeFileSync(file, FLOW);
+  const read = () => fs.readFileSync(file, 'utf8');
+  const groupServer = await serve({ dir, port: 0, quiet: true });
+  const page = await newPage();
+  await page.goto(`http://127.0.0.1:${groupServer.address().port}/studio.html#src=g.dot`);
+  await ready(page);
+  const until = async (fn, what) => {
+    for (let i = 0; i < 100; i++) { if (await fn()) return true; await page.waitForTimeout(50); }
+    check(false, `timed out: ${what}`);
+    return false;
+  };
+  const changed = async (before, what) => { await until(() => read() !== before, what); await page.waitForTimeout(400); return read(); };
+  const nodeAt = (id) => page.evaluate((id) => { const r = [...document.querySelectorAll('#map g.node')].find((g) => g.id === id).querySelector('rect, polygon, path').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, id);
+  const handle = (sel) => page.evaluate((sel) => { const r = document.querySelector(sel)?.getBoundingClientRect(); return r ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null; }, sel);
+  const click = async (pt) => { await page.mouse.click(pt.x, pt.y); await page.waitForTimeout(400); };
+  const pick = async (...ids) => {
+    await page.keyboard.press('Escape');
+    await click(await nodeAt(ids[0]));
+    await page.keyboard.down('Shift');
+    for (const id of ids.slice(1)) await click(await nodeAt(id));
+    await page.keyboard.up('Shift');
+  };
+  const tools = () => page.evaluate(() => [...document.querySelectorAll('#map .lm-edit-tool')].map((t) => t.dataset.act + (t.classList.contains('on') ? '*' : '')).join(' '));
+  const bar = () => page.evaluate(() => ['group', 'merge', 'split', 'ungroup'].filter((a) => !document.getElementById(`edit-${a}`).hidden).join(' '));
+  const hint = () => page.textContent('#edit-hint');
+  // the statements of a container (its braces matched)
+  const body = (t, id) => {
+    const i = t.indexOf(`subgraph ${id} {`);
+    if (i < 0) return null;
+    let depth = 0;
+    for (let j = t.indexOf('{', i); j < t.length; j++) {
+      if (t[j] === '{') depth++;
+      else if (t[j] === '}' && !--depth) return t.slice(i, j + 1);
+    }
+    return null;
+  };
+  const has = (b, id) => !!b && new RegExp(`[{;\\s]${id}\\b(?! *->)`).test(b);
+  const undoTo = async (target, what) => {
+    for (let i = 0; i < 3 && read() !== target; i++) { const t = read(); await page.keyboard.press('Control+z'); await changed(t, what); }
+    check(read() === target, `${what}: one undo each, back to the file before`);
+  };
+  await page.keyboard.press('e');
+  await page.waitForTimeout(300);
+
+  // two top-level boxes: only Group; then exactly a container's boxes: Ungroup
+  await pick('a', 'b');
+  check(await tools() === 'delete unpin* resize group' && await bar() === 'group', `two boxes at the top: the adorner offers Group (${await tools()}; bar: ${await bar()})`);
+  let before = read();
+  await click(await handle('#map .lm-edit-tool[data-act="group"]'));
+  await page.waitForSelector('#label-dialog[open]');
+  check(await page.textContent('#label-dialog h2') === 'New container', 'Group asks for the label of the new container');
+  await page.keyboard.type('Pair');
+  await page.keyboard.press('Enter');
+  let text = await changed(before, 'grouping a and b');
+  const pair = body(text, 'cluster_pair');
+  check(has(pair, 'a') && has(pair, 'b') && /label = "Pair"/.test(pair), `Group writes a new container around a and b (${pair?.replace(/\s+/g, ' ')})`);
+  check(/^2 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize ungroup' && await bar() === 'ungroup', `its boxes stay selected; now exactly its boxes: Ungroup (${await tools()})`);
+  const grouped = text;
+  await click(await handle('#map .lm-edit-tool[data-act="ungroup"]'));
+  text = await changed(grouped, 'ungrouping Pair');
+  check(!/cluster_pair/.test(text) && /\ba \[pos="0,0"\]/.test(text) && /^2 boxes:/.test(await hint()), 'Ungroup removes the container, a and b stay (and stay selected)');
+  await undoTo(FLOW, 'undo ungroup and group');
+
+  // boxes from X (clicked first) and Y: Merge into X; edges to Y move onto X
+  await pick('c', 'e');
+  check(await tools() === 'delete unpin* resize group merge' && await bar() === 'group merge', `boxes from two containers: Group and Merge (${await tools()})`);
+  before = read();
+  await click(await handle('#map .lm-edit-tool[data-act="merge"]'));
+  text = await changed(before, 'merging Y into X');
+  const x = body(text, 'cluster_x');
+  check(!/cluster_y/.test(text.replace(/a -> cluster_y/, '')) && ['c', 'd', 'g', 'e', 'f'].every((id) => has(x, id)) && /label="X"/.test(x), `Merge: e and f join X, Y goes (${x?.replace(/\s+/g, ' ')})`);
+  check(/a -> cluster_x \[lines=A\]/.test(text) && !/cluster_y/.test(text), 'the edge to Y now goes to X');
+  check(/^5 boxes:/.test(await hint()), `the boxes of X are selected (${(await hint()).slice(0, 10)})`);
+  await undoTo(FLOW, 'undo merge');
+
+  // two of X's three boxes: Group (inside X) and Split (beside X)
+  await pick('c', 'd');
+  check(await tools() === 'delete unpin* resize group split' && await bar() === 'group split', `two of a container's boxes: Group and Split (${await tools()})`);
+  before = read();
+  await click(await handle('#map .lm-edit-tool[data-act="split"]'));
+  await page.waitForSelector('#label-dialog[open]');
+  check(/Out of X/.test(await page.textContent('#label-dialog .hint')), 'Split asks for the label of the new container');
+  await page.keyboard.type('Side');
+  await page.keyboard.press('Enter');
+  text = await changed(before, 'splitting c and d off X');
+  const side = body(text, 'cluster_side'), x2 = body(text, 'cluster_x');
+  check(has(side, 'c') && has(side, 'd') && !has(x2, 'c') && has(x2, 'g') && !x2.includes('cluster_side'), `Split: c and d in a new container beside X, g stays (${side?.replace(/\s+/g, ' ')})`);
+  check(/^2 boxes:/.test(await hint()) && /ungroup/.test(await tools()), 'they stay selected, as the new container\'s boxes');
+  await undoTo(FLOW, 'undo split');
+  // Group inside X
+  await pick('c', 'd');
+  before = read();
+  await page.click('#edit-group');
+  await page.waitForSelector('#label-dialog[open]');
+  await page.keyboard.type('Inner');
+  await page.keyboard.press('Enter');
+  text = await changed(before, 'grouping c and d in X');
+  const inner = body(text, 'cluster_inner');
+  check(has(inner, 'c') && has(inner, 'd') && body(text, 'cluster_x')?.includes('subgraph cluster_inner'), 'Group from the edit bar: the new container is inside X');
+  await undoTo(FLOW, 'undo group');
+
+  // a click on a container selects its boxes: Ungroup, from the edit bar
+  await page.keyboard.press('Escape');
+  const corner = await page.evaluate(() => { const r = document.querySelector('#map g.group#cluster_x > rect').getBoundingClientRect(); return { x: r.x + 10, y: r.y + r.height - 10 }; });
+  await click(corner);
+  check(/^3 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize ungroup' && await bar() === 'ungroup', `a click on X: its boxes, Ungroup offered (${await tools()})`);
+  before = read();
+  await page.click('#edit-ungroup');
+  text = await changed(before, 'ungrouping X');
+  check(!/cluster_x/.test(text) && /cluster_y/.test(text), 'Ungroup from the edit bar removes X');
+  await undoTo(FLOW, 'undo ungroup');
+  // Escape on the label dialog: nothing changes
+  await pick('a', 'b');
+  await click(await handle('#map .lm-edit-tool[data-act="group"]'));
+  await page.waitForSelector('#label-dialog[open]');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
+  check(read() === FLOW, 'Escape in the label dialog groups nothing');
+
+  check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join('; ')}` : ''}`);
+  await page.close();
+  groupServer.close();
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log('edit mode, flows baked in: kept in the page, downloaded');
 {
   const repo = path.join(here, '..', '..', '..');
