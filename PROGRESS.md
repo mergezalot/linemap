@@ -183,8 +183,17 @@ Each is one edit and one undo; the new or kept container's members stay selected
     size mode.
   - unit 3b (cdbd241): left drag pans (both modes), Shift+drag selects, middle pans, Space gone,
     wheel pans, Ctrl/Cmd+wheel zooms (≤×1.65 per frame), Shift+wheel pans sideways.
-- Subagents must not use `git stash` (subagent #2 once stashed and popped the whole tree to run
+  - unit 6 (cabca89): Add note on a node's adorner (`#i-note-add`, `addNote()`, `askNote` in
+    actions.mjs, `#note-dialog`); note goes into the node's container, edge `node -> note` at
+    top level; id `note_<node>`. No key (N toggles notes). Examples already contain HTML-like
+    note labels (unit 10 must keep them working).
+  - unit 7 (ec1e543): multi adorner (Delete · Pin/Unpin all · Resize; P works on several);
+    size mode `{ kind: 'nodes', ids, mode: 'size', main }`; all resized boxes pinned (others at
+    their centre). A click on a selected box no longer shrinks the selection. Undo clears the
+    selection (`step()`); container actions go in the `nodes` branch of `tools()` / `tool(act)`;
+    `membersOf(group)` exists. A full smoke run takes 3–5 min.
+- Subagents must not use `git stash` or stage examples/ (the user edits them live in `pnpm studio`) (subagent #2 once stashed and popped the whole tree to run
   a check; nothing was lost).
-- In flight: unit 6, with implementer subagent #2 (agent id a49ac122b73be942b; ~115k tokens
-  after unit 3b; continue it with SendMessage while under 200k).
-- Next: unit 7.
+- In flight: unit 8, then unit 9, with implementer subagent #4 (id below). Subagent #3
+  (a697cb31be7aba239) retired at ~125k after unit 7 (units 8+9 are large).
+- Next: unit 10.
