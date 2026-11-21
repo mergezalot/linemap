@@ -44,6 +44,22 @@ test('pos adds to a declaration, or adds one where the node is first mentioned',
   assert.equal(edit({ op: 'pos', id: 'x', x: 5, y: 6 }, one), 'digraph g { subgraph lines { A } x [pos="5,6"]; y [shape=box] }');
 });
 
+test('unpin removes the pos, and a statement that set only the pos', () => {
+  assert.deepEqual(diff(FLOW, edit({ op: 'unpin', id: 'a' })), ['  a [label="Shop", pos="100,100"]', '  a [label="Shop"]']);
+  assert.equal(parseFlow(edit({ op: 'unpin', id: 'a' })).items.get('a').pinned, false);
+  // no pos anywhere: nothing changes
+  assert.equal(edit({ op: 'unpin', id: 'c' }), FLOW);
+  // every statement loses it; one that set only the pos goes, with its line
+  const t = 'digraph g {\n  subgraph lines { A }\n  a [pos="1,2"]\n  a [label="x", pos="3,4"]\n  a -> b [lines=A]\n}\n';
+  assert.equal(edit({ op: 'unpin', id: 'a' }, t), 'digraph g {\n  subgraph lines { A }\n  a [label="x"]\n  a -> b [lines=A]\n}\n');
+  // a statement that is the node's only mention (or its only one in its container) stays, bare
+  const alone = 'digraph g { subgraph lines { A } n [pos="1,2"]; subgraph cluster_x { b [pos="5,6"] } a -> b [lines=A] }';
+  const r = edit({ op: 'unpin', id: 'n' }, edit({ op: 'unpin', id: 'b' }, alone));
+  assert.equal(r, 'digraph g { subgraph lines { A } n; subgraph cluster_x { b } a -> b [lines=A] }');
+  assert.equal(parseFlow(r).items.get('b').group, 'cluster_x');
+  assert.throws(() => editDot(FLOW, { op: 'unpin', id: 'zz' }), /no node zz/);
+});
+
 test('via: on the edge statement, as a statement of its own for a chain, and removed again', () => {
   const v = edit({ op: 'via', from: 'a', to: 'c', points: [[10, 20], [30, 40]] });
   assert.deepEqual(diff(FLOW, v), ['    a -> c [lines=A]', '    a -> c [lines=A, via="10,20 30,40"]']);
@@ -73,6 +89,15 @@ test('addNode at the end of the graph or of its container', () => {
   assert.deepEqual(diff(FLOW, inX), ['', '    n [shape=cylinder, pos="5,6"]']);
   assert.equal(parseFlow(inX).items.get('n').group, 'cluster_x');
   assert.throws(() => editDot(FLOW, { op: 'addNode', id: 'a', x: 0, y: 0 }), /there is a node a already/);
+});
+test('addNode without a position, and a label of several lines', () => {
+  assert.deepEqual(diff(FLOW, edit({ op: 'addNode', id: 'n' })), ['', '  n']);
+  const label = 'one "two"\nC:\\three\r\nfour';
+  const t = edit({ op: 'addNode', id: 'note_1', label, shape: 'note' });
+  assert.deepEqual(diff(FLOW, t), ['', '  note_1 [label="one \\"two\\"\\nC:\\\\three\\nfour", shape=note]']);
+  const n = parseFlow(t).items.get('note_1');
+  assert.equal(n.label, 'one "two"\nC:\\three\nfour');
+  assert.equal(n.pinned, false);
 });
 
 test('addEdge and removeEdge', () => {

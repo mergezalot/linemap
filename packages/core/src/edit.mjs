@@ -2,9 +2,14 @@
 // the offsets the DOT parser reports, so comments, layout, quoting and attribute order stay as
 // written and a diff shows only the change. Ops (ids are DOT ids; points are px, y down, as `pos`):
 //   { op: 'pos', id, x, y }                           pin a node or note there
+//   { op: 'unpin', id }                               its pos goes from every statement of it (a
+//                                                     statement that set only the pos goes too); no
+//                                                     pos: nothing changes
 //   { op: 'via', from, to, points: [[x, y], ...] }    the edge's via points; [] removes them
-//   { op: 'addNode', id, x, y, label, shape, group }  a new node, pinned; in container `group`
-//                                                     (a cluster id) if given; label, shape optional
+//   { op: 'addNode', id, x, y, label, shape, group }  a new node, in container `group` (a cluster
+//                                                     id) if given; pinned at x, y if given, else
+//                                                     the layout places it; label, shape optional; a
+//                                                     label may have line breaks (written as `\n`)
 //   { op: 'removeNode', id }                          the node and every edge to or from it
 //   { op: 'addEdge', from, to, lines: [ids] }         lines [] or none: a note's attachment
 //   { op: 'removeEdge', from, to }
@@ -74,7 +79,7 @@ export function idText(id) {
   if ((/^[A-Za-z_\u0080-￿][\w\u0080-￿]*$/.test(id) && !KEYWORDS.test(id)) || /^-?(\.\d+|\d+(\.\d*)?)$/.test(id)) return id;
   return quote(id);
 }
-const quote = (s) => `"${String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+const quote = (s) => `"${String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r?\n|\r/g, '\\n')}"`;
 const pointText = ([x, y]) => `${Math.round(x)},${Math.round(y)}`;
 
 // Where a statement really ends: its location may run on over the whitespace after it.
@@ -307,6 +312,19 @@ const OPS = {
     return [appendTo(doc.text, first.body, `${idText(id)} [pos=${quote(value)}]`)];
   },
 
+  // A statement that set nothing but the pos goes, unless it is what keeps the node in its
+  // container (or in the graph): then it stays, bare.
+  unpin(doc, { id }) {
+    if (!known(doc, id)) throw new Error(`no node ${id}`);
+    const withPos = doc.stmts.filter((st) => st.kind === 'node' && st.id === id && ownAttr(st, 'pos'));
+    return withPos.map((st) => {
+      const onlyPos = st.s.children.filter((c) => c.type === 'Attribute').length === 1;
+      const cluster = st.body.cluster;
+      const kept = doc.stmts.some((o) => o !== st && mentions(o, id) && (!cluster || o.body.chain.includes(cluster)));
+      return onlyPos && kept ? replaceStmt(doc.text, st.s, []) : removeAttr(doc.text, st, 'pos');
+    });
+  },
+
   via(doc, { from, to, points }) {
     const list = edgeStmts(doc, from, to);
     if (!list.length) throw new Error(`no edge ${from}->${to}`);
@@ -379,8 +397,8 @@ const OPS = {
     const attrs = [];
     if (label !== undefined && label !== id) attrs.push(`label=${quote(label)}`);
     if (shape && shape !== 'box') attrs.push(`shape=${shape}`);
-    attrs.push(`pos=${quote(pointText([x, y]))}`);
-    return [appendTo(doc.text, body, `${idText(id)} [${attrs.join(', ')}]`)];
+    if (x != null && y != null) attrs.push(`pos=${quote(pointText([x, y]))}`);
+    return [appendTo(doc.text, body, `${idText(id)}${attrs.length ? ` [${attrs.join(', ')}]` : ''}`)];
   },
 
   removeNode(doc, { id }) {
