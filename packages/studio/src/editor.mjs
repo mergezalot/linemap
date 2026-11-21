@@ -40,7 +40,8 @@
 // for a node or note Delete · Pin/Unpin · Resize, for an edge or one of its lines Delete · Lines….
 // A node's adorner also has Add note: it asks for the text (several lines) and adds a note,
 // unpinned, in the node's container, attached by an edge without lines, as one edit (one undo);
-// the note is then selected.
+// the note is then selected. Text with <b>, <i>, <u>, <s>, <br/> or <font color="…"> is written as
+// an HTML-like label (label=<…>, line breaks as <br/>), any other text as a quoted string.
 // Pin/Unpin shows the state (the pin, highlighted, when pinned; a struck-out pin when not) and
 // switches it: pinning writes `pos` where the box is, unpinning lets the layout place it. It
 // hides while something is dragged. The edit bar keeps the same actions for the keyboard.

@@ -1,6 +1,7 @@
 // Turns a flow (DOT text) into the in-memory model used by every later stage. No I/O here:
 // the caller reads the file, so the same code runs in the browser.
 import { readDot } from './dot.mjs';
+import { RICH_LABEL, isStyled } from './rich.mjs';
 import { autoColor, THEMES } from './theme.mjs';
 
 export const STYLE = {
@@ -98,6 +99,7 @@ function styleProps(attrs, what) {
 
 // Rough text width; good enough for sizing notes without a font engine.
 export const textWidth = (s, size) => s.length * size * 0.56;
+const BOLD_WIDER = 1.08; // bold text runs this much wider
 
 // Size of an edge label's pill.
 export const edgeLabelSize = (label) => {
@@ -186,11 +188,15 @@ export function parseFlow(text) {
       x: at?.[0], y: at?.[1], // centre
     };
     if (shape === 'note') {
-      const rows = item.label.split('\n');
+      // an HTML-like label with styles (rich.mjs): runs of styled text, else plain rows
+      const rich = n.attrs[RICH_LABEL];
+      item.rich = rich && rich.text === n.attrs.label && isStyled(rich.rows) ? rich.rows : null;
+      const rows = item.rich ? item.rich.map((r) => r.reduce((w, t) => w + textWidth(t.text, style.fontSize) * (t.b ? BOLD_WIDER : 1), 0))
+        : item.label.split('\n').map((r) => textWidth(r, style.fontSize));
       const pad = STYLE.notePad;
       item.kind = 'note';
       item.attach = null;
-      item.w = own.width ?? Math.ceil(Math.max(...rows.map((r) => textWidth(r, style.fontSize)))) + 2 * pad;
+      item.w = own.width ?? Math.ceil(Math.max(...rows)) + 2 * pad;
       item.h = own.height ?? rows.length * style.lineHeight + 2 * pad;
       notes.push(item);
     } else {

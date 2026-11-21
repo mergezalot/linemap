@@ -1097,6 +1097,19 @@ console.log('edit mode, saving to the file (linemap studio)');
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing the note');
     check(read() === before && await page.evaluate(() => !document.getElementById('note_d')), 'one undo removes the note and its edge');
+    // rich text: written as an HTML-like label, drawn with a bold run
+    await click(await nodeAt('d'));
+    await click(await handle('#map .lm-edit-tool[data-act="note"]'));
+    await page.waitForSelector('#note-dialog[open]');
+    await page.keyboard.type('A <b>bold</b> one');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('& more');
+    await page.keyboard.press('Control+Enter');
+    text = await changed(before, 'adding a rich note to d');
+    const bold = await page.evaluate(() => document.querySelector('#note_d tspan[font-weight="700"]')?.textContent);
+    check(/note_d \[label=<A <b>bold<\/b> one<br\/>&amp; more>, shape=note\]/.test(text) && bold === 'bold', `a note with <b> is written as label=<…> and drawn bold (${/note_d[^\n]*/.exec(text)?.[0]}; ${bold})`);
+    await page.keyboard.press('Control+z');
+    await changed(text, 'undoing the rich note');
   }
 
   // one line of a bundle: click the selected edge on a lane

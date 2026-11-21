@@ -9,7 +9,10 @@
 //   { op: 'addNode', id, x, y, label, shape, group }  a new node, in container `group` (a cluster
 //                                                     id) if given; pinned at x, y if given, else
 //                                                     the layout places it; label, shape optional; a
-//                                                     label may have line breaks (written as `\n`)
+//                                                     label may have line breaks (written as `\n`); a
+//                                                     note's label with <b> <i> <u> <s> <br/> or
+//                                                     <font color> is written as label=<…> (line
+//                                                     breaks as <br/>, other < > & escaped)
 //   { op: 'removeNode', id }                          the node and every edge to or from it
 //   { op: 'addEdge', from, to, lines: [ids] }         lines [] or none: a note's attachment
 //   { op: 'removeEdge', from, to }
@@ -35,6 +38,7 @@
 // flow is still valid (a loop, a label conflict, an unknown line).
 import { parse } from '@ts-graphviz/ast';
 import { readDot } from './dot.mjs';
+import { hasRichTags, toHtml } from './rich.mjs';
 
 export function editDot(text, ops) {
   for (const op of Array.isArray(ops) ? ops : [ops]) {
@@ -430,7 +434,8 @@ const OPS = {
     const body = group ? doc.bodies.find((b) => b.cluster === group && b.node.id?.value === group) : doc.graph;
     if (!body) throw new Error(`no container ${group}`);
     const attrs = [];
-    if (label !== undefined && label !== id) attrs.push(`label=${quote(label)}`);
+    // a note whose text uses <b> <i> <u> <s> <br/> <font color>: an HTML-like label (rich.mjs)
+    if (label !== undefined && label !== id) attrs.push(`label=${shape === 'note' && hasRichTags(label) ? `<${toHtml(label)}>` : quote(label)}`);
     if (shape && shape !== 'box') attrs.push(`shape=${shape}`);
     if (x != null && y != null) attrs.push(`pos=${quote(pointText([x, y]))}`);
     return [appendTo(doc.text, body, `${idText(id)}${attrs.length ? ` [${attrs.join(', ')}]` : ''}`)];

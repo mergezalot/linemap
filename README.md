@@ -97,6 +97,10 @@ digraph example {
 - Units follow Graphviz (inches, points) except `pos`, which is px with y down.
 - Colours are hex, `#rgb` or `#rrggbb`; named colours like `red` are errors.
 - `URL`/`href` must be `http://`, `https://`, `mailto:` or relative.
+- A note's label may be HTML-like, as in Graphviz: `label=<Mind the <b>gap</b><br/>and the
+  <font color="#c62828">step</font>>`. Supported: `<b>`, `<i>`, `<u>`, `<s>`, `<br/>`,
+  `<font color="#…">`; any other tag (tables, images, …) is an error naming it. Elsewhere an
+  HTML-like label shows as plain text.
 - `dot -Tsvg flow.dot` still gives a Graphviz preview of the structure.
 
 ## Themes
@@ -181,7 +185,9 @@ The studio remembers notes on or off for your next visit. **Edit** (or `E`) chan
 place: drag boxes, bend lines, add, connect, reattach and delete boxes and edges, then undo with
 `Ctrl Z`. Click a selected box again to resize it, a selected edge again to work on the one line
 you clicked instead of the whole bundle. Shift+click, Shift+drag or a click on a container
-selects several boxes, to move together. Under `linemap studio` each edit is saved to the DOT file, changing only the lines it
+selects several boxes, to move together, or to group them in a new container, merge their
+containers, split them off into a new one, or ungroup a container. A note's text may use `<b>`,
+`<i>`, `<u>`, `<s>` and `<font color>`. Under `linemap studio` each edit is saved to the DOT file, changing only the lines it
 must; elsewhere download or copy the edited DOT text, or the page with it baked in. The SVG download is the map as shown:
 hidden lines, through, theme and notes left out. The address keeps these settings and the view,
 so a link reopens the same map (a `notes=` in it wins over the remembered one). Press `?` for keys.

@@ -1,25 +1,34 @@
 // Reads a DOT file (parsed by @ts-graphviz/ast) into plain lists, with Graphviz's own rules for
 // default attributes and subgraph membership. Nothing here knows about shapes or styles.
 import { parse } from '@ts-graphviz/ast';
+import { parseRich, plainOf, RICH_LABEL } from './rich.mjs';
 
 // DOT string values. A quoted string keeps its escapes: `\n`, `\l`, `\r` break the line,
-// backslash-newline continues it. An HTML-like string <...> collapses whitespace, `<br/>` breaks
-// the line, other tags are dropped and entities decoded. Lines are trimmed in both cases.
+// backslash-newline continues it. An HTML-like string <...> is read by rich.mjs: whitespace
+// collapses, `<br/>` breaks the line, <b> <i> <u> <s> <font color> style the text, any other tag
+// is an error. Lines are trimmed in both cases. Values are the plain text; the rows of an
+// HTML-like label also go under attrs[RICH_LABEL] (see rich.mjs).
 function text(lit) {
-  let s = lit.value;
-  if (lit.quoted === 'html') {
-    s = s.replace(/\s+/g, ' ').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '')
-      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
-      .replace(/&amp;/g, '&');
-  } else {
-    s = s.replace(/\\\r?\n/g, '').replace(/\\([nlr\\])/g, (_, c) => (c === '\\' ? '\\' : '\n'));
-  }
+  if (lit.quoted === 'html') return plainOf(parseRich(lit.value));
+  const s = lit.value.replace(/\\\r?\n/g, '').replace(/\\([nlr\\])/g, (_, c) => (c === '\\' ? '\\' : '\n'));
   return s.split('\n').map((r) => r.trim()).join('\n').trim();
 }
 
-const attrsOf = (stmt) => Object.fromEntries(
-  stmt.children.filter((c) => c.type === 'Attribute').map((a) => [a.key.value, text(a.value)]),
-);
+const attrsOf = (stmt) => {
+  const out = {};
+  for (const a of stmt.children.filter((c) => c.type === 'Attribute')) {
+    const key = a.key.value;
+    let value;
+    try {
+      value = text(a.value);
+    } catch (err) {
+      throw new Error(`DOT ${where(stmt)}: ${key}: ${err.message}`);
+    }
+    out[key] = value;
+    if (key === 'label' && a.value.quoted === 'html') out[RICH_LABEL] = { text: value, rows: parseRich(a.value.value) };
+  }
+  return out;
+};
 const where = (stmt) => `line ${stmt.location?.start.line ?? '?'}`;
 
 export function readDot(source) {
