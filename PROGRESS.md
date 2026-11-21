@@ -202,7 +202,31 @@ Each is one edit and one undo; the new or kept container's members stay selected
     container's parent; Ungroup = `removeGroup`. Unit 10: `addGroup` quotes labels.
 - Subagents must not use `git stash` or stage examples/ (the user edits them live in `pnpm studio`) (subagent #2 once stashed and popped the whole tree to run
   a check; nothing was lost).
-- Paused 2026-11-21 at the user's request (end of day). Nothing in flight; no subagent or
-  background process running. Subagent #4 (ae4aac41ee91da6fe, ~75k tokens) could be resumed
-  for unit 9 if this session continues; otherwise spawn a fresh one from this file.
-- Next: unit 9, then 10, 11.
+  - unit 9 (07a2dd4): `containerPlan()`/`containerTools()`/`containerActs` in editor.mjs; edit bar
+    `#edit-group/merge/split/ungroup`; `askLabel` in actions.mjs (`#label-dialog` gained a hint);
+    `newId(label, prefix)`; `sel.ids` keeps click order; a container click sets `sel.group`;
+    `selectAfter(ids, group)` restores selection after an edit. Limits: actions need >= 2 boxes;
+    Merge needs every box in a container and flattens nested containers; Ungroup drops edges to the
+    container's box. Smoke section "edit mode, container actions" added but NOT run (scratchpad libs
+    gone, chromium lacks libatk); verified with a throwaway Node harness. Core test for
+    examples/platform.dot fails only because of the user's uncommitted edit to it.
+  - unit 10 (5bbb13e, core): `packages/core/src/rich.mjs` (`parseRich` -> rows of runs
+    `{text,b,i,u,s,color}`, `toHtml`); `readDot` keeps plain text in every attribute and the rows
+    under the symbol `RICH_LABEL`; notes get `item.rich`, drawn as nested tspans (bold 1.08x
+    wider). Unsupported tags are errors for every HTML-like attribute; only notes draw rich text.
+    Font colour hex only. `addNode` with shape note writes `label=<…>` when the text has a
+    supported tag. No op to edit an existing note's text. Smoke check added, not run.
+    Tests: core 79/79, studio unit 6/6, cli 32/32.
+  - unit 11 (d1fd975): `packages/studio/src/arrange.mjs` (`arrange(boxes, how, grid)`, unit
+    tests in `packages/studio/test/arrange.test.mjs`); Align button in the multi adorner and
+    `#edit-align` open one HTML popover `#align-menu` (keyboard accessible). Every selected box is
+    pinned (not only moved ones); distribute needs >= 3 boxes and rounds to whole units (no grid).
+    Smoke checks added, not run. Tests: core 79/79, studio unit 11/11, cli 32/32.
+- Resumed 2026-11-21 (new orchestrator session). Subagent #5 (ae328f70c4dc31f1d) did units 9 and
+  10 and ended at ~185k tokens; unit 11 goes to a fresh subagent #6 (a0ed38398bace1fbc).
+- examples/platform.dot: the user's uncommitted change (28 lines) vanished from the working tree
+  at 16:12 during unit 10; the subagent's transcript shows no command touching it. Asked the user.
+- Open for the user: the smoke test can't run until the Playwright system deps and a font are
+  installed (`sudo pnpm exec playwright install-deps` + a font package), or the libs are unpacked
+  into a scratchpad again.
+- All units done (2026-11-21). Subagent #6 (a0ed38398bace1fbc, ~75k) finished unit 11.
