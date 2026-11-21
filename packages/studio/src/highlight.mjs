@@ -1,4 +1,4 @@
-// Hover and click on the map: focus lines (dim the rest), pin them (click a line or a node), open
+// Hover and click on the map: focus lines (dim the rest), pin them (click a line, a bundle or a node), open
 // node links (ctrl- or cmd-click), tooltips for lines, nodes, notes, bundles and container
 // titles. With notes off each note is a badge in its node: hovering it shows the text, a click
 // keeps the note open beside the badge, a click on the badge or the open note folds it again. Indexes are built once per render; pointer events are delegated to the map host and only
@@ -265,10 +265,8 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
       if (last.key?.startsWith('line ')) { last.html = lineTip(id, lineEl); tooltip.show(last.html, e.clientX, e.clientY); }
       return;
     }
-    const node = e.target.closest('g.node');
-    if (node) {
-      const ids = nodeLines(node.id);
-      if (!ids.length) return;
+    // a bundle's edge (its casing, beside the lines) or a node pins all of their lines, or unpins them
+    const toggleAll = (ids) => {
       const all = ids.every((id) => pinned.has(id));
       let next;
       if (e.shiftKey) {
@@ -276,6 +274,18 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
         for (const id of ids) all ? next.delete(id) : next.add(id);
       } else next = all && pinned.size === ids.length ? new Set() : new Set(ids);
       setPinned(next);
+    };
+    const edge = e.target.closest('g.edge');
+    if (edge) {
+      const ids = (edge.getAttribute('data-lines') ?? '').split(' ').filter(Boolean);
+      if (ids.length) toggleAll(ids);
+      return;
+    }
+    const node = e.target.closest('g.node');
+    if (node) {
+      const ids = nodeLines(node.id);
+      if (!ids.length) return;
+      toggleAll(ids);
       if (last.key === `node ${node.id}`) { last.html = nodeTip(node); tooltip.show(last.html, e.clientX, e.clientY); }
       return;
     }

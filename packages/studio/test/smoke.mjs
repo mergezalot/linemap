@@ -43,6 +43,8 @@ async function rerun(page, action) {
   await page.waitForTimeout(50);
 }
 const viewBox = (page) => page.evaluate(() => document.querySelector('#map svg').getAttribute('viewBox'));
+// the computed cursor of the first element matching each selector (null: none there)
+const cursors = (page, sels) => page.evaluate((sels) => sels.map((q) => { const x = document.querySelector(q); return x ? getComputedStyle(x).cursor : null; }).join(' '), sels);
 
 // A screen point on a strand of some line that is really on top there (not under a label).
 async function strandPoint(page, skip = []) {
@@ -82,6 +84,11 @@ for (const src of EXAMPLES) {
   check(info.titles === 0, 'native <title> tooltips removed');
   check(info.legendRows === info.lines, `legend has a row per line (${info.legendRows})`);
   await shot(page, `${name}-1-default`);
+  {
+    // cursors: the background pans (grab), a line, a bundle's rim and a node are clicked (pointer)
+    const c = await cursors(page, ['#stage', '#map g.edge > path[data-line]', '#map g.edge > .lm-casing', '#map g.node']);
+    check(c === 'grab pointer pointer pointer', `view mode cursors: background grab, line, bundle and node pointer (${c})`);
+  }
 
   // hover a strand: focus and tooltip
   const pt = await strandPoint(page);
@@ -943,6 +950,7 @@ console.log('edit mode, saving to the file (linemap studio)');
   text = await changed(before, 'bending b -> c');
   check(/b -> c \[lines=A, via="\d+,\d+"\]/.test(text), `dragging an edge adds a via (${/b -> c.*/.exec(text)?.[0]})`);
   check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-via').length) === 1, 'the via point has a handle');
+  check(await cursors(page, ['#map .lm-edit-via']) === 'move', 'a via handle shows the move cursor');
   await shot(page, 'edit-2-bent');
   // double-click the via handle: gone again
   before = read();
@@ -956,6 +964,11 @@ console.log('edit mode, saving to the file (linemap studio)');
   await page.waitForTimeout(150);
   const end = await handle('#map .lm-edit-end[data-end="to"]');
   check(!!end && /reattach/.test(await page.textContent('#edit-hint')), 'a selected edge shows handles on its ends');
+  {
+    // edges are clicked to select (pointer, never the grab of the background); their ends are dragged (move)
+    const c = await cursors(page, ['#stage', '#map g.edge > path[data-line]', '#map g.edge > .lm-casing', '#map .lm-edit-end', '#map g.node']);
+    check(c === 'grab pointer pointer move move', `edit mode cursors: background grab, line and bundle pointer, edge end and box move (${c})`);
+  }
   await drag(end, await nodeAt('d'));
   text = await changed(before, 'reattaching b -> c');
   check(/b -> d \[lines=A\]/.test(text) && !/b -> c/.test(text) && /c \[label="C"/.test(text), 'dragging its end onto d reattaches b -> c to b -> d; c stays');
@@ -979,6 +992,10 @@ console.log('edit mode, saving to the file (linemap studio)');
   await click(await nodeAt('a'));
   check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-size').length) === 8 && /resize/.test(await page.textContent('#edit-hint')), 'clicking the selected box shows resize handles');
   await shot(page, 'edit-2a-resize');
+  {
+    const c = await cursors(page, ['#map .lm-edit-size-se', '#map .lm-edit-size-ne', '#map .lm-edit-size-n', '#map .lm-edit-size-w']);
+    check(c === 'nwse-resize nesw-resize ns-resize ew-resize', `size handles show resize cursors (${c})`);
+  }
   before = read();
   const se = await handle('#map .lm-edit-size-se'), nw = await handle('#map .lm-edit-size-nw');
   await drag(se, { x: se.x + 60, y: se.y + 30 });
@@ -988,6 +1005,16 @@ console.log('edit mode, saving to the file (linemap studio)');
   check(!!sized && Math.abs(nw2.x - nw.x) < 4 && Math.abs(nw2.y - nw.y) < 4, `dragging the se handle resizes a, its nw corner stays (${sized?.[0]})`);
   await click(await nodeAt('a'));
   check(await page.evaluate(() => !document.querySelector('#map .lm-edit-size') && !!document.querySelector('#map .lm-edit-connect')), 'a click again: back to moving');
+  {
+    const c = await cursors(page, ['#map .lm-edit-connect', '#map .lm-edit-tool']);
+    check(c === 'crosshair pointer', `the connect handle shows a crosshair, adorner buttons the pointer (${c})`);
+    // Add node: the copy cursor over the whole map until Escape (which keeps the selection)
+    await page.click('#edit-add');
+    const adding = await cursors(page, ['#map svg', '#map g.node', '#map g.edge > path[data-line]']);
+    await page.keyboard.press('Escape');
+    const after = await cursors(page, ['#map g.node']);
+    check(adding === 'copy copy copy' && after === 'move', `Add node shows the copy cursor until Escape (${adding}; then ${after})`);
+  }
 
   // the adorner: Delete · Pin/Unpin · Resize above the box; pin and unpin, then undo both
   const tools = () => page.evaluate(() => [...document.querySelectorAll('#map .lm-edit-tool')].map((t) => t.dataset.act + (t.classList.contains('on') ? '*' : '')).join(' '));

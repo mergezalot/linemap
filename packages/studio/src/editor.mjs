@@ -55,6 +55,13 @@
 // Every pinned node and note carries a pin mark inside its top-right corner (not while it is
 // resized, nor when the box is too small on screen); a click on the mark unpins the box, a drag
 // from it moves the box like a drag anywhere on it.
+// Cursors (style.css), one meaning each, in view and edit mode: grab on the background (a drag
+// pans; grabbing only while a pan runs, over anything); pointer on what a click selects or pins
+// (edges, bundles and lines, container titles, legend rows, adorner buttons, pin marks, view-mode
+// nodes); move on what a drag moves (edit-mode boxes, edge ends, bend points); a resize arrow on
+// size handles; crosshair on the connect handle `+` (a drag draws an edge) and during a Shift+drag
+// rectangle; copy over the whole map while Add node waits for its click. A drag keeps the cursor
+// it started with until it ends (--drag-cursor on the host). The source sidebar's edge: ew-resize.
 // The overlay (selection, handles, adorner, pin marks) is drawn into the map's SVG in map units, after every
 // render; it keeps its size on screen.
 import { editDot, parseFlow } from '@linemap/core';
@@ -803,6 +810,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         drag = { ...drag, kind: 'via', i, points: [...ed.via.slice(0, i), [drag.p.x, drag.p.y], ...ed.via.slice(i)].map((q) => [...q]) };
         sel = { kind: 'via', from: ed.from, to: ed.to, i };
       }
+      host.style.setProperty('--drag-cursor', dragCursor(drag));
     }
     const p = toMap(e);
     if (drag.kind === 'move') {
@@ -845,6 +853,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       draw();
     }
   });
+
+  // the cursor a drag keeps until it ends: that of the handle or thing pressed (style.css)
+  const RESIZE = { n: 'ns', s: 'ns', e: 'ew', w: 'ew', nw: 'nwse', se: 'nwse', ne: 'nesw', sw: 'nesw' };
+  const dragCursor = (d) => (d.kind === 'size' ? `${RESIZE[d.dir]}-resize` : d.kind === 'box' || d.kind === 'connect' ? 'crosshair' : d.kind === 'add' ? 'copy' : 'move');
 
   // every box resized is pinned: the dragged one where the pointer has it, the others at their centres
   const sizeOps = (d) => d.ids.filter((id) => itemOf(id)).flatMap((id) => {

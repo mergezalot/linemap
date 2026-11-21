@@ -143,9 +143,11 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .banner .close { height: 26px; padding: 0 5px; color: var(--muted); }
 
 /* ---------- stage and map ---------- */
+/* Cursors (the scheme is in editor.mjs's header): the background grabs (a drag pans), grabbing only
+   while a pan runs; what a click selects or pins shows the pointer; what a drag moves shows move */
 #stage { position: fixed; inset: var(--tb-h) var(--src-right) 0 0; touch-action: none; cursor: grab; outline: none; }
-/* while any pan runs, the cursor grabs */
-#stage.panning, #stage.panning * { cursor: grabbing !important; }
+/* while any pan runs, the cursor grabs (over everything, in every mode) */
+#stage.panning, #stage.panning #map, #stage.panning #map * { cursor: grabbing !important; }
 #map, #map > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #map > svg { overflow: hidden; user-select: none; -webkit-user-select: none; }
 /* the map's own background: a quiet edge so it reads as a sheet on the stage */
@@ -177,7 +179,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .tsw i:first-child { top: 3px; }
 .tsw i:last-child { top: 7px; }
 #map [data-line], #map g.node, #map g.note, #map g.group > text, #map g.group-tab { transition: opacity .14s ease; }
-#map [data-line], #map g.node, #map g.note a, #map g.note.lm-note-folded, #map g.group > text, #map g.group-tab { cursor: pointer; }
+#map [data-line], #map g.edge, #map g.edge *, #map g.node, #map g.note a, #map g.note.lm-note-folded, #map g.group > text, #map g.group-tab { cursor: pointer; }
 #map svg.focus [data-line]:not(.on) { opacity: .12; }
 #map svg.focus g.edge > path:not([data-line]) { opacity: .5; }
 #map svg.focus g.node:not(.on), #map svg.focus g.note { opacity: .45; }
@@ -311,19 +313,24 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 
 /* ---------- edit mode ---------- */
 #map.editing g.node, #map.editing g.node *, #map.editing g.note:not(.lm-note-folded), #map.editing g.note:not(.lm-note-folded) * { cursor: move; }
-#map.editing g.edge, #map.editing g.edge * { cursor: crosshair; }
+/* an edge (bundle or line) is selected by a click: the pointer, as in view mode (a drag on it bends it) */
+#map.editing g.edge, #map.editing g.edge * { cursor: pointer; }
 #map.editing.adding, #map.editing.adding * { cursor: copy !important; }
-#map.dragging, #map.dragging * { cursor: grabbing !important; }
+#map.editing.adding .lm-edit-tool, #map.editing.adding .lm-edit-tool * { cursor: pointer !important; }
+/* while something is dragged it keeps the cursor of what was pressed (editor.mjs sets --drag-cursor) */
+#map.dragging, #map.dragging * { cursor: var(--drag-cursor, move) !important; }
 #map .lm-edit { pointer-events: none; }
-#map .lm-edit .lm-edit-handle { pointer-events: all; cursor: grab; }
+/* edge ends and bend points move; the connect handle draws a new edge */
+#map .lm-edit .lm-edit-handle { pointer-events: all; cursor: move; }
+#map .lm-edit .lm-edit-connect, #map .lm-edit .lm-edit-connect * { cursor: crosshair; }
 #map .lm-edit-sel { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
 #map .lm-edit-handle:is(circle, rect), #map .lm-edit-handle circle { fill: #fff; stroke: var(--accent); stroke-width: 2px; vector-effect: non-scaling-stroke; }
 #map .lm-edit-sel.sizing { stroke-dasharray: none; stroke-width: 1px; }
 #map .lm-edit-size { fill: #fff; }
-#map .lm-edit-size-nw, #map .lm-edit-size-se { cursor: nwse-resize; }
-#map .lm-edit-size-ne, #map .lm-edit-size-sw { cursor: nesw-resize; }
-#map .lm-edit-size-n, #map .lm-edit-size-s { cursor: ns-resize; }
-#map .lm-edit-size-e, #map .lm-edit-size-w { cursor: ew-resize; }
+#map .lm-edit .lm-edit-size-nw, #map .lm-edit .lm-edit-size-se { cursor: nwse-resize; }
+#map .lm-edit .lm-edit-size-ne, #map .lm-edit .lm-edit-size-sw { cursor: nesw-resize; }
+#map .lm-edit .lm-edit-size-n, #map .lm-edit .lm-edit-size-s { cursor: ns-resize; }
+#map .lm-edit .lm-edit-size-e, #map .lm-edit .lm-edit-size-w { cursor: ew-resize; }
 #map .lm-edit-lane { stroke-opacity: .35; }
 #map .lm-edit-dim { opacity: .25; }
 #map .lm-edit-via { fill: #fff; }
