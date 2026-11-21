@@ -27,7 +27,7 @@ const el = {
   pasteDialog: $('paste-dialog'), positionsDialog: $('positions-dialog'), help: $('help'),
   flows: $('linemap-flows'),
   edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editLines: $('edit-lines'),
-  editPin: $('edit-pin'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
+  editPin: $('edit-pin'), editUnpin: $('edit-unpin'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
   editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'), editDone: $('edit-done'),
   labelDialog: $('label-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'),
 };
@@ -336,6 +336,7 @@ el.editAdd.addEventListener('click', () => editor.startAdding());
 el.editDelete.addEventListener('click', () => editor.remove());
 el.editLines.addEventListener('click', () => editor.editLines());
 el.editPin.addEventListener('click', () => editor.pinAll());
+el.editUnpin.addEventListener('click', () => editor.unpinAll());
 el.editUndo.addEventListener('click', () => editor.undo());
 el.editRedo.addEventListener('click', () => editor.redo());
 const dotName = () => `${baseName()}.dot`;
@@ -577,6 +578,8 @@ window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
     const act = mod && k === 'z' ? (e.shiftKey ? editor.redo : editor.undo) : mod && k === 'y' ? editor.redo
       : !mod && !e.altKey && (e.key === 'Delete' || e.key === 'Backspace') ? editor.remove
+        : !mod && !e.altKey && k === 'p' && editor.togglePin() ? () => {}
+          : !mod && !e.altKey && k === 'l' && (editor.selection()?.kind === 'edge' || editor.selection()?.kind === 'via') ? editor.editLines
         : e.key === 'Escape' && editor.escape() ? () => {} : null;
     if (act) { e.preventDefault(); act(); return; }
   }

@@ -328,6 +328,14 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 #map .lm-edit-plus { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 #map .lm-edit-route { fill: none; stroke: var(--accent); stroke-opacity: .2; stroke-linejoin: round; stroke-linecap: round; }
 #map .lm-edit-standin { fill: none; stroke: var(--accent); stroke-width: 3px; stroke-dasharray: 8 5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+/* the adorner: a toolbar above (or below) the selection, in map units sized to stay the same on screen */
+#map .lm-edit-adorner > rect { fill: var(--panel, #fff); stroke: var(--line, #d0d5dd); stroke-width: 1px; vector-effect: non-scaling-stroke; filter: drop-shadow(0 1px 2px rgba(0,0,0,.18)); }
+#map .lm-edit-tool { pointer-events: all; cursor: pointer; color: var(--ink, #222); }
+#map .lm-edit-tool > rect { fill: transparent; }
+#map .lm-edit-tool:hover > rect { fill: var(--hover, rgba(0,0,0,.07)); }
+#map .lm-edit-tool.on { color: var(--accent); }
+#map .lm-edit-tool.on > rect { fill: var(--accent); fill-opacity: .12; }
+#map .lm-edit-tool use { fill: none; stroke: currentColor; stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 #map .lm-edit-box { fill: var(--accent); fill-opacity: .08; stroke: var(--accent); stroke-width: 1px; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
 #map .lm-edit-ghost { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; }
 .edit-bar {

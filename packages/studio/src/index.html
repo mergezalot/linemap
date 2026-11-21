@@ -17,6 +17,8 @@
     <symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.5 8S4 3.6 8 3.6 14.5 8 14.5 8 12 12.4 8 12.4 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></symbol>
     <symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2.2v8M4.8 7.2 8 10.4l3.2-3.2M2.6 13.6h10.8"/></symbol>
     <symbol id="i-pin" viewBox="0 0 16 16"><path d="M8 14.2s4.6-4.3 4.6-7.6a4.6 4.6 0 0 0-9.2 0c0 3.3 4.6 7.6 4.6 7.6z"/><circle cx="8" cy="6.6" r="1.6"/></symbol>
+    <symbol id="i-unpin" viewBox="0 0 16 16"><path d="M8 14.2s4.6-4.3 4.6-7.6a4.6 4.6 0 0 0-9.2 0c0 3.3 4.6 7.6 4.6 7.6z"/><circle cx="8" cy="6.6" r="1.6"/><path d="m2.4 2.4 11.2 11.2"/></symbol>
+    <symbol id="i-resize" viewBox="0 0 16 16"><path d="M9.4 2.6h4v4M13.4 2.6 9 7M6.6 13.4h-4v-4M2.6 13.4 7 9"/></symbol>
     <symbol id="i-help" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.3a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.4"/><circle cx="8" cy="11.4" r=".4"/></symbol>
     <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
     <symbol id="i-minus" viewBox="0 0 16 16"><path d="M3 8h10"/></symbol>
@@ -126,9 +128,10 @@
 
 <div id="edit-bar" class="panel edit-bar" role="toolbar" aria-label="Edit" hidden>
   <button id="edit-add" class="btn" aria-pressed="false" title="Add a node: click where it goes (or double-click the map)"><svg class="icon"><use href="#i-node"/></svg><span class="lbl">Node</span></button>
-  <button id="edit-lines" class="btn" title="Pick the lines the selected edge carries" hidden><svg class="icon"><use href="#i-menu"/></svg><span class="lbl">Lines…</span></button>
+  <button id="edit-lines" class="btn" title="Pick the lines the selected edge carries (L)" hidden><svg class="icon"><use href="#i-menu"/></svg><span class="lbl">Lines…</span></button>
   <button id="edit-delete" class="btn" title="Delete the selection (Del)"><svg class="icon"><use href="#i-trash"/></svg></button>
   <button id="edit-pin" class="btn" title="Pin every node and note where it is now"><svg class="icon"><use href="#i-pin"/></svg><span class="lbl">Pin all</span></button>
+  <button id="edit-unpin" class="btn" title="Unpin every node and note: the layout places them"><svg class="icon"><use href="#i-unpin"/></svg><span class="lbl">Unpin all</span></button>
   <div class="tb-sep"></div>
   <button id="edit-undo" class="btn" title="Undo (Ctrl+Z)"><svg class="icon"><use href="#i-undo"/></svg></button>
   <button id="edit-redo" class="btn" title="Redo (Ctrl+Shift+Z)"><svg class="icon"><use href="#i-redo"/></svg></button>

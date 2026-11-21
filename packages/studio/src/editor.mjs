@@ -18,8 +18,13 @@
 // the routes they stand in for fade. Boxes may overlap each other and containers they are not in;
 // a drag never changes which container a box is in. Undo and redo step through the texts committed
 // here; any other change of the text (a reload, another file) forgets them.
-// The overlay (selection, handles) is drawn into the map's SVG in map units, after every render;
-// handles keep their size on screen.
+// The adorner, a small toolbar above the selection (below it when there is no room on screen):
+// for a node or note Delete · Pin/Unpin · Resize, for an edge or one of its lines Delete · Lines….
+// Pin/Unpin shows the state (the pin, highlighted, when pinned; a struck-out pin when not) and
+// switches it: pinning writes `pos` where the box is, unpinning lets the layout place it. It
+// hides while something is dragged. The edit bar keeps the same actions for the keyboard.
+// The overlay (selection, handles, adorner) is drawn into the map's SVG in map units, after every
+// render; it keeps its size on screen.
 import { editDot, parseFlow } from '@linemap/core';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -29,6 +34,8 @@ const PREVIEW_DELAY = 120; // ms the pointer rests before a drag lays the map ou
 const HANDLE = 6;       // handle radius, screen px
 const MIN_SIZE = 20;    // a node resized is at least this wide and high, map px
 const SIZE_DIRS = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+const TOOL = 26;        // adorner button, screen px
+const TOOL_GAP = 8;     // adorner to the selection, screen px (keeps clear of the connect handle)
 
 export function createEditor({ host, getText, commit, check, preview, cancelPreview, toast, askLabel, askLines, onChange }) {
   let on = false;
@@ -38,6 +45,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   let sel = null;
   let drag = null;
   let adding = false; // Add node: the next click on the map places one
+  let swallowClick = false; // the click that ends a press handled already (a rectangle, an adorner button)
   let lastClick = null; // { key, t }: a second click on the same handle soon after is a double click
   const undo = [], redo = [];
 
@@ -332,6 +340,98 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const s = 1.2 * r;
       el('rect', { x: x - s, y: y - s, width: 2 * s, height: 2 * s, transform: `rotate(45 ${x} ${y})`, class: 'lm-edit-handle lm-edit-via on' }, g);
     }
+    if (!drag?.moved) adorner(g, u);
+  }
+
+  // ---------- adorner ----------
+  // The buttons for the selection, and the map rectangle to put them by (x0, y0, x1, y1).
+  function tools() {
+    if (sel?.kind === 'node') {
+      const n = itemOf(sel.id);
+      if (!n || n.kind === 'legend') return null;
+      const pad = sel.mode === 'size' ? 0 : 6 * unit();
+      const sizing = sel.mode === 'size';
+      return {
+        at: { x0: n.x - n.w / 2 - pad, y0: n.y - n.h / 2 - pad, x1: n.x + n.w / 2 + pad, y1: n.y + n.h / 2 + pad },
+        list: [
+          { act: 'delete', icon: 'i-trash', title: `Delete the ${n.kind === 'note' ? 'note' : 'box and its edges'} (Del)` },
+          n.pinned ? { act: 'unpin', icon: 'i-pin', on: true, title: 'Pinned here: click to unpin it, so the layout places it (P)' }
+            : { act: 'pin', icon: 'i-unpin', title: 'Not pinned: click to pin it where it is (P)' },
+          { act: 'resize', icon: 'i-resize', on: sizing, title: sizing ? 'Resizing: click to move it again (or click the box)' : 'Resize (or click the box again)' },
+        ],
+      };
+    }
+    if (sel?.kind === 'edge') {
+      const e = edgeOf(sel.from, sel.to);
+      if (!e?.path?.length) return null;
+      const p = midpoint(e.path), h = e.width / 2 + 4 * unit();
+      return {
+        at: { x0: p.x, y0: p.y - h, x1: p.x, y1: p.y + h },
+        list: [
+          { act: 'delete', icon: 'i-trash', title: sel.line ? `Take line ${lineLabel(sel.line)} off this edge (Del)` : 'Delete the edge (Del)' },
+          { act: 'lines', icon: 'i-menu', title: 'Lines…: pick the lines the edge carries (L)' },
+        ],
+      };
+    }
+    return null;
+  }
+  // the point halfway along a polyline
+  function midpoint(path) {
+    const lens = path.slice(1).map((b, i) => Math.hypot(b.x - path[i].x, b.y - path[i].y));
+    let half = lens.reduce((a, b) => a + b, 0) / 2;
+    for (let i = 0; i < lens.length; i++) {
+      if (half <= lens[i]) { const t = lens[i] ? half / lens[i] : 0; return { x: path[i].x + t * (path[i + 1].x - path[i].x), y: path[i].y + t * (path[i + 1].y - path[i].y) }; }
+      half -= lens[i];
+    }
+    return path[0];
+  }
+  function adorner(g, u) {
+    const t = tools();
+    if (!t) return;
+    const b = TOOL * u, w = t.list.length * b + 4 * u, h = b + 4 * u, gap = TOOL_GAP * u;
+    // above the selection, else below it (off the map's top, or under a floating panel: the edit
+    // bar, the hint, the legend); within the visible map sideways
+    const m = ctm(), view = host.getBoundingClientRect();
+    let x = (t.at.x0 + t.at.x1) / 2 - w / 2;
+    x = Math.max(x, (view.left + 4 - m.e) / m.a);
+    x = Math.min(x, (view.right - 4 - m.e) / m.a - w);
+    const panels = [...document.querySelectorAll('.panel, .edit-hint')].filter((p) => !p.hidden).map((p) => p.getBoundingClientRect());
+    const sx0 = x * m.a + m.e, sx1 = sx0 + w * m.a;
+    const free = (y) => {
+      const sy0 = y * m.d + m.f, sy1 = sy0 + h * m.d;
+      return sy0 >= view.top + 4 && sy1 <= view.bottom - 4 && !panels.some((r) => r.width && sx0 < r.right && r.left < sx1 && sy0 < r.bottom && r.top < sy1);
+    };
+    const above = t.at.y0 - gap - h, below = t.at.y1 + gap;
+    const y = free(above) || !free(below) ? above : below;
+    const a = el('g', { class: 'lm-edit-adorner', role: 'toolbar' }, g);
+    el('rect', { x, y, width: w, height: h, rx: 6 * u }, a);
+    t.list.forEach((tl, i) => {
+      const bx = x + 2 * u + i * b, by = y + 2 * u;
+      const btn = el('g', { class: `lm-edit-tool${tl.on ? ' on' : ''}`, 'data-handle': 'tool', 'data-act': tl.act }, a);
+      el('title', {}, btn).textContent = tl.title;
+      el('rect', { x: bx, y: by, width: b, height: b, rx: 4 * u }, btn);
+      const s = 16 * u;
+      el('use', { href: `#${tl.icon}`, x: bx + (b - s) / 2, y: by + (b - s) / 2, width: s, height: s }, btn);
+    });
+  }
+  function tool(act) {
+    if (act === 'delete') return remove();
+    if (act === 'lines') return editLines();
+    if (act === 'pin' || act === 'unpin') return togglePin();
+    if (act === 'resize' && sel?.kind === 'node') {
+      sel = { ...sel, mode: sel.mode === 'size' ? 'move' : 'size' };
+      draw();
+      onChange?.();
+    }
+  }
+  // pin the selected box where it is, or unpin it; false when nothing pinnable is selected
+  function togglePin() {
+    const n = sel?.kind === 'node' && itemOf(sel.id);
+    if (!n || n.kind === 'legend') return false;
+    apply(n.pinned ? { op: 'unpin', id: n.id } : { op: 'pos', id: n.id, x: n.x, y: n.y });
+    draw();
+    onChange?.();
+    return true;
   }
   const edgeG = (e) => svg.querySelector(`g.edge[data-from="${CSS.escape(e.from)}"][data-to="${CSS.escape(e.to)}"]`);
   // While the map is stale: the edges the drag changes, each with a straight stand-in route from
@@ -377,7 +477,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     const start = { x: e.clientX, y: e.clientY };
     const handle = t.closest('[data-handle]');
     const base = getText();
-    if (adding) {
+    if (handle?.dataset.handle === 'tool') {
+      drag = { kind: 'tool', start, act: handle.dataset.act };
+    } else if (adding) {
       e.stopPropagation();
       drag = { kind: 'add', start, p };
     } else if (handle?.dataset.handle === 'via') {
@@ -421,7 +523,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   });
 
   window.addEventListener('pointermove', (e) => {
-    if (!drag) return;
+    if (!drag || drag.kind === 'tool') return;
     if (!drag.moved) {
       if (Math.hypot(e.clientX - drag.start.x, e.clientY - drag.start.y) < DRAG_START) return;
       drag.moved = true;
@@ -486,6 +588,13 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     host.classList.remove('dragging');
     if (e.type === 'pointercancel') { if (d.base) cancelPreview(); draw(); return; }
     if (d.kind === 'add') { if (!d.moved) addNodeAt(d.p); return; }
+    if (d.kind === 'tool') {
+      // the button is drawn again at once, so the click that follows finds no handle: not a click on the map
+      swallowClick = true;
+      setTimeout(() => { swallowClick = false; }, 0);
+      tool(d.act);
+      return;
+    }
     if (!d.moved) {
       // a click: select. (The overlay is drawn again on every click, so the browser's dblclick
       // never reaches a handle: a second click on the same via point soon after removes it.)
@@ -557,7 +666,6 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   window.addEventListener('pointercancel', end);
 
   // in edit mode a click never pins lines or follows a node's link
-  let swallowClick = false;
   host.addEventListener('click', (e) => {
     if (!on) return;
     e.preventDefault();
@@ -628,6 +736,13 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       adding = !adding;
       host.classList.toggle('adding', adding);
       onChange?.();
+    },
+    togglePin,
+    // unpin every node and note: the layout places them
+    unpinAll() {
+      const ops = [...model.items.values()].filter((n) => n.pinned && n.kind !== 'legend').map((n) => ({ op: 'unpin', id: n.id }));
+      if (!ops.length) { toast('Nothing is pinned'); return; }
+      if (apply(ops)) toast(`Unpinned ${ops.length} item${ops.length === 1 ? '' : 's'}`);
     },
     // pin every node and note where it is now
     pinAll() {

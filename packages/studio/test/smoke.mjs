@@ -973,6 +973,39 @@ console.log('edit mode, saving to the file (linemap studio)');
   await click(await nodeAt('a'));
   check(await page.evaluate(() => !document.querySelector('#map .lm-edit-size') && !!document.querySelector('#map .lm-edit-connect')), 'a click again: back to moving');
 
+  // the adorner: Delete · Pin/Unpin · Resize above the box; pin and unpin, then undo both
+  const tools = () => page.evaluate(() => [...document.querySelectorAll('#map .lm-edit-tool')].map((t) => t.dataset.act + (t.classList.contains('on') ? '*' : '')).join(' '));
+  check(await tools() === 'delete unpin* resize', `a pinned box has the adorner Delete · Unpin · Resize (${await tools()})`);
+  {
+    // above the box, or below it when a panel (here the edit bar) is in the way; clear of the + and
+    // of every panel: each button is what a click there hits
+    const r = await page.evaluate(() => {
+      const box = (q) => document.querySelector(q).getBoundingClientRect();
+      const ad = box('#map .lm-edit-adorner'), sel = box('#map .lm-edit-sel'), plus = box('#map .lm-edit-connect');
+      const apart = (a, b) => a.bottom <= b.top || b.bottom <= a.top || a.right <= b.left || b.right <= a.left;
+      const hit = [...document.querySelectorAll('#map .lm-edit-tool')].every((t) => {
+        const q = t.getBoundingClientRect();
+        return document.elementFromPoint(q.x + q.width / 2, q.y + q.height / 2)?.closest('.lm-edit-tool') === t;
+      });
+      return { side: ad.bottom <= sel.top ? 'above' : ad.top >= sel.bottom ? 'below' : 'over', clear: apart(ad, plus), hit };
+    });
+    check(r.side !== 'over' && r.clear && r.hit, `the adorner sits by the box, clear of the connect handle and of the panels (${JSON.stringify(r)})`);
+  }
+  await click(await handle('#map .lm-edit-tool[data-act="resize"]'));
+  check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-size').length) === 8 && await tools() === 'delete unpin* resize*', `Resize in the adorner shows the handles (${await tools()})`);
+  await click(await handle('#map .lm-edit-tool[data-act="resize"]'));
+  check(await page.evaluate(() => !document.querySelector('#map .lm-edit-size')), 'Resize again: back to moving');
+  before = read();
+  await click(await handle('#map .lm-edit-tool[data-act="unpin"]'));
+  text = await changed(before, 'unpinning a');
+  check(/\n  a \[label="A", width=[\d.]+, height=[\d.]+\]/.test(text) && await tools() === 'delete pin resize', `Unpin takes a's pos away (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
+  await click(await handle('#map .lm-edit-tool[data-act="pin"]'));
+  text = await changed(text, 'pinning a');
+  check(/a \[label="A", width=[\d.]+, height=[\d.]+, pos="-?\d+,-?\d+"\]/.test(text) && await tools() === 'delete unpin* resize', `Pin writes a's pos (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
+  await page.keyboard.press('Control+z');
+  await page.keyboard.press('Control+z');
+  await until(() => read() === before, 'undoing pin and unpin');
+
   // one line of a bundle: click the selected edge on a lane
   const laneAt = (from, to, line, f = 0.5) => page.evaluate(([from, to, line, f]) => {
     const p = document.querySelector(`#map g.edge[data-from="${from}"][data-to="${to}"] path.lm-strand[data-line="${line}"]`);
