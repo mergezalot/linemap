@@ -70,6 +70,26 @@ export function askLabel(dialog) {
   });
 }
 
+// New note dialog: resolves with the text typed (several lines; trailing blanks dropped), or
+// null. title: what the note is for. Ctrl+Enter (⌘+Enter) adds, Escape cancels.
+export function askNote(dialog, title) {
+  const ta = dialog.querySelector('textarea');
+  dialog.querySelector('.hint').textContent = title;
+  return new Promise((resolve) => {
+    const enter = (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); dialog.close('ok'); } };
+    ta.addEventListener('keydown', enter);
+    dialog.addEventListener('close', () => {
+      ta.removeEventListener('keydown', enter);
+      const text = ta.value.replace(/\r\n?/g, '\n').replace(/\s+$/, '').replace(/^(\s*\n)+/, '');
+      resolve(dialog.returnValue === 'ok' && text.trim() ? text : null);
+    }, { once: true });
+    dialog.returnValue = '';
+    ta.value = '';
+    dialog.showModal();
+    ta.focus();
+  });
+}
+
 // Which lines an edge carries: a checkbox per line, `checked` ticked. Resolves with the ids
 // ticked, or null. heading, ok: the dialog's title and button (else those for a new edge).
 export function askLines(dialog, lines, checked, title, { heading = 'Lines on the new edge', ok = 'Connect' } = {}) {

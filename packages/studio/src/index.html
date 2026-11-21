@@ -28,6 +28,7 @@
     <symbol id="i-menu" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></symbol>
     <symbol id="i-sparkles" viewBox="0 0 16 16"><path d="M6.5 4.6c.4 3 1.4 4 4.4 4.4-3 .4-4 1.4-4.4 4.4-.4-3-1.4-4-4.4-4.4 3-.4 4-1.4 4.4-4.4zM12.4 1.6c.2 1.2.6 1.6 1.8 1.8-1.2.2-1.6.6-1.8 1.8-.2-1.2-.6-1.6-1.8-1.8 1.2-.2 1.6-.6 1.8-1.8z"/></symbol>
     <symbol id="i-note" viewBox="0 0 16 16"><path d="M3.2 2.6h6.6l3 3v7.8H3.2zM9.8 2.6v3h3M5.6 8.2h4.8M5.6 10.8h3.2"/></symbol>
+    <symbol id="i-note-add" viewBox="0 0 16 16"><path d="M8.6 13.4H2.6V2.6h6.2l2.8 2.8v2.4M8.8 2.6v2.8h2.8M4.8 7.2h4M4.8 9.6h2.4M12.2 9.6v4.8M9.8 12h4.8"/></symbol>
     <symbol id="i-close" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></symbol>
     <symbol id="i-edit" viewBox="0 0 16 16"><path d="M10.6 2.8 13.2 5.4 5.6 13 2.6 13.4 3 10.4zM9.2 4.2l2.6 2.6"/></symbol>
     <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.8 4.4h10.4M6.4 4.4V2.8h3.2v1.6M4.2 4.4l.7 8.8h6.2l.7-8.8M6.8 7v4M9.2 7v4"/></symbol>
@@ -186,6 +187,18 @@
   </form>
 </dialog>
 
+<dialog id="note-dialog" class="dialog">
+  <form method="dialog">
+    <h2>New note</h2>
+    <p class="hint"></p>
+    <textarea name="text" class="prose" rows="6" spellcheck="true" placeholder="Text of the note" aria-label="Text of the note"></textarea>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button class="btn primary" value="ok" title="Ctrl+Enter">Add note</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="lines-dialog" class="dialog small">
   <form method="dialog">
     <h2>Lines on the new edge</h2>
@@ -223,7 +236,7 @@
       <tr><th>Search</th><td><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>F</kbd></td></tr>
       <tr><th>Next theme</th><td><kbd>T</kbd></td></tr>
       <tr><th>Notes on / off</th><td><kbd>N</kbd>; off draws the map without them and puts a badge for each in its node: hover it to read the note, click it to keep the note open, click again to close it. Remembered for your next visit</td></tr>
-      <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; a pin marks a pinned box, click it to unpin the box; <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
+      <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
       <tr><th>Reload</th><td><kbd>R</kbd></td></tr>
       <tr><th>Open / paste</th><td>drop a file, or paste DOT text anywhere</td></tr>
     </table>

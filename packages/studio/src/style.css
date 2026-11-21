@@ -288,6 +288,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
   width: 100%; resize: vertical; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: #fafbfc;
   font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; outline: none;
 }
+.dialog textarea.prose { font: 14px/1.5 system-ui, sans-serif; }
 .dialog textarea:focus { border-color: #b9c8e6; box-shadow: 0 0 0 3px rgba(47, 100, 200, .12); background: #fff; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .dialog-actions .btn { height: 32px; padding: 0 14px; }

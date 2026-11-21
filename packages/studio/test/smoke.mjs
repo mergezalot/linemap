@@ -991,7 +991,7 @@ console.log('edit mode, saving to the file (linemap studio)');
 
   // the adorner: Delete · Pin/Unpin · Resize above the box; pin and unpin, then undo both
   const tools = () => page.evaluate(() => [...document.querySelectorAll('#map .lm-edit-tool')].map((t) => t.dataset.act + (t.classList.contains('on') ? '*' : '')).join(' '));
-  check(await tools() === 'delete unpin* resize', `a pinned box has the adorner Delete · Unpin · Resize (${await tools()})`);
+  check(await tools() === 'delete unpin* resize note', `a pinned box has the adorner Delete · Unpin · Resize · Add note (${await tools()})`);
   {
     // above the box, or below it when a panel (here the edit bar) is in the way; clear of the + and
     // of every panel: each button is what a click there hits
@@ -1008,16 +1008,16 @@ console.log('edit mode, saving to the file (linemap studio)');
     check(r.side !== 'over' && r.clear && r.hit, `the adorner sits by the box, clear of the connect handle and of the panels (${JSON.stringify(r)})`);
   }
   await click(await handle('#map .lm-edit-tool[data-act="resize"]'));
-  check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-size').length) === 8 && await tools() === 'delete unpin* resize*', `Resize in the adorner shows the handles (${await tools()})`);
+  check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-size').length) === 8 && await tools() === 'delete unpin* resize* note', `Resize in the adorner shows the handles (${await tools()})`);
   await click(await handle('#map .lm-edit-tool[data-act="resize"]'));
   check(await page.evaluate(() => !document.querySelector('#map .lm-edit-size')), 'Resize again: back to moving');
   before = read();
   await click(await handle('#map .lm-edit-tool[data-act="unpin"]'));
   text = await changed(before, 'unpinning a');
-  check(/\n  a \[label="A", width=[\d.]+, height=[\d.]+\]/.test(text) && await tools() === 'delete pin resize', `Unpin takes a's pos away (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
+  check(/\n  a \[label="A", width=[\d.]+, height=[\d.]+\]/.test(text) && await tools() === 'delete pin resize note', `Unpin takes a's pos away (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
   await click(await handle('#map .lm-edit-tool[data-act="pin"]'));
   text = await changed(text, 'pinning a');
-  check(/a \[label="A", width=[\d.]+, height=[\d.]+, pos="-?\d+,-?\d+"\]/.test(text) && await tools() === 'delete unpin* resize', `Pin writes a's pos (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
+  check(/a \[label="A", width=[\d.]+, height=[\d.]+, pos="-?\d+,-?\d+"\]/.test(text) && await tools() === 'delete unpin* resize note', `Pin writes a's pos (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
   await page.keyboard.press('Control+z');
   await page.keyboard.press('Control+z');
   await until(() => read() === before, 'undoing pin and unpin');
@@ -1053,7 +1053,7 @@ console.log('edit mode, saving to the file (linemap studio)');
     before = read();
     await click(await handle('#map .lm-edit-pin[data-id="b"]'));
     text = await changed(before, 'unpinning b by its mark');
-    check(/\n  b \[label="B"\]/.test(text) && await marks() === 'a c d' && await tools() === 'delete unpin* resize', `a click on b's pin mark unpins b, a stays selected (${/b \[[^\]]*\]/.exec(text)?.[0]})`);
+    check(/\n  b \[label="B"\]/.test(text) && await marks() === 'a c d' && await tools() === 'delete unpin* resize note', `a click on b's pin mark unpins b, a stays selected (${/b \[[^\]]*\]/.exec(text)?.[0]})`);
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing the unpin');
     check(read() === before, 'undo pins b again');
@@ -1064,6 +1064,39 @@ console.log('edit mode, saving to the file (linemap studio)');
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing the move');
     check(read() === before, 'undo moves c back');
+  }
+
+  // Add note on a box in a container: a text dialog (Escape cancels, Ctrl+Enter adds); the note
+  // is unpinned, in the box's container, attached by an edge without lines, and selected; one undo
+  {
+    await click(await nodeAt('d'));
+    before = read();
+    await click(await handle('#map .lm-edit-tool[data-act="note"]'));
+    await page.waitForSelector('#note-dialog[open]');
+    await page.fill('#note-dialog textarea', 'never mind');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+    check(await page.evaluate(() => !document.querySelector('#note-dialog[open]')) && read() === before, 'Escape closes the note dialog and adds nothing');
+    await click(await handle('#map .lm-edit-tool[data-act="note"]'));
+    await page.waitForSelector('#note-dialog[open]');
+    check(await page.evaluate(() => document.activeElement === document.querySelector('#note-dialog textarea') && document.querySelector('#note-dialog textarea').value === ''), 'the note dialog opens empty, the text area focused');
+    await page.keyboard.type('First line');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('  second line');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('third');
+    await page.keyboard.press('Control+Enter');
+    text = await changed(before, 'adding a note to d');
+    const note = /subgraph cluster_x \{[^}]*\bnote_d \[label="First line\\n  second line\\nthird", shape=note\][^}]*\}/.test(text);
+    check(note && /\n  d -> note_d\n/.test(text), `Add note writes an unpinned note in d's container, attached to d (${/note_d[^\n]*/.exec(text)?.[0]} | ${/[^\n]*-> note_d[^\n]*/.exec(text)?.[0]})`);
+    const r = await page.evaluate(() => {
+      const g = document.getElementById('note_d');
+      return { rows: g ? g.querySelectorAll('text tspan').length || g.querySelectorAll('text').length : 0 };
+    });
+    check(r.rows === 3 && await tools() === 'delete pin resize', `the note is drawn with three lines and selected, unpinned (${JSON.stringify(r)}, ${await tools()})`);
+    await page.keyboard.press('Control+z');
+    await changed(text, 'undoing the note');
+    check(read() === before && await page.evaluate(() => !document.getElementById('note_d')), 'one undo removes the note and its edge');
   }
 
   // one line of a bundle: click the selected edge on a lane

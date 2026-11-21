@@ -20,6 +20,9 @@
 // here; any other change of the text (a reload, another file) forgets them.
 // The adorner, a small toolbar above the selection (below it when there is no room on screen):
 // for a node or note Delete · Pin/Unpin · Resize, for an edge or one of its lines Delete · Lines….
+// A node's adorner also has Add note: it asks for the text (several lines) and adds a note,
+// unpinned, in the node's container, attached by an edge without lines, as one edit (one undo);
+// the note is then selected.
 // Pin/Unpin shows the state (the pin, highlighted, when pinned; a struck-out pin when not) and
 // switches it: pinning writes `pos` where the box is, unpinning lets the layout place it. It
 // hides while something is dragged. The edit bar keeps the same actions for the keyboard.
@@ -42,7 +45,7 @@ const TOOL_GAP = 8;     // adorner to the selection, screen px (keeps clear of t
 const PIN = 8;          // pin mark radius, screen px
 const PIN_IN = 13;      // pin mark centre from the box's top and right sides, screen px (clear of the corner handles)
 
-export function createEditor({ host, getText, commit, check, preview, cancelPreview, toast, askLabel, askLines, onChange }) {
+export function createEditor({ host, getText, commit, check, preview, cancelPreview, toast, askLabel, askLines, askNote, onChange }) {
   let on = false;
   let svg = null, model = null;
   // { kind: 'node', id, mode: 'move' | 'size' } | { kind: 'edge', from, to, line? } (line: that
@@ -247,6 +250,20 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     }
     if (apply({ op: 'addEdge', from, to, lines })) sel = { kind: 'edge', from, to };
   }
+  // a note for the selected node: unpinned (the layout puts it beside the node), in the node's
+  // container (so the container grows around it), attached by an edge without lines
+  async function addNote() {
+    const n = sel?.kind === 'node' && itemOf(sel.id);
+    if (n?.kind !== 'node') return;
+    const text = await askNote(n.label);
+    if (!text) return;
+    const id = newId(`note_${n.id}`);
+    if (apply([{ op: 'addNode', id, label: text, shape: 'note', group: n.group ?? undefined }, { op: 'addEdge', from: n.id, to: id }])) {
+      sel = { kind: 'node', id, mode: 'move' };
+      draw();
+      onChange?.();
+    }
+  }
   // pick the lines of the selected edge
   async function editLines() {
     if (sel?.kind !== 'edge' && sel?.kind !== 'via') return;
@@ -384,6 +401,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
           n.pinned ? { act: 'unpin', icon: 'i-pin', on: true, title: 'Pinned here: click to unpin it, so the layout places it (P)' }
             : { act: 'pin', icon: 'i-unpin', title: 'Not pinned: click to pin it where it is (P)' },
           { act: 'resize', icon: 'i-resize', on: sizing, title: sizing ? 'Resizing: click to move it again (or click the box)' : 'Resize (or click the box again)' },
+          ...(n.kind === 'node' ? [{ act: 'note', icon: 'i-note-add', title: 'Add a note to this box' }] : []),
         ],
       };
     }
@@ -443,6 +461,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function tool(act) {
     if (act === 'delete') return remove();
     if (act === 'lines') return editLines();
+    if (act === 'note') return addNote();
     if (act === 'pin' || act === 'unpin') return togglePin();
     if (act === 'resize' && sel?.kind === 'node') {
       sel = { ...sel, mode: sel.mode === 'size' ? 'move' : 'size' };

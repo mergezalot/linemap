@@ -10,7 +10,7 @@ import { createHighlight } from './highlight.mjs';
 import { createLegend } from './legend.mjs';
 import { createSearch } from './search.mjs';
 import { createEditor } from './editor.mjs';
-import { download, positionsText, copyOrShow, askText, askLabel, askLines, toaster } from './actions.mjs';
+import { download, positionsText, copyOrShow, askText, askLabel, askLines, askNote, toaster } from './actions.mjs';
 
 const $ = (id) => document.getElementById(id);
 // All page elements are looked up now, before any map is inserted: ids from the DOT file end up
@@ -29,7 +29,7 @@ const el = {
   edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editLines: $('edit-lines'),
   editPin: $('edit-pin'), editUnpin: $('edit-unpin'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
   editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'), editDone: $('edit-done'),
-  labelDialog: $('label-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'),
+  labelDialog: $('label-dialog'), noteDialog: $('note-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'),
 };
 
 // The toolbar wraps on narrow screens; the stage starts below it.
@@ -127,6 +127,7 @@ const editor = createEditor({
   toast: (msg) => toast(msg),
   askLabel: () => askLabel(el.labelDialog),
   askLines: (lines, checked, title, opts) => askLines(el.linesDialog, lines, checked, title, opts),
+  askNote: (title) => askNote(el.noteDialog, `A note on ${title}`),
   onChange: () => updateEditBar(),
 });
 
