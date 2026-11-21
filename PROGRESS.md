@@ -126,14 +126,44 @@ Each is one edit and one undo; the new or kept container's members stay selected
   breaks as `<br/>`), otherwise as a quoted string, as now.
 - Markdown could replace this later.
 
+### 11. studio: align and distribute several boxes
+- In the adorner of a multi-selection (and the edit bar): align left, centre, right, top, middle,
+  bottom (to the selection's bounding box), and distribute evenly, horizontally or vertically
+  (equal gaps between boxes, the outermost two stay). Shown as one Align button opening a small
+  menu, to keep the adorner short.
+- Every moved box is pinned at its new place (`pos`); one edit, one undo; snapping as for moves.
+
 ## Ideas not yet planned
-- Align (left, centre, right, top, middle, bottom) and distribute evenly, for several boxes.
 - Rename a container from the adorner when the selection is exactly its members.
 
-## Open questions for the user
-- Align/distribute: add as a unit?
-
 ## Progress
-- Done: none.
-- In flight: none.
-- Next: unit 1.
+- Done:
+  - plan (fdea7b4)
+  - unit 1 (43facbd): `unpin` op; `addNode` without x/y; `quote` normalises \r\n. Notes: a
+    pos-only statement that is a node's only mention (or only mention in its container) stays as a
+    bare id; `unpin` of an unknown id throws. Labels are trimmed per line when parsed (unit 6:
+    leading spaces in notes are lost). Unpinned items have `pinned: false` in the model.
+  - unit 2 (badc4f5): no overlap refusal; `blocked`/`groupBoxes`/`lm-edit-bad` removed (unit 9
+    can bring back `groupBoxes()` for the Ctrl-drop highlight). Layout accepts overlapping pinned
+    boxes. Smoke test updated; chromium installed later (user approved), smoke run asked for with unit 4.
+  - unit 3 (781e4ea): middle button / Space+drag pan (capture listener on #stage in
+    viewport.mjs); edit-mode background drag selects; touch still pans. Extras: Space on a
+    focused button keeps its normal meaning unless the pointer is over the map; a middle press
+    is always suppressed (no paste/autoscroll/auxclick). Smoke checks updated, not run.
+    Known nit: in add-node mode the copy cursor wins over the Space grab cursor.
+  - unit 2 fix (5b9a71a): smoke drops a box beside the other's centre (see 4a).
+  - unit 3 fix (d101073): Linux middle-release pasted the primary selection, and the studio
+    opened pasted DOT; viewport.mjs drops a `paste` within 500 ms of a middle release over the map.
+  - unit 4 (25dcea5): adorner as SVG overlay (`tools()` returns `{ at, list }`, actions in
+    `tool(act)` in editor.mjs; add buttons there). Node/note: Delete, Pin/Unpin, Resize; edge:
+    Delete, Lines…. Icons `#i-unpin`, `#i-resize`. Keys P (pin toggle), L (lines). Edit bar: Unpin
+    all (`editor.unpinAll()`). Presses on adorner buttons act on release and swallow the click.
+- Smoke test runs (264 checks pass) with system libs and a font unpacked in the scratchpad, no
+  root needed:
+  `D=/tmp/claude-1000/-home-player2-workspaces-mad-flowgraph-flowgraph/722b5987-640b-47b3-b966-932ef34b3442/scratchpad/libs; FONTCONFIG_FILE=$D/fonts.conf LD_LIBRARY_PATH=$D/root/usr/lib/x86_64-linux-gnu pnpm test:studio`
+  The scratchpad may be cleared; the lasting fix is `sudo pnpm exec playwright install-deps` plus
+  a font package (user's call).
+- In flight: unit 4a (added: core crash when two connected boxes are pinned at the same point,
+  `layout` throws at packages/core/src/msagl.mjs:87 "reading 'x'"), then unit 5, with implementer
+  subagent #2 (subagent #1 retired at ~150k tokens).
+- Next: unit 6.
