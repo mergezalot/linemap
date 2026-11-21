@@ -23,7 +23,10 @@
 // Pin/Unpin shows the state (the pin, highlighted, when pinned; a struck-out pin when not) and
 // switches it: pinning writes `pos` where the box is, unpinning lets the layout place it. It
 // hides while something is dragged. The edit bar keeps the same actions for the keyboard.
-// The overlay (selection, handles, adorner) is drawn into the map's SVG in map units, after every
+// Every pinned node and note carries a pin mark inside its top-right corner (not while it is
+// resized, nor when the box is too small on screen); a click on the mark unpins the box, a drag
+// from it moves the box like a drag anywhere on it.
+// The overlay (selection, handles, adorner, pin marks) is drawn into the map's SVG in map units, after every
 // render; it keeps its size on screen.
 import { editDot, parseFlow } from '@linemap/core';
 
@@ -36,6 +39,8 @@ const MIN_SIZE = 20;    // a node resized is at least this wide and high, map px
 const SIZE_DIRS = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 const TOOL = 26;        // adorner button, screen px
 const TOOL_GAP = 8;     // adorner to the selection, screen px (keeps clear of the connect handle)
+const PIN = 8;          // pin mark radius, screen px
+const PIN_IN = 13;      // pin mark centre from the box's top and right sides, screen px (clear of the corner handles)
 
 export function createEditor({ host, getText, commit, check, preview, cancelPreview, toast, askLabel, askLines, onChange }) {
   let on = false;
@@ -45,7 +50,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   let sel = null;
   let drag = null;
   let adding = false; // Add node: the next click on the map places one
-  let swallowClick = false; // the click that ends a press handled already (a rectangle, an adorner button)
+  let swallowClick = false; // the click that ends a press handled already (a rectangle, an adorner button, a pin mark)
+  // the click that follows this release finds the overlay drawn again: it is not a click on the map
+  const swallow = () => { swallowClick = true; setTimeout(() => { swallowClick = false; }, 0); };
   let lastClick = null; // { key, t }: a second click on the same handle soon after is a double click
   const undo = [], redo = [];
 
@@ -277,6 +284,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (!on) return;
     const u = unit(), r = HANDLE * u;
     const g = el('g', { class: 'lm-edit' }, svg);
+    pinMarks(g, u);
     if (sel?.kind === 'node' && itemOf(sel.id)) {
       // (while it is dragged or resized: where the pointer has it)
       const dragged = drag?.moved && drag.id === sel.id && (drag.kind !== 'move' || drag.ids.length === 1);
@@ -341,6 +349,24 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       el('rect', { x: x - s, y: y - s, width: 2 * s, height: 2 * s, transform: `rotate(45 ${x} ${y})`, class: 'lm-edit-handle lm-edit-via on' }, g);
     }
     if (!drag?.moved) adorner(g, u);
+  }
+
+  // A pin mark on every pinned box, under the other handles: where a drag has the box now.
+  function pinMarks(g, u) {
+    const pr = PIN * u, inset = PIN_IN * u;
+    for (const n of model.items.values()) {
+      if (!n.pinned || n.kind === 'legend') continue;
+      if ((sel?.kind === 'node' && sel.id === n.id && sel.mode === 'size') || (drag?.kind === 'size' && drag.id === n.id)) continue;
+      // too small on screen: the mark would cover it
+      if (n.w < 2 * (PIN_IN + PIN) * u || n.h < 2 * (PIN_IN + PIN) * u) continue;
+      const at = drag?.kind === 'move' && drag.moved && drag.orig.has(n.id) ? dragAt(drag, n.id) : n;
+      const cx = at.x + n.w / 2 - inset, cy = at.y - n.h / 2 + inset;
+      const m = el('g', { class: 'lm-edit-handle lm-edit-pin', 'data-handle': 'pin', 'data-id': n.id }, g);
+      el('title', {}, m).textContent = 'Pinned here: click to unpin it, so the layout places it (P); drag to move it';
+      el('circle', { cx, cy, r: pr }, m);
+      const s = 12 * u;
+      el('use', { href: '#i-pin', x: cx - s / 2, y: cy - s / 2, width: s, height: s }, m);
+    }
   }
 
   // ---------- adorner ----------
@@ -500,7 +526,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const n = itemOf(sel.id);
       drag = { kind: 'connect', start, from: sel.id, ghost: { a: { x: n.x, y: n.y }, b: p } };
     } else {
-      const g = t.closest('g.node, g.note:not(.lm-note-folded)');
+      // a pin mark is pressed like its box: a drag moves it, a click (in end()) unpins it
+      const unpin = handle?.dataset.handle === 'pin' ? handle.dataset.id : null;
+      const g = unpin ? { id: unpin } : t.closest('g.node, g.note:not(.lm-note-folded)');
       const edge = !g && t.closest('g.edge');
       if (g && itemOf(g.id) && itemOf(g.id).kind !== 'legend') {
         const n = itemOf(g.id);
@@ -508,7 +536,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         const chosen = selectedIds();
         const ids = chosen.includes(g.id) ? chosen : e.shiftKey ? [...chosen, g.id] : [g.id];
         const orig = new Map(ids.map((id) => [id, { x: itemOf(id).x, y: itemOf(id).y }]));
-        drag = { kind: 'move', start, base, id: g.id, ids, orig, shift: e.shiftKey, off: { x: p.x - n.x, y: p.y - n.y }, at: { x: n.x, y: n.y } };
+        drag = { kind: 'move', start, base, id: g.id, ids, orig, shift: e.shiftKey, off: { x: p.x - n.x, y: p.y - n.y }, at: { x: n.x, y: n.y }, unpin };
       } else if (edge) {
         drag = { kind: 'bend', start, base, from: edge.dataset.from, to: edge.dataset.to, p, line: lineAt(edge, e) };
       } else if (e.pointerType !== 'touch') {
@@ -589,10 +617,16 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (e.type === 'pointercancel') { if (d.base) cancelPreview(); draw(); return; }
     if (d.kind === 'add') { if (!d.moved) addNodeAt(d.p); return; }
     if (d.kind === 'tool') {
-      // the button is drawn again at once, so the click that follows finds no handle: not a click on the map
-      swallowClick = true;
-      setTimeout(() => { swallowClick = false; }, 0);
+      swallow();
       tool(d.act);
+      return;
+    }
+    if (!d.moved && d.unpin) {
+      // a click on a pin mark: unpin that box, the selection stays
+      swallow();
+      apply({ op: 'unpin', id: d.unpin });
+      draw();
+      onChange?.();
       return;
     }
     if (!d.moved) {
@@ -630,8 +664,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const inside = [...model.items.values()].filter((n) => n.kind !== 'legend' && n.x >= x0 && n.x <= x1 && n.y >= y0 && n.y <= y1).map((n) => n.id);
       selectIds([...(d.shift ? selectedIds() : []), ...inside]);
       // the click that ends this drag selects nothing else, nor clears the selection
-      swallowClick = true;
-      setTimeout(() => { swallowClick = false; }, 0);
+      swallow();
     } else if (d.kind === 'move') {
       if (!apply(moveOps(d))) cancelPreview();
     } else if (d.kind === 'size') {

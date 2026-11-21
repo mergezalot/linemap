@@ -1006,6 +1006,50 @@ console.log('edit mode, saving to the file (linemap studio)');
   await page.keyboard.press('Control+z');
   await until(() => read() === before, 'undoing pin and unpin');
 
+  // pin marks: one inside the top-right corner of every pinned box, clear of the adorner and the
+  // connect handle; a click on one unpins its box (the selection stays), a drag from it moves the box
+  {
+    await click(await nodeAt('a'));
+    const marks = () => page.evaluate(() => [...document.querySelectorAll('#map .lm-edit-pin')].map((m) => m.dataset.id).sort().join(' '));
+    check(await marks() === 'a b c d', `every pinned box has a pin mark (${await marks()})`);
+    const r = await page.evaluate(() => {
+      const box = (q) => document.querySelector(q).getBoundingClientRect();
+      const mark = box('#map .lm-edit-pin[data-id="a"]'), node = document.getElementById('a').querySelector('rect, polygon, path').getBoundingClientRect();
+      const apart = (a, b) => a.bottom <= b.top || b.bottom <= a.top || a.right <= b.left || b.right <= a.left;
+      // what a click on a mark hits (c's: a's may be under the edit bar)
+      const mc = box('#map .lm-edit-pin[data-id="c"]');
+      const top = document.elementFromPoint(mc.x + mc.width / 2, mc.y + mc.height / 2), hit = top?.closest('.lm-edit-pin')?.dataset.id ?? top?.outerHTML.slice(0, 80);
+      return {
+        corner: mark.right <= node.right && mark.right > node.right - 40 && mark.top >= node.top && mark.top < node.top + 40,
+        size: Math.round(mark.width), clear: apart(mark, box('#map .lm-edit-adorner')) && apart(mark, box('#map .lm-edit-connect')), hit,
+      };
+    });
+    check(r.corner && r.clear && r.hit === 'c', `the pin mark sits in the box's top-right corner, clear of the adorner and the + (${JSON.stringify(r)})`);
+    await page.click('#zoom-in');
+    await page.waitForTimeout(400);
+    const zoomed = await page.evaluate(() => Math.round(document.querySelector('#map .lm-edit-pin[data-id="a"]').getBoundingClientRect().width));
+    check(zoomed === r.size, `the pin mark keeps its size on screen (${r.size} px, zoomed in: ${zoomed} px)`);
+    await page.click('#zoom-out');
+    await page.waitForTimeout(400);
+    await click(await nodeAt('a'));
+    check(await page.evaluate(() => !document.querySelector('#map .lm-edit-pin[data-id="a"]') && !!document.querySelector('#map .lm-edit-pin[data-id="b"]')), 'a box being resized has no pin mark');
+    await click(await nodeAt('a'));
+    before = read();
+    await click(await handle('#map .lm-edit-pin[data-id="b"]'));
+    text = await changed(before, 'unpinning b by its mark');
+    check(/\n  b \[label="B"\]/.test(text) && await marks() === 'a c d' && await tools() === 'delete unpin* resize', `a click on b's pin mark unpins b, a stays selected (${/b \[[^\]]*\]/.exec(text)?.[0]})`);
+    await page.keyboard.press('Control+z');
+    await changed(text, 'undoing the unpin');
+    check(read() === before, 'undo pins b again');
+    const m = await handle('#map .lm-edit-pin[data-id="c"]'), right = await scr(100, 0), zero = await scr(0, 0);
+    await drag(m, { x: m.x + (right.x - zero.x), y: m.y });
+    text = await changed(before, 'dragging c by its pin mark');
+    check(/c \[label="C", pos="800,500"\]/.test(text), `a drag from c's pin mark moves c (${/c \[[^\]]*\]/.exec(text)?.[0]})`);
+    await page.keyboard.press('Control+z');
+    await changed(text, 'undoing the move');
+    check(read() === before, 'undo moves c back');
+  }
+
   // one line of a bundle: click the selected edge on a lane
   const laneAt = (from, to, line, f = 0.5) => page.evaluate(([from, to, line, f]) => {
     const p = document.querySelector(`#map g.edge[data-from="${from}"][data-to="${to}"] path.lm-strand[data-line="${line}"]`);

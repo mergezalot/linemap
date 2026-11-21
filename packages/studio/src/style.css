@@ -325,6 +325,9 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 #map .lm-edit-dim { opacity: .25; }
 #map .lm-edit-via { fill: #fff; }
 #map .lm-edit-via.on { fill: var(--accent); }
+#map .lm-edit .lm-edit-pin { cursor: pointer; }
+#map .lm-edit-pin use { fill: none; stroke: var(--accent); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+#map .lm-edit-pin:hover circle { fill: var(--accent); fill-opacity: .15; }
 #map .lm-edit-plus { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 #map .lm-edit-route { fill: none; stroke: var(--accent); stroke-opacity: .2; stroke-linejoin: round; stroke-linecap: round; }
 #map .lm-edit-standin { fill: none; stroke: var(--accent); stroke-width: 3px; stroke-dasharray: 8 5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
