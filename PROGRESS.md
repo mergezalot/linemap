@@ -34,8 +34,8 @@ commits, and reports its context usage. A fresh orchestrator resumes from this f
 
 ### 2. studio: boxes may overlap
 - Drop the box-on-box refusal in `blocked()` (moves and resizes): editing is a pain otherwise.
-  A box may also overlap a container it is not in; a plain drag never changes membership (Ctrl
-  while dropping moves the box into the container, unit 9). Remove `blocked`, `drag.bad`,
+  A box may also overlap a container it is not in; a drag never changes membership (only the
+  container actions of unit 9 do; the user decided against drop-into-container as too finicky). Remove `blocked`, `drag.bad`,
   `.lm-edit-bad` and the toast if nothing else is left of them.
 - Update the header comment ("A box may not land on another box…").
 
@@ -48,6 +48,21 @@ commits, and reports its context usage. A fresh orchestrator resumes from this f
   grab/grabbing while Space is held. Space must not trigger while typing in an input or dialog.
 - Touch: one finger on the background still pans in edit mode; two fingers pinch.
 - Wheel zooms, unchanged.
+
+### 3b. studio: panning revised (user feedback after unit 3)
+Space+drag did not work with a touchpad (on Linux, libinput's disable-while-typing most likely
+switches the touchpad off while Space is held), and the user prefers left drag for panning.
+- Left drag on the background pans, in view and edit mode (as before unit 3).
+- Edit mode: Shift+drag on the background draws the selection rectangle (adds to the selection;
+  Shift+click still adds or removes one box).
+- Middle button pans everywhere, over boxes too (unchanged from unit 3; keep the Linux paste
+  guard).
+- Remove Space+drag panning entirely (keys, `space-pan` class, cursors, focus special cases).
+- Wheel: a plain wheel / two-finger touchpad scroll pans (deltaX and deltaY); Ctrl+wheel (also
+  how browsers report a touchpad pinch) zooms at the cursor. Shift+wheel pans horizontally for
+  mice without a horizontal wheel.
+- Update hint text in main.mjs, the help table in index.html, the editor/viewport header
+  comments, and the smoke checks.
 
 ### 4. studio: the adorner toolbar
 - A small floating toolbar above the selection (below it when there is no room on screen), with
@@ -112,10 +127,8 @@ In the adorner of a multi-selection (and the edit bar), each shown only when it 
 - **Ungroup**: shown when the selection is exactly a container's members (a click on a container
   selects them): the container goes, its members stay where they are.
 Each is one edit and one undo; the new or kept container's members stay selected.
-- **Drag into a container**: dropping boxes with Ctrl (Cmd on macOS) held moves them into the
-  innermost container under the pointer, or to the top of the graph over the background
-  (`moveTo`, together with their new `pos`, as one edit). While Ctrl is held during a drag, that
-  container is highlighted.
+- No drag-into-container: dropping a box on a container never changes its membership (user
+  decision: too finicky). Membership changes only through the actions above.
 
 ### 10. notes: rich text as DOT HTML-like labels
 - Notes may have an HTML-like label (`label=<…>`), as DOT has natively; no dependency. Supported
@@ -143,8 +156,7 @@ Each is one edit and one undo; the new or kept container's members stay selected
     pos-only statement that is a node's only mention (or only mention in its container) stays as a
     bare id; `unpin` of an unknown id throws. Labels are trimmed per line when parsed (unit 6:
     leading spaces in notes are lost). Unpinned items have `pinned: false` in the model.
-  - unit 2 (badc4f5): no overlap refusal; `blocked`/`groupBoxes`/`lm-edit-bad` removed (unit 9
-    can bring back `groupBoxes()` for the Ctrl-drop highlight). Layout accepts overlapping pinned
+  - unit 2 (badc4f5): no overlap refusal; `blocked`/`groupBoxes`/`lm-edit-bad` removed . Layout accepts overlapping pinned
     boxes. Smoke test updated; chromium installed later (user approved), smoke run asked for with unit 4.
   - unit 3 (781e4ea): middle button / Space+drag pan (capture listener on #stage in
     viewport.mjs); edit-mode background drag selects; touch still pans. Extras: Space on a
@@ -163,7 +175,16 @@ Each is one edit and one undo; the new or kept container's members stay selected
   `D=/tmp/claude-1000/-home-player2-workspaces-mad-flowgraph-flowgraph/722b5987-640b-47b3-b966-932ef34b3442/scratchpad/libs; FONTCONFIG_FILE=$D/fonts.conf LD_LIBRARY_PATH=$D/root/usr/lib/x86_64-linux-gnu pnpm test:studio`
   The scratchpad may be cleared; the lasting fix is `sudo pnpm exec playwright install-deps` plus
   a font package (user's call).
-- In flight: unit 4a (added: core crash when two connected boxes are pinned at the same point,
-  `layout` throws at packages/core/src/msagl.mjs:87 "reading 'x'"), then unit 5, with implementer
-  subagent #2 (subagent #1 retired at ~150k tokens).
-- Next: unit 6.
+  - unit 4a (392477c, core): coincident connection ends are not routed (path = that point);
+    route.mjs keeps paths at >= 2 points; a diamond is routed as its bounding box (MSAGL
+    convex-hull bug with overlapping non-rectangles). Smoke drop back on the exact centre.
+  - unit 5 (36d860f): `pinMarks()` in editor.mjs; press on a mark = move drag with `unpin: id`,
+    a click unpins; shared `swallow()` helper. Unit 7 must hide marks for every box in multi
+    size mode.
+  - unit 3b (cdbd241): left drag pans (both modes), Shift+drag selects, middle pans, Space gone,
+    wheel pans, Ctrl/Cmd+wheel zooms (≤×1.65 per frame), Shift+wheel pans sideways.
+- Subagents must not use `git stash` (subagent #2 once stashed and popped the whole tree to run
+  a check; nothing was lost).
+- In flight: unit 6, with implementer subagent #2 (agent id a49ac122b73be942b; ~115k tokens
+  after unit 3b; continue it with SendMessage while under 200k).
+- Next: unit 7.
