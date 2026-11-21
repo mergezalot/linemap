@@ -46,6 +46,7 @@
     <symbol id="i-align-bottom" viewBox="0 0 16 16"><path d="M1.8 13.6h12.4"/><rect x="3.6" y="2.8" width="3.2" height="8.6" rx=".6"/><rect x="9.2" y="6" width="3.2" height="5.4" rx=".6"/></symbol>
     <symbol id="i-space-h" viewBox="0 0 16 16"><path d="M1.8 2v12M14.2 2v12"/><rect x="5.6" y="4.4" width="4.8" height="7.2" rx=".6"/></symbol>
     <symbol id="i-space-v" viewBox="0 0 16 16"><path d="M2 1.8h12M2 14.2h12"/><rect x="4.4" y="5.6" width="7.2" height="4.8" rx=".6"/></symbol>
+    <symbol id="i-code" viewBox="0 0 16 16"><path d="M5.4 4.2 1.8 8l3.6 3.8M10.6 4.2 14.2 8l-3.6 3.8M9 2.8 7 13.2"/></symbol>
     <symbol id="i-node" viewBox="0 0 16 16"><rect x="1.8" y="3.8" width="9.4" height="7" rx="1.6"/><path d="M13 9.6v4.8M10.6 12h4.8"/></symbol>
   </defs>
 </svg>
@@ -67,6 +68,7 @@
       <button id="open" class="btn" title="Open a DOT file"><svg class="icon"><use href="#i-open"/></svg><span class="lbl">Open</span></button>
       <button id="paste" class="btn" title="Paste DOT text"><svg class="icon"><use href="#i-paste"/></svg><span class="lbl">Paste</span></button>
       <button id="reload" class="btn" title="Reload (R)"><svg class="icon"><use href="#i-reload"/></svg><span class="lbl in-menu">Reload</span></button>
+      <button id="source-btn" class="btn" aria-pressed="false" aria-controls="source-panel" title="The DOT source beside the map, to read and edit (S)" hidden><svg class="icon"><use href="#i-code"/></svg><span class="lbl">Source</span></button>
       <button id="watch" class="btn" title="Watch the file: redraw when it is saved (kept when you reload the page)" aria-pressed="false" hidden><svg class="icon"><use href="#i-eye"/></svg><span class="lbl">Watch</span></button>
     </div>
     <div class="tb-sep"></div>
@@ -138,6 +140,21 @@
 </main>
 
 <aside id="legend" class="panel legend" hidden></aside>
+
+<!-- the DOT text of the flow, editable (sourcepanel.mjs) -->
+<aside id="source-panel" class="panel source-panel" aria-label="DOT source" hidden>
+  <div class="src-head">
+    <svg class="icon"><use href="#i-code"/></svg><span class="src-title">Source</span><span class="src-name"></span>
+    <button class="btn src-close" title="Close the source (S)" aria-label="Close the source"><svg class="icon"><use href="#i-close"/></svg></button>
+  </div>
+  <div class="src-body">
+    <div class="src-band" hidden></div>
+    <div class="src-gutter" aria-hidden="true"><div class="src-lines"></div></div>
+    <textarea class="src-text" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="DOT source of the flow"></textarea>
+  </div>
+  <div class="src-status" role="status" hidden><button class="btn src-goto" title="Put the caret on that line"></button><span class="src-msg"></span></div>
+  <div class="src-resize" role="separator" aria-orientation="vertical" aria-label="Width of the source (arrow keys)" tabindex="0"></div>
+</aside>
 
 <div id="edit-bar" class="panel edit-bar" role="toolbar" aria-label="Edit" hidden>
   <button id="edit-add" class="btn" aria-pressed="false" title="Add a node: click where it goes (or double-click the map)"><svg class="icon"><use href="#i-node"/></svg><span class="lbl">Node</span></button>
@@ -268,6 +285,7 @@
       <tr><th>Search</th><td><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>F</kbd></td></tr>
       <tr><th>Next theme</th><td><kbd>T</kbd></td></tr>
       <tr><th>Notes on / off</th><td><kbd>N</kbd>; off draws the map without them and puts a badge for each in its node: hover it to read the note, click it to keep the note open, click again to close it. Remembered for your next visit</td></tr>
+      <tr><th>Source</th><td><kbd>S</kbd> or Source in the toolbar: the DOT text beside the map, in view and edit mode; type in it and the map follows after a short pause (one undo step each; a text that cannot be drawn keeps the last map and marks the line). Drag its edge to widen it; <kbd>Tab</kbd> indents, <kbd>Esc</kbd> leaves the text, keys typed there are only text</td></tr>
       <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; click one of several selected boxes again to give them all one size; Align in their toolbar (and the edit bar) lines them up on a side or centre, or spaces them evenly (the outermost two stay), and pins them; their toolbar (and the edit bar) groups them in a new container, merges their containers into the one clicked first, splits them off into a new container, or ungroups a container (click it to select its boxes); a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels; &lt;b&gt; &lt;i&gt; &lt;u&gt; &lt;s&gt; &lt;font color&gt; style its text); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
       <tr><th>Reload</th><td><kbd>R</kbd></td></tr>
       <tr><th>Open / paste</th><td>drop a file, or paste DOT text anywhere</td></tr>

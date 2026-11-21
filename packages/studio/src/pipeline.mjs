@@ -8,8 +8,15 @@
 // `legendpos` is ignored: nothing keeps clear of it, and the exported SVG puts the legend outside
 // the map. An edit (meta.carry) keeps every box where the last map had it: the new text's first run
 // gets the last map's positions as `fixed`, so only what the edit moved or added moves.
-// Errors come back as results, never thrown.
+// Errors come back as results, never thrown; each names its line as "DOT line N" where it can.
 import { parseFlow, layout, render, positions, paintLines, THEMES, DEFAULT_THEME } from '@linemap/core';
+
+// the message of an error; the DOT parser's syntax errors carry their place only as a location
+export function errorText(err) {
+  const at = err?.name === 'DotSyntaxError' ? (err.cause?.location ?? err.location)?.start : null;
+  const msg = err?.message ?? String(err);
+  return at ? `DOT line ${at.line}, column ${at.column}: ${msg}` : msg;
+}
 
 export function createPipeline({ onResult }) {
   let bases = null; // { text, carry, show, hide }: { model, fixed } of the first run of the current text, per notes setting
@@ -63,7 +70,7 @@ export function createPipeline({ onResult }) {
       try {
         result = await runOnce(job.text, job.settings, !!job.meta.carry);
       } catch (err) {
-        result = { ok: false, error: err?.message ?? String(err) };
+        result = { ok: false, error: errorText(err) };
       }
       const next = pending;
       pending = null;
@@ -80,7 +87,7 @@ export function createPipeline({ onResult }) {
     // Lays out an edited text now (as a run with meta.carry would), so an edit can be refused
     // before it is kept: the error, or null. The run that follows reuses the layout.
     check(text, settings) {
-      try { baseFor(text, settings.notes ? 'show' : 'hide', true); return null; } catch (err) { return err?.message ?? String(err); }
+      try { baseFor(text, settings.notes ? 'show' : 'hide', true); return null; } catch (err) { return errorText(err); }
     },
     busy: () => running,
     // export with the legend: a second render of the model on screen, so it shows what the studio

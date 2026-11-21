@@ -13,6 +13,8 @@
   --shadow: 0 1px 2px rgba(20, 30, 45, .06), 0 4px 16px rgba(20, 30, 45, .08);
   --shadow-lg: 0 2px 6px rgba(20, 30, 45, .08), 0 12px 40px rgba(20, 30, 45, .16);
   --tb-h: 44px;
+  --src-w: 440px;     /* the source sidebar's width (sourcepanel.mjs) */
+  --src-right: 0px;   /* the room it takes from the map: its width when open on a wide screen */
   --map-bg: #ffffff;
   --sheet-edge: #d9dde2;
   --tb-bg: rgba(255, 255, 255, .96);
@@ -131,7 +133,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 
 /* ---------- banner ---------- */
 .banner {
-  position: fixed; top: calc(var(--tb-h) + 10px); left: 50%; transform: translateX(-50%); z-index: 25;
+  position: fixed; top: calc(var(--tb-h) + 10px); left: calc(50% - var(--src-right) / 2); transform: translateX(-50%); z-index: 25;
   display: flex; align-items: flex-start; gap: 8px; max-width: min(760px, calc(100vw - 24px));
   padding: 10px 6px 10px 14px; border-radius: var(--radius);
   background: #fff; border: 1px solid #f1c6c2; border-left: 4px solid var(--danger); box-shadow: var(--shadow-lg);
@@ -141,7 +143,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .banner .close { height: 26px; padding: 0 5px; color: var(--muted); }
 
 /* ---------- stage and map ---------- */
-#stage { position: fixed; inset: var(--tb-h) 0 0 0; touch-action: none; cursor: grab; outline: none; }
+#stage { position: fixed; inset: var(--tb-h) var(--src-right) 0 0; touch-action: none; cursor: grab; outline: none; }
 /* while any pan runs, the cursor grabs */
 #stage.panning, #stage.panning * { cursor: grabbing !important; }
 #map, #map > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -214,7 +216,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 
 /* ---------- floating panels ---------- */
 .panel { position: fixed; z-index: 10; background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
-.zoom { right: 14px; bottom: 14px; display: flex; flex-direction: column; padding: 3px; }
+.zoom { right: calc(14px + var(--src-right)); bottom: 14px; display: flex; flex-direction: column; padding: 3px; }
 .zoom .btn { width: 32px; height: 32px; padding: 0; justify-content: center; }
 /* touch screens zoom with a pinch; only fit stays */
 @media (hover: none) and (pointer: coarse) {
@@ -343,14 +345,14 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 #map .lm-edit-box { fill: var(--accent); fill-opacity: .08; stroke: var(--accent); stroke-width: 1px; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
 #map .lm-edit-ghost { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; }
 .edit-bar {
-  top: calc(var(--tb-h) + 10px); left: 50%; transform: translateX(-50%); max-width: calc(100vw - 24px);
+  top: calc(var(--tb-h) + 10px); left: calc(50% - var(--src-right) / 2); transform: translateX(-50%); max-width: calc(100vw - 24px);
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; padding: 4px;
 }
 .edit-bar .btn.primary { padding: 0 12px; margin-left: 4px; }
 .edit-status { color: var(--muted); padding: 0 8px; white-space: nowrap; }
 .edit-status.error { color: var(--danger); }
 .edit-hint {
-  position: fixed; top: calc(var(--tb-h) + 58px); left: 50%; transform: translateX(-50%); z-index: 9; pointer-events: none;
+  position: fixed; top: calc(var(--tb-h) + 58px); left: calc(50% - var(--src-right) / 2); transform: translateX(-50%); z-index: 9; pointer-events: none;
   max-width: calc(100vw - 24px); padding: 3px 10px; border-radius: 12px; background: var(--tb-bg); color: var(--muted); font-size: 12px; text-align: center;
 }
 .dialog.small { width: min(380px, calc(100vw - 32px)); }
@@ -362,6 +364,35 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .dialog .line-row { display: flex; align-items: center; gap: 10px; padding: 5px 6px; border-radius: 5px; cursor: pointer; }
 .dialog .line-row:hover { background: var(--hover); }
 .dialog .line-row .sw { width: 26px; height: 8px; border-radius: 4px; flex: none; }
+
+/* ---------- source sidebar ---------- */
+body.source-open { --src-right: var(--src-w); }
+.source-panel {
+  top: var(--tb-h); right: 0; bottom: 0; width: var(--src-w); max-width: 100vw; border-radius: 0;
+  display: flex; flex-direction: column; border-left: 1px solid var(--line);
+}
+.src-head { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border-bottom: 1px solid var(--line); color: var(--muted); }
+.src-title { font-weight: 600; color: var(--ink); }
+.src-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src-close { padding: 0 6px; }
+.src-body { position: relative; flex: 1; min-height: 0; display: flex; overflow: hidden; background: var(--field); }
+.src-gutter {
+  flex: none; overflow: hidden; padding: 6px 1ch 6px 0; text-align: right; color: var(--faint); user-select: none;
+  border-right: 1px solid var(--line); font: 12px/18px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.src-lines { white-space: pre; }
+.src-text {
+  flex: 1; min-width: 0; margin: 0; padding: 6px 8px; border: 0; outline: none; resize: none; background: transparent;
+  font: 12px/18px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; overflow: auto; tab-size: 2;
+}
+.src-text:read-only { color: var(--muted); }
+.src-band { position: absolute; left: 0; right: 0; height: 18px; background: var(--danger); opacity: .12; pointer-events: none; }
+.src-status { display: flex; align-items: flex-start; gap: 6px; padding: 6px 8px; border-top: 1px solid var(--line); color: var(--danger); max-height: 30%; overflow: auto; }
+.src-msg { white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding-top: 2px; }
+.src-goto { flex: none; height: 22px; padding: 0 6px; color: var(--danger); text-decoration: underline; }
+.src-resize { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: ew-resize; touch-action: none; outline: none; }
+.src-resize:hover, .src-resize:focus-visible, .source-panel.resizing .src-resize { background: var(--accent); opacity: .35; }
+.source-panel.resizing { user-select: none; }
 
 /* before the first map: only the ways to load one */
 body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .edit-group, body.nomap .search, body.nomap #export, body.nomap #positions, body.nomap .tb-sep, body.nomap .zoom { display: none; }
@@ -407,6 +438,11 @@ body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, bod
   .tb-more .seg button { flex: 1; height: 30px; justify-content: center; }
   .tb-more .out-group { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 4px; }
   body.nomap .tb-more .out-group { border-top: 0; margin-top: 0; padding-top: 0; }
+}
+/* narrow screens: the source lies over the map */
+@media (max-width: 860px) {
+  body.source-open { --src-right: 0px; }
+  .source-panel { box-shadow: var(--shadow-lg); }
 }
 @media (max-width: 560px) {
   .search kbd { display: none; }

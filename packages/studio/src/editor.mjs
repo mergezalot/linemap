@@ -41,7 +41,8 @@
 // meanwhile dashed stand-ins run straight from the dragged box (or through the via points) and
 // the routes they stand in for fade. Boxes may overlap each other and containers they are not in;
 // a drag never changes which container a box is in. Undo and redo step through the texts committed
-// here; any other change of the text (a reload, another file) forgets them.
+// here, and the texts the source sidebar commits (commitText: one pause in typing, one step);
+// any other change of the text (a reload, another file) forgets them.
 // The adorner, a small toolbar above the selection (below it when there is no room on screen):
 // for a node or note Delete · Pin/Unpin · Resize, for an edge or one of its lines Delete · Lines….
 // A node's adorner also has Add note: it asks for the text (several lines) and adds a note,
@@ -1008,6 +1009,15 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     on: () => on,
     // the text changed by something other than an edit here
     forget() { undo.length = 0; redo.length = 0; sel = null; onChange?.(); },
+    // a text typed in the source sidebar (sourcepanel.mjs), checked already: one undo step
+    commitText(text) {
+      const cur = getText();
+      if (text === cur) return;
+      undo.push(cur);
+      redo.length = 0;
+      commit(text);
+      onChange?.();
+    },
     undo: () => step(undo, redo),
     redo: () => step(redo, undo),
     canUndo: () => undo.length > 0,

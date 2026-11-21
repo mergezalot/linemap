@@ -1546,6 +1546,101 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
+console.log('source sidebar: the DOT text beside the map, both ways');
+{
+  const os = await import('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'linemap-source-'));
+  const file = path.join(dir, 's.dot');
+  const FLOW = `digraph s {
+  subgraph lines { A }
+  a [label="Alpha", pos="0,0"]
+  b [pos="300,0"]
+  c
+  a -> b [lines=A]
+  b -> c [lines=A]
+}
+`;
+  fs.writeFileSync(file, FLOW);
+  const read = () => fs.readFileSync(file, 'utf8');
+  const srcServer = await serve({ dir, port: 0, quiet: true });
+  const page = await newPage();
+  const url = `http://127.0.0.1:${srcServer.address().port}/studio.html#src=s.dot`;
+  await page.goto(url);
+  await ready(page);
+  const until = async (fn, what) => {
+    for (let i = 0; i < 100; i++) { if (await fn()) return true; await page.waitForTimeout(50); }
+    check(false, `timed out: ${what}`);
+    return false;
+  };
+  const TA = '#source-panel .src-text';
+  const value = () => page.inputValue(TA);
+  const label = (id) => page.evaluate((id) => [...document.querySelectorAll('#map g.node')].find((g) => g.id === id)?.textContent.trim() ?? null, id);
+  const stageW = () => page.evaluate(() => document.getElementById('stage').getBoundingClientRect().width);
+  const w0 = await stageW();
+  check(!(await page.isVisible('#source-panel')) && await page.isVisible('#source-btn'), 'the sidebar starts closed; Source is in the toolbar');
+  await page.keyboard.press('s');
+  await page.waitForTimeout(300);
+  check(await page.isVisible('#source-panel') && await value() === FLOW && await page.getAttribute('#source-btn', 'aria-pressed') === 'true', 'S opens the sidebar with the file\'s text');
+  check(await stageW() < w0 - 200, `the map makes room for it (${Math.round(w0)} -> ${Math.round(await stageW())})`);
+  check(await page.evaluate(() => document.querySelector('#source-panel .src-lines').textContent.split('\n').length) === FLOW.split('\n').length, 'the gutter numbers every line');
+
+  // typing: keys are text, not shortcuts; a pause commits (saved to the file, drawn)
+  await page.click(TA);
+  await page.keyboard.press('Control+Home');
+  await page.keyboard.type('// etn\n');
+  await page.waitForTimeout(100);
+  check(!(await page.isVisible('#edit-bar')) && !(await page.evaluate(() => document.querySelector('.search input') === document.activeElement)), 'E, T, N and / typed in the text are only text');
+  await until(() => read().startsWith('// etn'), 'the typed comment saved');
+  check(read() === `// etn\n${FLOW}`, 'a pause in typing saves the text to the file');
+  await page.fill(TA, FLOW.replace('"Alpha"', '"Omega"'));
+  await until(async () => /Omega/.test(await label('a') ?? ''), 'the map redrawn with the new label');
+  check(/label="Omega"/.test(read()), 'a changed label is drawn and saved');
+
+  // a text that cannot be drawn: the last map stays, the message and the line are shown
+  const good = read();
+  await page.fill(TA, good.replace('b -> c [lines=A]', 'b -> [lines=A]'));
+  await until(() => page.isVisible('#source-panel .src-status'), 'the error under the text');
+  const st = await page.evaluate(() => ({ goto: document.querySelector('#source-panel .src-goto').textContent, band: !document.querySelector('#source-panel .src-band').hidden }));
+  check(st.goto === 'Line 7' && st.band && read() === good && /Omega/.test(await label('a') ?? ''), `a syntax error: "${st.goto}" marked, the file and the last map kept`);
+  await page.click('#source-panel .src-goto');
+  check(await page.evaluate(() => { const t = document.querySelector('#source-panel .src-text'); return t.value.slice(0, t.selectionStart).split('\n').length; }) === 7, 'a click on the line puts the caret there');
+  await page.fill(TA, good);
+  await until(async () => !(await page.isVisible('#source-panel .src-status')), 'the error gone');
+
+  // map -> text: an edit on the map, and its undo, show in the text; one undo per pause
+  await page.click('#map', { position: { x: 5, y: 5 } }); // leaves the text
+  await page.keyboard.press('e');
+  await page.waitForTimeout(300);
+  await page.click('#edit-pin');
+  await until(async () => /c \[pos=/.test(await value()), 'Pin all shown in the text');
+  check(await value() === read(), 'a map edit updates the text');
+  await page.keyboard.press('Control+z');
+  await until(async () => await value() === good, 'undo shown in the text');
+  check(read() === good, 'undo of the map edit: the text follows');
+  await page.keyboard.press('Control+z');
+  await until(async () => await value() === `// etn\n${FLOW}`, 'the Omega pause undone');
+  check(read() === `// etn\n${FLOW}`, 'the next undo takes back one pause of typing');
+
+  // remembered open, and its width (dragged)
+  const edge = await page.evaluate(() => { const r = document.querySelector('#source-panel .src-resize').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + 200 }; });
+  await page.mouse.move(edge.x, edge.y);
+  await page.mouse.down();
+  await page.mouse.move(edge.x - 100, edge.y, { steps: 5 });
+  await page.mouse.up();
+  const wide = await page.evaluate(() => document.getElementById('source-panel').getBoundingClientRect().width);
+  await page.reload();
+  await ready(page);
+  await page.waitForTimeout(300);
+  const again = await page.evaluate(() => document.getElementById('source-panel').getBoundingClientRect().width);
+  check(await page.isVisible('#source-panel') && Math.abs(again - wide) < 2 && wide > 500, `open and width (${Math.round(wide)}) remembered after a reload`);
+  await page.click('#source-panel .src-close');
+  check(!(await page.isVisible('#source-panel')), 'Close shuts it');
+  check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join('; ')}` : ''}`);
+  await page.close();
+  srcServer.close();
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+
 console.log('edit mode, flows baked in: kept in the page, downloaded');
 {
   const repo = path.join(here, '..', '..', '..');

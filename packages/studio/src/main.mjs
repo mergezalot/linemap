@@ -1,5 +1,7 @@
 // Boot and wiring: every module gets the elements and callbacks it needs; none reaches into
 // another's DOM. Flow: source -> pipeline (with the state's settings) -> map, legend, search.
+// The source sidebar (sourcepanel.mjs) shows the source's text and commits what is typed in it
+// through the editor (one undo step a pause), so it saves and dirties as a map edit does.
 import { markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE } from '@linemap/core';
 import { createState, readHash, hashWriter } from './state.mjs';
 import { createPipeline } from './pipeline.mjs';
@@ -10,6 +12,7 @@ import { createHighlight } from './highlight.mjs';
 import { createLegend } from './legend.mjs';
 import { createSearch } from './search.mjs';
 import { createEditor } from './editor.mjs';
+import { createSourcePanel } from './sourcepanel.mjs';
 import { download, positionsText, copyOrShow, askText, askLabel, askLines, askNote, toaster } from './actions.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -17,7 +20,7 @@ const $ = (id) => document.getElementById(id);
 // as element ids in the SVG and could shadow ours.
 const el = {
   toolbar: document.querySelector('.toolbar'),
-  fileName: $('file-name'), recent: $('recent'), open: $('open'), paste: $('paste'), reload: $('reload'), watch: $('watch'),
+  fileName: $('file-name'), recent: $('recent'), open: $('open'), paste: $('paste'), reload: $('reload'), watch: $('watch'), sourceBtn: $('source-btn'), sourcePanel: $('source-panel'),
   through: $('through'), notes: $('notes'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
   search: $('search'), results: $('results'), export: $('export'), positions: $('positions'), helpBtn: $('help-btn'),
   menuBtn: $('menu-btn'), more: $('tb-more'),
@@ -133,6 +136,27 @@ const editor = createEditor({
   onChange: () => updateEditBar(),
 });
 
+// the DOT text beside the map: what is typed is checked as a map edit is, then committed by the
+// editor (one undo step); the error otherwise, and nothing changes
+const sourcePanel = createSourcePanel({
+  panel: el.sourcePanel,
+  store,
+  commit(text) {
+    const cur = source.current();
+    if (!cur) return null;
+    if (text === cur.text) return null;
+    const err = pipeline.check(text, state.get());
+    if (err) return err;
+    editor.commitText(text);
+    return null;
+  },
+  onToggle: (open) => el.sourceBtn.setAttribute('aria-pressed', String(open)),
+});
+el.sourceBtn.setAttribute('aria-pressed', String(sourcePanel.isOpen()));
+el.sourceBtn.addEventListener('click', () => sourcePanel.toggle());
+// a press on the map leaves the text, so Del and the other keys reach the map again (and what was
+// typed is committed first)
+el.stage.addEventListener('pointerdown', () => { if (document.activeElement === sourcePanel.textarea) sourcePanel.textarea.blur(); }, true);
 const pipeline = createPipeline({ onResult: show });
 let busyTimer = 0;
 let freshNext = false; // the next run shows a different file: fit the view
@@ -279,6 +303,7 @@ function updateToolbar() {
   el.fileName.title = cur?.src ? `${cur.src} · recent files` : 'Recent files';
   document.title = cur ? `${cur.name} · linemap` : 'linemap studio';
   el.watch.hidden = !source.canWatch();
+  el.sourceBtn.hidden = !cur;
   el.watch.setAttribute('aria-pressed', String(source.watching()));
   for (const b of [el.export, el.positions, el.reload, el.zoomIn, el.zoomOut, el.zoomFit, el.edit]) b.disabled = !shown;
   document.body.classList.toggle('nomap', !shown);
@@ -427,11 +452,12 @@ el.editPage.addEventListener('click', () => {
 });
 for (const b of document.querySelectorAll('dialog [data-close]')) b.addEventListener('click', () => b.closest('dialog').close('cancel'));
 // edits that are only in this page
-window.addEventListener('beforeunload', (e) => { if (source.dirty()) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', (e) => { sourcePanel.flush(); if (source.dirty() || sourcePanel.pending()) { e.preventDefault(); e.returnValue = ''; } });
 
 // ---------- source ----------
 const source = createSource({
-  onText({ src, flow, fresh, edited }) {
+  onText({ text, name, src, flow, fresh, edited }) {
+    sourcePanel.setText(text, { fresh, title: name });
     if (edited) { run({ carry: true }); updateToolbar(); return; }
     editor.forget();
     if (fresh) saveState = { state: null, message: '' };
@@ -658,6 +684,7 @@ window.addEventListener('keydown', (e) => {
     ArrowUp: () => viewport.panBy(0, -pan), ArrowDown: () => viewport.panBy(0, pan),
     r: () => source.reload(),
     e: () => setEditing(!editor.on()),
+    s: () => { if (source.current()) sourcePanel.toggle(); },
     n: () => { if (hasNotes()) toggleNotes(); },
     // the next theme, fancy or not as now
     t: () => {
@@ -667,7 +694,7 @@ window.addEventListener('keydown', (e) => {
     Escape: () => { el.recent.hidden = true; showThemes(false); setMenu(false); highlight.clearPins(); highlight.foldNotes(); hideBanner(); },
   };
   const fn = keys[e.key];
-  if (!fn || (!shown && !['/', '?', 'Escape'].includes(e.key))) return;
+  if (!fn || (!shown && !['/', '?', 'Escape', 's'].includes(e.key))) return;
   e.preventDefault();
   fn();
 });

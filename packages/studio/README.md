@@ -1,7 +1,7 @@
 # @linemap/studio
 
 The [linemap](https://github.com/mergezalot/linemap) studio as one self-contained HTML file: open a
-DOT flow, explore it as a transit map, hide and solo lines, switch themes, hide notes behind badges, edit the map (move, resize, add and connect boxes, add notes (with bold, italic, underlined, struck-out or coloured text), bend lines, change the lines of an edge, align and distribute several boxes, group boxes into containers, merge, split and ungroup containers), save the SVG. Everything
+DOT flow, explore it as a transit map, hide and solo lines, switch themes, hide notes behind badges, read and edit the DOT text in a sidebar beside the map, edit the map (move, resize, add and connect boxes, add notes (with bold, italic, underlined, struck-out or coloured text), bend lines, change the lines of an edge, align and distribute several boxes, group boxes into containers, merge, split and ungroup containers), save the SVG. Everything
 runs in the browser; the file loads nothing from anywhere else, so it works offline, from `file://`
 and inside embeds such as Notion.
 
