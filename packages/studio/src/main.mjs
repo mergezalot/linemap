@@ -2,7 +2,11 @@
 // another's DOM. Flow: source -> pipeline (with the state's settings) -> map, legend, search.
 // The source sidebar (sourcepanel.mjs) shows the source's text and commits what is typed in it
 // through the editor (one undo step a pause), so it saves and dirties as a map edit does.
-import { markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE } from '@linemap/core';
+// Its selection and the map's follow each other (below "source <-> map"): what is selected on the
+// map (edit mode), or clicked last (view mode: a node, note, bundle or line, container title,
+// legend row), has its statements marked in the text; the caret put on a statement selects that
+// thing on the map (edit mode) or pins its lines and flashes it (view mode).
+import { statementsOf, markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE } from '@linemap/core';
 import { createState, readHash, hashWriter } from './state.mjs';
 import { createPipeline } from './pipeline.mjs';
 import { createSource, isHttp, store } from './source.mjs';
@@ -133,7 +137,8 @@ const editor = createEditor({
   askLines: (lines, checked, title, opts) => askLines(el.linesDialog, lines, checked, title, opts),
   askNote: (title) => askNote(el.noteDialog, `A note on ${title}`),
   openAlign: (anchor) => toggleAlign(anchor),
-  onChange: () => updateEditBar(),
+  // (a selection made on the map: the caret on the same statement as before selects it again)
+  onChange: () => { updateEditBar(); if (!caretPick) caretKey = null; syncMarks({ scroll: !caretPick }); },
 });
 
 // the DOT text beside the map: what is typed is checked as a map edit is, then committed by the
@@ -150,7 +155,8 @@ const sourcePanel = createSourcePanel({
     editor.commitText(text);
     return null;
   },
-  onToggle: (open) => el.sourceBtn.setAttribute('aria-pressed', String(open)),
+  onToggle: (open) => { el.sourceBtn.setAttribute('aria-pressed', String(open)); if (open) syncMarks({ scroll: 'always' }); },
+  onCaret: (offset, text) => caretTo(offset, text),
 });
 el.sourceBtn.setAttribute('aria-pressed', String(sourcePanel.isOpen()));
 el.sourceBtn.addEventListener('click', () => sourcePanel.toggle());
@@ -158,6 +164,113 @@ el.sourceBtn.addEventListener('click', () => sourcePanel.toggle());
 // typed is committed first)
 el.stage.addEventListener('pointerdown', () => { if (document.activeElement === sourcePanel.textarea) sourcePanel.textarea.blur(); }, true);
 const pipeline = createPipeline({ onResult: show });
+
+// ---------- source <-> map ----------
+// what each statement of a text is about (core's statementsOf), for the last text asked
+let stmts = { text: null, list: [] };
+function statements(text) {
+  if (stmts.text !== text) {
+    let list = [];
+    try { list = statementsOf(text); } catch { /* not readable: nothing to mark */ }
+    stmts = { text, list };
+  }
+  return stmts.list;
+}
+let viewPick = null;   // view mode: what was clicked last on the map, or put the caret on
+let caretPick = false; // the editor's selection is changing because of the caret: no scrolling
+let caretKey = null;   // what the caret was on last
+// what is selected on the map: [{ kind: 'node' | 'group' | 'line', id } | { kind: 'edge', from, to }]
+function picked() {
+  if (!editor.on()) return viewPick ? [viewPick] : [];
+  const s = editor.selection();
+  if (!s) return [];
+  if (s.kind === 'node') return [{ kind: 'node', id: s.id }];
+  if (s.kind === 'nodes') return s.group ? [{ kind: 'group', id: s.group }] : s.ids.map((id) => ({ kind: 'node', id }));
+  return [{ kind: 'edge', from: s.from, to: s.to }];
+}
+// the lines to mark: the statements of each thing (strong), the edge statements naming a node or
+// container (weak)
+function rangesFor(things, list) {
+  const out = [];
+  for (const st of list) {
+    let hit = 0;
+    for (const t of things) {
+      if (t.kind === 'edge') { if (st.kind === 'edge' && st.pairs.some(([a, b]) => a === t.from && b === t.to)) hit = 2; }
+      else if (st.kind === t.kind && st.id === t.id) hit = 2;
+      else if (st.kind === 'edge' && st.ids.includes(t.id)) hit = Math.max(hit, 1);
+    }
+    if (hit) out.push({ line: st.line, endLine: st.endLine, weak: hit === 1 });
+  }
+  return out;
+}
+function syncMarks({ scroll = true } = {}) {
+  if (!shown || !sourcePanel.isOpen()) return; // (no map yet: the source may not exist yet either)
+  const cur = source.current();
+  const things = cur ? picked() : [];
+  // (scrolled to only when it is something else than marked before, or asked to (the panel opened))
+  const key = things.map(keyOf).join();
+  sourcePanel.mark(things.length ? rangesFor(things, statements(cur.text)) : [], { scroll: scroll && (key !== markedKey || scroll === 'always') });
+  markedKey = key;
+}
+let markedKey = '';
+// what the statement at `offset` is about: the smallest statement on the caret's line (one the caret
+// is in, if several), a container's block when nothing smaller is there; null: none
+function thingAt(offset, text) {
+  const line = text.slice(0, offset).split('\n').length;
+  const inside = (st) => offset >= st.start && offset <= st.end;
+  const size = (st) => st.endLine - st.line;
+  const st = statements(text).filter((x) => x.line <= line && line <= x.endLine)
+    .sort((a, b) => size(a) - size(b) || inside(b) - inside(a) || (a.kind === 'group') - (b.kind === 'group'))[0];
+  if (!st) return null;
+  if (st.kind !== 'edge') return { kind: st.kind, id: st.id };
+  // an edge statement: the first edge it makes that is on the map
+  const on = (a, b) => shown?.model.edges.some((e) => e.from === a && e.to === b);
+  const [from, to] = st.pairs.find(([a, b]) => on(a, b)) ?? st.pairs[0];
+  return { kind: 'edge', from, to };
+}
+const keyOf = (t) => (!t ? '' : t.kind === 'edge' ? `edge ${t.from} ${t.to}` : `${t.kind} ${t.id}`);
+// the caret was put at `offset` of the text (the map's text): select or focus what is there
+function caretTo(offset, text) {
+  if (!shown || text !== source.current()?.text) return;
+  const t = thingAt(offset, text);
+  if (keyOf(t) === caretKey) return;
+  caretKey = keyOf(t);
+  if (editor.on()) {
+    caretPick = true;
+    try { editor.select(t?.kind === 'line' ? null : t); } finally { caretPick = false; }
+    return;
+  }
+  viewPick = t;
+  focusThing(t);
+  syncMarks({ scroll: false });
+}
+// view mode: pin the lines of what the caret is on and flash it
+function focusThing(t) {
+  const m = shown.model;
+  const g = (sel) => [...el.map.querySelectorAll(sel)];
+  if (!t) { highlight.clearPins(); return; }
+  if (t.kind === 'line') { highlight.pin([t.id]); return; }
+  const edges = t.kind === 'edge' ? m.edges.filter((e) => e.from === t.from && e.to === t.to)
+    : t.kind === 'node' ? m.edges.filter((e) => e.from === t.id || e.to === t.id) : [];
+  const ids = [...new Set(edges.flatMap((e) => e.lines.map((l) => l.id)))];
+  if (ids.length) highlight.pin(ids); else highlight.clearPins();
+  const box = t.kind === 'edge' ? g('g.edge').find((x) => x.dataset.from === t.from && x.dataset.to === t.to)
+    : g(t.kind === 'group' ? 'g.group' : 'g.node, g.note').find((x) => x.id === t.id);
+  if (box) highlight.flash(box);
+}
+// view mode: a click on the map picks what it is on (nothing: the background)
+el.map.addEventListener('click', (e) => {
+  if (editor.on() || !shown || !(e.target instanceof Element)) return;
+  const x = e.target;
+  const row = x.closest('g.legend [data-line]'), edge = x.closest('g.edge'), box = x.closest('g.node, g.note');
+  const tab = x.closest('g.group-tab'), title = tab ? tab.dataset.group : x.closest('g.group > text')?.parentNode.id;
+  viewPick = row ? { kind: 'line', id: row.getAttribute('data-line') }
+    : edge ? { kind: 'edge', from: edge.dataset.from, to: edge.dataset.to }
+    : box ? { kind: 'node', id: box.id }
+    : title ? { kind: 'group', id: title } : null;
+  caretKey = null;
+  syncMarks();
+});
 let busyTimer = 0;
 let freshNext = false; // the next run shows a different file: fit the view
 function run(meta = {}) {
@@ -198,6 +311,7 @@ function show(result, meta) {
   if (pendingView) { viewport.setView(pendingView); pendingView = null; }
   highlight.index(svg, result.model);
   editor.index(svg, result.model);
+  syncMarks({ scroll: false });
   if (pendingPin) { highlight.pin([pendingPin]); zoomToLine(pendingPin); pendingPin = null; }
 
   search.index([
@@ -315,6 +429,8 @@ let saveState = { state: null, message: '' }; // of the last save to the server
 function setEditing(on) {
   if (on && !shown) return;
   if (on) { highlight.clearPins(); highlight.leave(); }
+  viewPick = null;
+  caretKey = null;
   editor.setOn(on);
   if (on && innerWidth < 860) setMenu(false);
 }
@@ -460,7 +576,7 @@ const source = createSource({
     sourcePanel.setText(text, { fresh, title: name });
     if (edited) { run({ carry: true }); updateToolbar(); return; }
     editor.forget();
-    if (fresh) saveState = { state: null, message: '' };
+    if (fresh) { saveState = { state: null, message: '' }; viewPick = null; caretKey = null; }
     if (fresh && loadedOnce) {
       // a different file: its own settings (or the link's), fitted view, nothing pinned
       const link = src || flow != null ? linked : null;

@@ -12,6 +12,13 @@
 // the text around it). While a pause is pending, what was typed wins and is committed over it;
 // a text that could not be drawn is replaced (the map was changed meanwhile, so it wins), as is
 // everything when another flow is shown (fresh).
+// Map <-> text: mark(ranges) tints the lines of what is selected on the map (a stronger band for its
+// own statements, a weaker one for statements that only mention it) and, unless the textarea has
+// the focus or a pause is pending, scrolls the first into view; it never moves the caret. Typing
+// drops the marks until the text is on the map again. onCaret(offset) is called when the caret
+// is put somewhere (a click, keys that move it, the focus), never while typing or while the text
+// differs from the map's (pending or not drawable): main.mjs selects what the statement there is
+// about.
 // Open or closed and the width (drag the panel's edge, or arrow keys on it) are remembered.
 // On wide screens the map makes room for it; on narrow ones (CSS) it lies over the map.
 const DELAY = 300;  // ms of no typing before the text is committed
@@ -20,7 +27,7 @@ const PAD = 6;      // top padding of the text, px (style.css)
 const MIN_W = 240;
 const KEY = 'linemap:source';
 
-export function createSourcePanel({ panel, store, commit, onToggle }) {
+export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
   const $ = (s) => panel.querySelector(s);
   const ta = $('.src-text'), lines = $('.src-lines'), band = $('.src-band'), status = $('.src-status');
   const goto = $('.src-goto'), msg = $('.src-msg'), name = $('.src-name'), resize = $('.src-resize'), close = $('.src-close');
@@ -32,6 +39,10 @@ export function createSourcePanel({ panel, store, commit, onToggle }) {
   let broken = false;  // the text shown could not be drawn (not committed)
   let errLine = null;
   let count = 0;       // lines in the gutter
+  let marks = [];      // [{ line, endLine, weak }] tinted
+  const markBox = document.createElement('div');
+  markBox.className = 'src-marks';
+  band.before(markBox);
 
   function clampW(w) { return Math.round(Math.max(MIN_W, Math.min(w, Math.max(MIN_W, innerWidth * 0.8)))); }
   const keep = () => store.set(KEY, { open, width });
@@ -63,6 +74,36 @@ export function createSourcePanel({ panel, store, commit, onToggle }) {
     lines.style.transform = `translateY(${-ta.scrollTop}px)`;
     band.hidden = !errLine;
     if (errLine) band.style.top = `${PAD + (errLine - 1) * LH - ta.scrollTop}px`;
+    markBox.style.transform = `translateY(${PAD - ta.scrollTop}px)`;
+  }
+  function drawMarks() {
+    markBox.replaceChildren(...marks.map(({ line, endLine, weak }) => {
+      const d = document.createElement('div');
+      d.className = `src-mark${weak ? ' weak' : ''}`;
+      d.dataset.line = String(line);
+      d.style.top = `${(line - 1) * LH}px`;
+      d.style.height = `${(endLine - line + 1) * LH}px`;
+      return d;
+    }));
+  }
+  // the lines of what is selected on the map; scroll: bring the first strong one into view
+  function mark(ranges, { scroll = true } = {}) {
+    marks = timer || broken ? [] : ranges;
+    drawMarks();
+    if (!scroll || !marks.length || !open || document.activeElement === ta) return;
+    const first = marks.find((m) => !m.weak) ?? marks[0];
+    const y0 = (first.line - 1) * LH, y1 = first.endLine * LH, h = ta.clientHeight - 2 * PAD;
+    if (y0 < ta.scrollTop || y1 > ta.scrollTop + h) ta.scrollTop = Math.max(0, y1 - y0 > h ? y0 : y0 - Math.max(0, (h - (y1 - y0)) / 3));
+    scrolled();
+  }
+  // the caret was put somewhere: tell main.mjs, unless typing is pending or the text is not the map's
+  let caretAt = -1;
+  function caret() {
+    if (timer || broken || ta.readOnly || document.activeElement !== ta) return;
+    const at = ta.selectionStart;
+    if (at === caretAt) return;
+    caretAt = at;
+    onCaret?.(at, ta.value);
   }
   function showError(err) {
     broken = !!err;
@@ -96,10 +137,17 @@ export function createSourcePanel({ panel, store, commit, onToggle }) {
   function flush() { if (timer) apply(); }
   ta.addEventListener('input', () => {
     gutter();
+    // what is marked has moved with the typing: the marks come back with the map
+    if (marks.length) { marks = []; drawMarks(); }
+    caretAt = -1;
     clearTimeout(timer);
     timer = setTimeout(apply, DELAY);
   });
-  ta.addEventListener('blur', flush);
+  ta.addEventListener('blur', () => { flush(); caretAt = -1; });
+  // (after the press has put the caret)
+  ta.addEventListener('focus', () => setTimeout(caret, 0));
+  ta.addEventListener('pointerup', () => setTimeout(caret, 0));
+  ta.addEventListener('keyup', (e) => { if (/^(Arrow|Page|Home|End)/.test(e.key)) caret(); });
   ta.addEventListener('scroll', scrolled);
   ta.addEventListener('keydown', (e) => {
     e.stopPropagation(); // no studio shortcut
@@ -168,10 +216,12 @@ export function createSourcePanel({ panel, store, commit, onToggle }) {
       const [a, b] = [at(ta.selectionStart), at(ta.selectionEnd)];
       ta.value = text;
       if (fresh) { ta.setSelectionRange(0, 0); ta.scrollTop = 0; ta.scrollLeft = 0; } else { ta.setSelectionRange(a, b); ta.scrollTop = top; ta.scrollLeft = left; }
+      caretAt = -1;
       showError(null);
       gutter();
       scrolled();
     },
+    mark,
     toggle: () => setOpen(!open),
     setOpen,
     isOpen: () => open,

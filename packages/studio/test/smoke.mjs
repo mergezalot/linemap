@@ -1648,6 +1648,47 @@ console.log('source sidebar: the DOT text beside the map, both ways');
   await until(async () => await value() === `// etn\n${FLOW}`, 'the Omega pause undone');
   check(read() === `// etn\n${FLOW}`, 'the next undo takes back one pause of typing');
 
+  // source <-> map selection: a box selected on the map marks its statements (and the edges that
+  // name it, weaker); the caret on a statement selects what it is about
+  {
+    // lines now: 1 // etn, 2 digraph, 3 lines, 4 a, 5 b, 6 c, 7 a -> b, 8 b -> c
+    const marks = () => page.evaluate(() => [...document.querySelectorAll('#source-panel .src-mark')].map((m) => m.dataset.line + (m.classList.contains('weak') ? 'w' : '')).join(' '));
+    const centre = (id) => page.evaluate((id) => { const r = [...document.querySelectorAll('#map g.node')].find((g) => g.id === id).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, id);
+    const b = await centre('b');
+    await page.mouse.click(b.x, b.y);
+    await page.waitForTimeout(200);
+    check(await marks() === '5 7w 8w', `selecting b on the map marks its statement, and the edges naming it weaker (${await marks()})`);
+    const caretOn = async (line) => {
+      await page.click(TA);
+      await page.keyboard.press('Control+Home');
+      for (let i = 1; i < line; i++) await page.keyboard.press('ArrowDown');
+      await page.waitForTimeout(200);
+    };
+    await caretOn(8);
+    const sel = () => page.evaluate(() => document.getElementById('edit-hint').textContent);
+    check(/reattach/.test(await sel()) && await marks() === '8', `the caret on "b -> c" selects that edge on the map (${await sel()}; marks ${await marks()})`);
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowUp');
+    await page.waitForTimeout(200);
+    check(/^Drag to move/.test(await sel()) && await marks() === '5 7w 8w', `the caret on "b [...]" selects box b (${await sel()})`);
+    // view mode: the caret on an edge pins its line
+    await page.keyboard.press('Escape'); // leaves the text
+    await page.keyboard.press('e');
+    await page.waitForTimeout(300);
+    await caretOn(7);
+    check(await page.evaluate(() => document.querySelector('#map svg').classList.contains('focus') && !!document.querySelector('#legend li.on')), 'view mode: the caret on "a -> b" pins its line');
+    check(await marks() === '7', `and marks its statement (${await marks()})`);
+    // typing drops the marks; nothing on the map changes until the pause commits
+    await page.keyboard.type(' ');
+    check(await marks() === '', 'typing drops the marks');
+    await page.keyboard.press('Backspace');
+    await page.waitForTimeout(600);
+    await page.click('#map', { position: { x: 5, y: 5 } }); // leaves the text
+    await page.keyboard.press('e');
+    await page.waitForTimeout(300);
+  }
+
   // remembered open, and its width (dragged)
   const edge = await page.evaluate(() => { const r = document.querySelector('#source-panel .src-resize').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + 200 }; });
   await page.mouse.move(edge.x, edge.y);

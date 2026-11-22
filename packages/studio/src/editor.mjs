@@ -1037,6 +1037,28 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     remove,
     editLines,
     selection: () => sel,
+    // select what a statement of the source is about (main.mjs, from the caret in the sidebar):
+    // { kind: 'node', id } | { kind: 'edge', from, to } | { kind: 'group', id } (its boxes, as a
+    // click on it) | null (nothing). Something not on the map leaves the selection as it is.
+    select(t) {
+      if (!on || !model) return;
+      if (t?.kind === 'node') {
+        if (!itemOf(t.id) || itemOf(t.id).kind === 'legend') return;
+        selectIds([t.id]);
+      } else if (t?.kind === 'edge') {
+        if (!edgeOf(t.from, t.to)) return;
+        sel = { kind: 'edge', from: t.from, to: t.to };
+      } else if (t?.kind === 'group') {
+        if (!model.groups.some((g) => g.id === t.id)) return;
+        selectIds(membersOf(t.id));
+        if (sel?.kind === 'nodes') sel.group = t.id;
+      } else if (!t) {
+        if (!sel) return;
+        sel = null;
+      } else return;
+      draw();
+      onChange?.();
+    },
     // the label of the line selected alone, for the hint
     lineLabel,
     adding: () => adding,

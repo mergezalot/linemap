@@ -394,6 +394,10 @@ body.source-open { --src-right: var(--src-w); }
 }
 .src-text:read-only { color: var(--muted); }
 .src-band { position: absolute; left: 0; right: 0; height: 18px; background: var(--danger); opacity: .12; pointer-events: none; }
+/* the statements of what is selected on the map (sourcepanel.mjs mark()); weak: they only mention it */
+.src-marks { position: absolute; left: 0; right: 0; top: 0; height: 0; pointer-events: none; }
+.src-mark { position: absolute; left: 0; right: 0; background: var(--accent); opacity: .14; box-shadow: inset 3px 0 0 var(--accent); }
+.src-mark.weak { opacity: .07; box-shadow: none; }
 .src-status { display: flex; align-items: flex-start; gap: 6px; padding: 6px 8px; border-top: 1px solid var(--line); color: var(--danger); max-height: 30%; overflow: auto; }
 .src-msg { white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding-top: 2px; }
 .src-goto { flex: none; height: 22px; padding: 0 6px; color: var(--danger); text-decoration: underline; }
