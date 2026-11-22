@@ -134,3 +134,18 @@ export function askLines(dialog, lines, checked, title, { heading = 'Lines on th
     (list.querySelector('input:checked') ?? list.querySelector('input'))?.focus();
   });
 }
+
+// A yes or no question (a deletion that takes much with it): resolves true when confirmed. heading,
+// text, ok: the dialog's title, the line under it and its button. Cancel has the focus, so Enter or
+// Escape keeps everything.
+export function askConfirm(dialog, { heading, text = '', ok = 'OK' }) {
+  dialog.querySelector('h2').textContent = heading;
+  dialog.querySelector('.hint').textContent = text;
+  dialog.querySelector('button[value="ok"]').textContent = ok;
+  return new Promise((resolve) => {
+    dialog.addEventListener('close', () => resolve(dialog.returnValue === 'ok'), { once: true });
+    dialog.returnValue = '';
+    dialog.showModal();
+    dialog.querySelector('[data-close]').focus();
+  });
+}

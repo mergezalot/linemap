@@ -17,7 +17,7 @@ import { createLegend } from './legend.mjs';
 import { createSearch } from './search.mjs';
 import { createEditor } from './editor.mjs';
 import { createSourcePanel } from './sourcepanel.mjs';
-import { download, positionsText, copyOrShow, askText, askLabel, askLines, askNote, toaster } from './actions.mjs';
+import { download, positionsText, copyOrShow, askText, askLabel, askLines, askNote, askConfirm, toaster } from './actions.mjs';
 
 const $ = (id) => document.getElementById(id);
 // All page elements are looked up now, before any map is inserted: ids from the DOT file end up
@@ -33,11 +33,11 @@ const el = {
   tooltip: $('tooltip'), toast: $('toast'), drop: $('drop'), fileInput: $('file-input'),
   pasteDialog: $('paste-dialog'), positionsDialog: $('positions-dialog'), help: $('help'),
   flows: $('linemap-flows'),
-  edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editLines: $('edit-lines'), editText: $('edit-text'),
+  edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editDeleteAll: $('edit-delete-all'), editLines: $('edit-lines'), editText: $('edit-text'),
   editPin: $('edit-pin'), editUnpin: $('edit-unpin'),
   editAlign: $('edit-align'), alignMenu: $('align-menu'), editGroup: $('edit-group'), editMerge: $('edit-merge'), editSplit: $('edit-split'), editUngroup: $('edit-ungroup'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
   editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'), editDone: $('edit-done'),
-  labelDialog: $('label-dialog'), noteDialog: $('note-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'),
+  labelDialog: $('label-dialog'), noteDialog: $('note-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'), confirmDialog: $('confirm-dialog'),
 };
 
 // The toolbar wraps on narrow screens; the stage starts below it.
@@ -136,6 +136,7 @@ const editor = createEditor({
   askLabel: (opts) => askLabel(el.labelDialog, opts),
   askLines: (lines, checked, title, opts) => askLines(el.linesDialog, lines, checked, title, opts),
   askNote: (title, opts) => askNote(el.noteDialog, title, opts),
+  askConfirm: (opts) => askConfirm(el.confirmDialog, opts),
   openAlign: (anchor) => toggleAlign(anchor),
   // (a selection made on the map: the caret on the same statement as before selects it again)
   onChange: () => { updateEditBar(); if (!caretPick) caretKey = null; syncMarks({ scroll: !caretPick }); },
@@ -185,7 +186,8 @@ function picked() {
   const s = editor.selection();
   if (!s) return [];
   if (s.kind === 'node') return [{ kind: 'node', id: s.id }];
-  if (s.kind === 'nodes') return s.group ? [{ kind: 'group', id: s.group }] : s.ids.map((id) => ({ kind: 'node', id }));
+  if (s.kind === 'group') return [{ kind: 'group', id: s.id }];
+  if (s.kind === 'nodes') return s.ids.map((id) => ({ kind: 'node', id }));
   return [{ kind: 'edge', from: s.from, to: s.to }];
 }
 // the lines to mark: the statements of each thing (strong), the edge statements naming a node or
@@ -435,7 +437,8 @@ function setEditing(on) {
   if (on && innerWidth < 860) setMenu(false);
 }
 const HINTS = {
-  none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box · Shift+drag the background or click a container to select several · drag the background to pan',
+  none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box · click a container to select it · Shift+drag the background to select several · drag the background to pan',
+  group: 'Drag it to move all in it · click again for its boxes · F2 or a double-click on its title renames it · drag the + onto a box to connect · Del removes it, its boxes stay',
   nodes: 'Drag one to move them all · click one again to resize them all · Align… lines them up · Shift+click adds or removes a box · Del removes them',
   nodesSize: 'Drag a handle: every box takes that size, each around its centre · click one to move them again · Del removes them',
   node: 'Drag to move · click again to resize · double-click or F2 edits its text · drag the + onto another box to connect them · Del removes the box and its edges',
@@ -454,6 +457,7 @@ function updateEditBar() {
   el.editUndo.disabled = !editor.canUndo();
   el.editRedo.disabled = !editor.canRedo();
   el.editDelete.disabled = !sel;
+  el.editDeleteAll.hidden = sel?.kind !== 'group';
   el.editLines.hidden = !(sel?.kind === 'edge' || sel?.kind === 'via');
   el.editText.hidden = !editor.textTarget();
   // the container actions, where they apply to the boxes selected
@@ -463,7 +467,7 @@ function updateEditBar() {
   if (el.editAlign.hidden) closeAlign();
   el.editAdd.setAttribute('aria-pressed', String(editor.adding()));
   const mode = sel?.mode === 'size' ? (sel.kind === 'nodes' ? 'nodesSize' : 'size') : sel?.line ? 'line' : sel?.kind ?? 'none';
-  el.editHint.textContent = (mode === 'line' ? `Line ${editor.lineLabel(sel.line)}: ` : sel?.kind === 'nodes' ? `${sel.ids.length} boxes: ` : '') + HINTS[editor.adding() ? 'adding' : mode];
+  el.editHint.textContent = (mode === 'line' ? `Line ${editor.lineLabel(sel.line)}: ` : sel?.kind === 'nodes' ? `${sel.ids.length} boxes: ` : sel?.kind === 'group' ? `${editor.groupLabel(sel.id)}: ` : '') + HINTS[editor.adding() ? 'adding' : mode];
   const cur = source.current();
   el.editPage.hidden = !(pageHtml && cur?.flow !== null && cur?.flow !== undefined);
   // where the edits go: the file (served by linemap studio), or only this page
@@ -485,6 +489,7 @@ el.edit.addEventListener('click', () => setEditing(!editor.on()));
 el.editDone.addEventListener('click', () => setEditing(false));
 el.editAdd.addEventListener('click', () => editor.startAdding());
 el.editDelete.addEventListener('click', () => editor.remove());
+el.editDeleteAll.addEventListener('click', () => editor.removeDeep());
 el.editLines.addEventListener('click', () => editor.editLines());
 el.editText.addEventListener('click', () => editor.editText());
 el.editPin.addEventListener('click', () => editor.pinAll());

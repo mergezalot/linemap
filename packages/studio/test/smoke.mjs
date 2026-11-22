@@ -1373,8 +1373,15 @@ console.log('edit mode, saving to the file (linemap studio)');
     await click(corner);
     await page.keyboard.up('Shift');
     check(/^2 boxes:/.test(await page.textContent('#edit-hint')), `Shift+click on a container adds its boxes (${(await page.textContent('#edit-hint')).slice(0, 12)})`);
+    // a click on a container: the container itself; again: its boxes (here d alone); again: it
+    check(await cursors(page, ['#map g.group#cluster_x > rect']) === 'pointer', 'a container not selected shows the pointer');
     await click(corner);
-    check(!/boxes/.test(await page.textContent('#edit-hint')) && /click again to resize/.test(await page.textContent('#edit-hint')), 'a click on a container selects its boxes (here: d alone)');
+    check(/^X: Drag it/.test(await page.textContent('#edit-hint')) && await page.evaluate(() => !!document.querySelector('#map .lm-edit-sel') && !!document.querySelector('#map .lm-edit-connect')), `a click on a container selects it, outlined, with a connect handle (${(await page.textContent('#edit-hint')).slice(0, 12)})`);
+    check(await cursors(page, ['#map g.group#cluster_x > rect']) === 'move', 'a selected container shows the move cursor');
+    await click(corner);
+    check(!/boxes/.test(await page.textContent('#edit-hint')) && /click again to resize/.test(await page.textContent('#edit-hint')), 'a second click selects its boxes (here: d alone)');
+    await click(corner);
+    check(/^X: /.test(await page.textContent('#edit-hint')), 'a third click selects the container again');
     // Shift+drag on the background: the boxes in the rectangle
     await page.keyboard.press('Escape');
     const r0 = await scr(-200, 650), r1 = await scr(720, 250);
@@ -1583,11 +1590,13 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   check(has(inner, 'c') && has(inner, 'd') && body(text, 'cluster_x')?.includes('subgraph cluster_inner'), 'Group from the edit bar: the new container is inside X');
   await undoTo(FLOW, 'undo group');
 
-  // a click on a container selects its boxes: Ungroup, from the edit bar
+  // a click on a container selects it; a second click its boxes: Ungroup, from the edit bar
   await page.keyboard.press('Escape');
   const corner = await page.evaluate(() => { const r = document.querySelector('#map g.group#cluster_x > rect').getBoundingClientRect(); return { x: r.x + 10, y: r.y + r.height - 10 }; });
   await click(corner);
-  check(/^3 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize align ungroup text' && await bar() === 'ungroup', `a click on X: its boxes, Ungroup offered (${await tools()})`);
+  check(/^X: /.test(await hint()) && await tools() === 'delete deleteAll unpin* text' && await bar() === '' && await page.isVisible('#edit-delete-all'), `a click on X: the container, its own adorner (${await tools()})`);
+  await click(corner);
+  check(/^3 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize align ungroup text' && await bar() === 'ungroup', `a second click on X: its boxes, Ungroup offered (${await tools()})`);
   // Edit text on a clicked container: rename it (its label prefilled), one undo
   before = read();
   await click(await handle('#map .lm-edit-tool[data-act="text"]'));
@@ -1602,11 +1611,78 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   check(/subgraph cluster_x \{ label="Ex";/.test(text) && /^3 boxes:/.test(await hint()), `the container's label is set, its boxes stay selected (${/subgraph cluster_x[^\n]*/.exec(text)?.[0]})`);
   await undoTo(FLOW, 'undo rename');
   await click(corner);
+  await click(corner);
   before = read();
   await page.click('#edit-ungroup');
   text = await changed(before, 'ungrouping X');
   check(!/cluster_x/.test(text) && /cluster_y/.test(text), 'Ungroup from the edit bar removes X');
   await undoTo(FLOW, 'undo ungroup');
+
+  // a selected container: Del removes only it; Delete with contents asks, then removes all it holds
+  await page.keyboard.press('Escape');
+  await click(corner);
+  await page.keyboard.press('Delete');
+  text = await changed(FLOW, 'deleting X alone');
+  check(!/cluster_x/.test(text) && /\bc \[pos="0,300"\]/.test(text) && /d -> e/.test(text), `Del on a container removes it, its boxes and their edges stay (${text.replace(/\s+/g, ' ').slice(0, 120)})`);
+  await undoTo(FLOW, 'undo delete X');
+  await click(corner);
+  await click(await handle('#map .lm-edit-tool[data-act="deleteAll"]'));
+  await page.waitForSelector('#confirm-dialog[open]');
+  {
+    const o = await page.evaluate(() => ({ h: document.querySelector('#confirm-dialog h2').textContent, t: document.querySelector('#confirm-dialog .hint').textContent, focus: document.activeElement?.textContent }));
+    check(/^Delete X with everything/.test(o.h) && /3 boxes/.test(o.t) && o.focus === 'Cancel', `Delete with contents asks first, naming what goes, Cancel focused (${JSON.stringify(o)})`);
+  }
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  check(read() === FLOW, 'Escape in the question deletes nothing');
+  await page.keyboard.press('Escape');
+  await click(corner);
+  await click(await handle('#map .lm-edit-tool[data-act="deleteAll"]'));
+  await page.waitForSelector('#confirm-dialog[open]');
+  await page.click('#confirm-dialog button[value="ok"]');
+  text = await changed(FLOW, 'deleting X with its contents');
+  check(!/cluster_x/.test(text) && !/\bc \[/.test(text) && !/b -> c|d -> e/.test(text) && /cluster_y/.test(text), `confirmed: X, its boxes and their edges go (${text.replace(/\s+/g, ' ').slice(0, 160)})`);
+  await undoTo(FLOW, 'undo delete with contents');
+
+  // a drag on a selected container moves all its boxes, pinned, in one edit; on one not selected it pans
+  await page.keyboard.press('Escape');
+  const scale = await page.evaluate(() => document.querySelector('#map svg').getScreenCTM().a);
+  const dragBy = async (a, dx) => {
+    await page.mouse.move(a.x, a.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) { await page.mouse.move(a.x + dx * i / 8, a.y); await page.waitForTimeout(30); }
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+  };
+  {
+    const t0 = await page.evaluate(() => document.querySelector('#map svg').getScreenCTM().e);
+    await dragBy(corner, 40);
+    const t1 = await page.evaluate(() => document.querySelector('#map svg').getScreenCTM().e);
+    check(read() === FLOW && Math.abs(t1 - t0 - 40) < 2 && !/^X: /.test(await hint()), `a drag on a container not selected pans the map (${Math.round(t1 - t0)} px)`);
+    await dragBy({ x: corner.x + 40, y: corner.y }, -40);
+  }
+  await click(corner);
+  await dragBy(corner, 100 * scale);
+  text = await changed(FLOW, 'moving X');
+  check(/c \[pos="100,300"\]/.test(text) && /d \[pos="400,300"\]/.test(text) && /g \[pos="600,300"\]/.test(text) && /e \[pos="0,600"\]/.test(text) && /^X: /.test(await hint()),
+    `dragging X moves c, d and g by the drag, X stays selected (${/subgraph cluster_x[^\n]*/.exec(text)?.[0]})`);
+  await undoTo(FLOW, 'undo moving X');
+
+  // the + of a selected container: an edge from its box
+  await click(corner);
+  await page.mouse.move(...Object.values(await handle('#map .lm-edit-connect')));
+  await page.mouse.down();
+  {
+    const a = await nodeAt('a');
+    for (let i = 1; i <= 8; i++) { await page.mouse.move(a.x, a.y, { steps: 1 }); await page.waitForTimeout(30); }
+  }
+  await page.mouse.up();
+  await page.waitForSelector('#lines-dialog[open]');
+  await page.check('#lines-dialog input[value="A"]');
+  await page.click('#lines-dialog button[value="ok"]');
+  text = await changed(FLOW, 'connecting X to a');
+  check(/cluster_x -> a \[lines=A\]/.test(text), `the + of a container draws an edge from its box (${/[^\n]*cluster_x -> [^\n]*/.exec(text)?.[0]})`);
+  await undoTo(FLOW, 'undo connect');
   // Escape on the label dialog: nothing changes
   await pick('a', 'b');
   await click(await handle('#map .lm-edit-tool[data-act="group"]'));

@@ -8,7 +8,17 @@
 // an edge between its whole bundle and the one line clicked (whose ends move only that line to
 // another box, and Delete takes only it off the edge). Lines… picks the lines of the edge.
 // Several boxes: Shift+click adds or removes one, Shift+drag on the background adds those in the
-// rectangle, a click on a container selects the boxes in it; dragging one of them moves them all.
+// rectangle, Shift+click on a container adds the boxes in it; dragging one of them moves them all.
+// A container: a click on it (its body or its title) selects the container itself, outlined; a
+// second click selects the boxes in it (as several boxes, so Group, Ungroup, Merge, Split and Edit
+// text work on them), a third the container again. A drag on a selected container (anywhere on it,
+// containers inside it too) moves everything in it: its boxes at any depth and the notes attached
+// to them, by the drag (snapped as the first box in it), all pinned where they end up, in one edit;
+// its box follows the pointer. A drag on a container not selected pans, so large containers never
+// get in the way of panning. Its adorner: Delete (the container only, its boxes stay, edges to its
+// box go; also Del) · Delete with contents (asks first, naming what goes: its boxes, notes,
+// containers in it and every edge to them) · Pin/Unpin all of its boxes (P) · Edit text (its
+// label); and the connect handle `+` beside it, for an edge from its box to a box or container.
 // Their adorner sits above them all: Delete · Pin/Unpin all (unpin when every box is pinned,
 // else pin them all) · Resize. A click on one of them (or Resize) resizes them all: the handles
 // are on that box, the others are outlined; while it is dragged every box takes its width and
@@ -24,7 +34,7 @@
 //            others go; edges to their boxes move onto the one kept where that is still valid.
 //   Split    all from one container, not all of it: they leave it for a new container (asks its
 //            label) beside it, in the same parent.
-//   Ungroup  they are exactly a container's boxes (the one clicked; else the innermost): it goes,
+//   Ungroup  they are exactly a container's boxes (the one clicked twice; else the innermost): it goes,
 //            the boxes stay where they are. Edges to its box go with it.
 // A note moves with the node it is attached to. No drag changes which container a box is in.
 // Align… in that adorner (and the edit bar) opens a small menu (main.mjs; Escape, a click
@@ -53,8 +63,8 @@
 // container's title): the text dialog, opened with the label as written (a note's HTML-like
 // label as its source, with its tags; line breaks as real ones), sets the label of the node, note
 // or container (`label` op), one edit, one undo; the selection stays. A container's text is
-// offered when exactly its boxes are selected by a click on it (sel.group). A text left blank or
-// unchanged changes nothing.
+// offered when it is selected, or exactly its boxes are by a second click on it (sel.group). A
+// text left blank or unchanged changes nothing.
 // Pin/Unpin shows the state (the pin, highlighted, when pinned; a struck-out pin when not) and
 // switches it: pinning writes `pos` where the box is, unpinning lets the layout place it. It
 // hides while something is dragged. The edit bar keeps the same actions for the keyboard.
@@ -63,8 +73,9 @@
 // from it moves the box like a drag anywhere on it.
 // Cursors (style.css), one meaning each, in view and edit mode: grab on the background (a drag
 // pans; grabbing only while a pan runs, over anything); pointer on what a click selects or pins
-// (edges, bundles and lines, container titles, legend rows, adorner buttons, pin marks, view-mode
-// nodes); move on what a drag moves (edit-mode boxes, edge ends, bend points); a resize arrow on
+// (edges, bundles and lines, container titles, edit-mode containers, legend rows, adorner buttons,
+// pin marks, view-mode nodes); move on what a drag moves (edit-mode boxes, a selected container and
+// those in it, edge ends, bend points); a resize arrow on
 // size handles; crosshair on the connect handle `+` (a drag draws an edge) and during a Shift+drag
 // rectangle; copy over the whole map while Add node waits for its click. A drag keeps the cursor
 // it started with until it ends (--drag-cursor on the host). The source sidebar's edge: ew-resize.
@@ -85,12 +96,13 @@ const TOOL_GAP = 8;     // adorner to the selection, screen px (keeps clear of t
 const PIN = 8;          // pin mark radius, screen px
 const PIN_IN = 13;      // pin mark centre from the box's top and right sides, screen px (clear of the corner handles)
 
-export function createEditor({ host, getText, commit, check, preview, cancelPreview, toast, askLabel, askLines, askNote, openAlign, onChange }) {
+export function createEditor({ host, getText, commit, check, preview, cancelPreview, toast, askLabel, askLines, askNote, askConfirm, openAlign, onChange }) {
   let on = false;
   let svg = null, model = null;
   // { kind: 'node', id, mode: 'move' | 'size' } | { kind: 'edge', from, to, line? } (line: that
-  // line alone, not the bundle) | { kind: 'via', from, to, i } | { kind: 'nodes', ids, mode?, main? }
-  // (two or more; mode 'size': all take one size, the handles are on box `main`)
+  // line alone, not the bundle) | { kind: 'via', from, to, i } | { kind: 'nodes', ids, mode?, main?,
+  // group? } (two or more; mode 'size': all take one size, the handles are on box `main`; group:
+  // the container they were selected as) | { kind: 'group', id } (a container itself)
   let sel = null;
   let drag = null;
   let adding = false; // Add node: the next click on the map places one
@@ -124,6 +136,20 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function membersOf(group) {
     const inside = (id) => { for (let g = id; g; g = model.groups.find((x) => x.id === g)?.parent) if (g === group) return true; return false; };
     return [...model.items.values()].filter((n) => n.kind !== 'legend' && inside(n.group)).map((n) => n.id);
+  }
+  const isGroup = (id) => !!model?.groups.some((g) => g.id === id);
+  // container id and the containers in it, at any depth
+  const groupsIn = (id) => model.groups.map((g) => g.id).filter((g) => within(g, id));
+  // what moving container id takes along: its boxes at any depth, and the notes attached to them
+  function groupLoad(id) {
+    const out = new Set(membersOf(id));
+    for (const n of model.items.values()) if (n.kind === 'note' && n.attach && out.has(n.attach)) out.add(n.id);
+    return [...out];
+  }
+  // a container's box as drawn now (map units): { x0, y0, x1, y1 }, or null (not drawn)
+  function groupBox(id) {
+    const b = svg?.querySelector(`g.group[id="${CSS.escape(id)}"] > rect.lm-group-box`)?.getBBox();
+    return b ? { x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height } : null;
   }
   const lineLabel = (id) => model?.lines.find((l) => l.id === id)?.label ?? id;
 
@@ -167,6 +193,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function targetAt(x, y) {
     for (const el of document.elementsFromPoint(x, y)) {
       if (!svg?.contains(el) || el.closest('.lm-edit')) continue;
+      const tab = el.closest('g.group-tab');
+      if (tab) return tab.dataset.group;
       const g = el.closest('g.node, g.note:not(.lm-note-folded), g.group');
       if (g) return g.id;
     }
@@ -248,6 +276,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function remove() {
     if (!sel) return;
     if (sel.kind === 'node') apply({ op: 'removeNode', id: sel.id });
+    // a container: only it, its boxes stay (in its parent); edges to its box go
+    else if (sel.kind === 'group') apply({ op: 'removeGroup', id: sel.id });
     else if (sel.kind === 'nodes') apply(sel.ids.map((id) => ({ op: 'removeNode', id })));
     else if (sel.kind === 'edge' && sel.line) {
       const e = edgeOf(sel.from, sel.to);
@@ -259,6 +289,26 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (e) apply({ op: 'via', from: e.from, to: e.to, points: e.via.filter((_, i) => i !== sel.i) });
     }
     sel = null;
+    draw();
+    onChange?.();
+  }
+  // Delete with contents: the selected container with everything in it (deep removeGroup), once the
+  // dialog naming what goes is confirmed
+  async function removeDeep() {
+    if (sel?.kind !== 'group' || !isGroup(sel.id)) return;
+    const id = sel.id;
+    const load = groupLoad(id).map(itemOf).filter(Boolean);
+    const count = (k, one, many) => (k === 1 ? `1 ${one}` : `${k} ${many}`);
+    const boxes = load.filter((n) => n.kind !== 'note').length, notes = load.length - boxes, inner = groupsIn(id).length - 1;
+    const parts = [count(boxes, 'box', 'boxes'), notes && count(notes, 'note', 'notes'), inner && count(inner, 'container', 'containers')].filter(Boolean);
+    const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0];
+    const ok = await askConfirm?.({
+      heading: `Delete ${groupLabel(id)} with everything in it?`,
+      text: `The container, ${list} in it, and every edge to them go. Ctrl+Z brings them back.`,
+      ok: `Delete ${count(boxes, 'box', 'boxes')}`,
+    });
+    if (!ok || sel?.kind !== 'group' || sel.id !== id) return;
+    if (apply({ op: 'removeGroup', id, deep: true })) sel = null;
     draw();
     onChange?.();
   }
@@ -289,7 +339,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     // an edge to or from a note attaches it; any other carries lines
     if (a?.kind !== 'note' && b?.kind !== 'note') {
       const carried = new Set(model.edges.filter((e) => e.from === from || e.to === from).flatMap((e) => e.lines.map((l) => l.id)));
-      lines = await askLines(model.lines, carried, `${a?.label ?? from} → ${b?.label ?? model.groups.find((g) => g.id === to)?.label ?? to}`);
+      const name = (id) => itemOf(id)?.label ?? model.groups.find((g) => g.id === id)?.label ?? id;
+      lines = await askLines(model.lines, carried, `${name(from)} → ${name(to)}`);
       if (!lines?.length) return;
     }
     if (apply({ op: 'addEdge', from, to, lines })) sel = { kind: 'edge', from, to };
@@ -326,9 +377,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
 
   // ---------- text ----------
   // What Edit text would edit: { kind: 'node' | 'note' | 'group', id }, or null. A container: when
-  // exactly its boxes are selected, by a click on it.
+  // it is selected, or exactly its boxes are, by a second click on it.
   function textTarget() {
     if (!model) return null;
+    if (sel?.kind === 'group') return isGroup(sel.id) ? { kind: 'group', id: sel.id } : null;
     if (sel?.kind === 'node') {
       const n = itemOf(sel.id);
       return n && n.kind !== 'legend' ? { kind: n.kind, id: n.id } : null;
@@ -518,10 +570,26 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const ge = edgeG(sel);
       for (const x of ge?.querySelectorAll('[data-line]') ?? []) if (x.getAttribute('data-line') !== sel.line) x.classList.add('lm-edit-dim');
     }
+    // a selected container, and those in it: a drag on them moves it (the move cursor, style.css)
+    for (const x of svg.querySelectorAll('.lm-edit-on')) x.classList.remove('lm-edit-on');
+    if (on && sel?.kind === 'group' && isGroup(sel.id)) {
+      for (const id of groupsIn(sel.id)) {
+        for (const x of svg.querySelectorAll(`g.group[id="${CSS.escape(id)}"], g.group-tab[data-group="${CSS.escape(id)}"]`)) x.classList.add('lm-edit-on');
+      }
+    }
     if (!on) return;
     const u = unit(), r = HANDLE * u;
     const g = el('g', { class: 'lm-edit' }, svg);
     pinMarks(g, u);
+    if (sel?.kind === 'group') {
+      // (while it is dragged: where the pointer has it)
+      const b = drag?.moved && drag.group === sel.id ? movedBox(drag, sel.id) : groupBox(sel.id);
+      if (b) {
+        const pad = 6 * u;
+        el('rect', { class: 'lm-edit-sel', x: b.x0 - pad, y: b.y0 - pad, width: b.x1 - b.x0 + 2 * pad, height: b.y1 - b.y0 + 2 * pad, rx: 10 * u }, g);
+        connectHandle(g, b.x1 + pad + 14 * u, (b.y0 + b.y1) / 2, r);
+      }
+    }
     if (sel?.kind === 'node' && itemOf(sel.id)) {
       // (while it is dragged or resized: where the pointer has it)
       const dragged = drag?.moved && drag.id === sel.id && (drag.kind !== 'move' || drag.ids.length === 1);
@@ -531,12 +599,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       const pad = (sizing ? 0 : 6) * u;
       el('rect', { class: `lm-edit-sel${sizing ? ' sizing' : ''}`, x: n.x - n.w / 2 - pad, y: n.y - n.h / 2 - pad, width: n.w + 2 * pad, height: n.h + 2 * pad, rx: sizing ? 0 : 8 * u }, g);
       if (sizing) sizeHandles(g, n, r);
-      else if (n.kind !== 'legend') {
-        const c = el('g', { class: 'lm-edit-handle lm-edit-connect', 'data-handle': 'connect' }, g);
-        const cx = n.x + n.w / 2 + pad + 14 * u;
-        el('circle', { cx, cy: n.y, r: r * 1.5 }, c);
-        el('path', { d: `M${cx - r * 0.8},${n.y}H${cx + r * 0.8}M${cx},${n.y - r * 0.8}V${n.y + r * 0.8}`, class: 'lm-edit-plus' }, c);
-      }
+      else if (n.kind !== 'legend') connectHandle(g, n.x + n.w / 2 + pad + 14 * u, n.y, r);
     }
     if (sel?.kind === 'nodes') {
       // in size mode: each box outlined, the handles on the main one; while resized, each at the
@@ -590,6 +653,12 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (!drag?.moved) adorner(g, u);
   }
 
+  // the connect handle `+` at cx, cy: a drag from it draws a new edge
+  function connectHandle(g, cx, cy, r) {
+    const c = el('g', { class: 'lm-edit-handle lm-edit-connect', 'data-handle': 'connect' }, g);
+    el('circle', { cx, cy, r: r * 1.5 }, c);
+    el('path', { d: `M${cx - r * 0.8},${cy}H${cx + r * 0.8}M${cx},${cy - r * 0.8}V${cy + r * 0.8}`, class: 'lm-edit-plus' }, c);
+  }
   // the eight size handles on a box's corners and sides
   function sizeHandles(g, n, r) {
     const s = r * 0.85;
@@ -660,6 +729,23 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         ],
       };
     }
+    if (sel?.kind === 'group') {
+      const b = isGroup(sel.id) && groupBox(sel.id);
+      if (!b) return null;
+      const pad = 6 * unit(), name = groupLabel(sel.id);
+      const ns = groupLoad(sel.id).map(itemOf).filter((n) => n && n.kind !== 'legend');
+      const all = ns.length > 0 && ns.every((n) => n.pinned);
+      return {
+        at: { x0: b.x0 - pad, y0: b.y0 - pad, x1: b.x1 + pad, y1: b.y1 + pad },
+        list: [
+          { act: 'delete', icon: 'i-trash', title: `Delete ${name} only: its boxes stay, edges to the container go (Del)` },
+          { act: 'deleteAll', icon: 'i-trash-all', title: `Delete ${name} with everything in it…` },
+          all ? { act: 'unpin', icon: 'i-pin', on: true, title: 'All its boxes are pinned: click to unpin them, so the layout places them (P)' }
+            : { act: 'pin', icon: 'i-unpin', title: `${ns.some((n) => n.pinned) ? 'Not all' : 'None'} of its boxes pinned: click to pin them all where they are (P)` },
+          { act: 'text', icon: 'i-text-edit', title: `Rename ${name} (F2, Enter or double-click its title)` },
+        ],
+      };
+    }
     if (sel?.kind === 'edge') {
       const e = edgeOf(sel.from, sel.to);
       if (!e?.path?.length) return null;
@@ -725,6 +811,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function tool(act) {
     if (containerActs[act]) return containerActs[act]();
     if (act === 'delete') return remove();
+    if (act === 'deleteAll') return removeDeep();
     if (act === 'lines') return editLines();
     if (act === 'note') return addNote();
     if (act === 'text') return editText();
@@ -739,9 +826,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     }
   }
   // pin the selected boxes where they are, or unpin them when all are pinned; false when nothing
-  // pinnable is selected
+  // pinnable is selected (a container: what a drag on it moves)
   function togglePin() {
-    const ns = selectedIds().map(itemOf).filter((n) => n && n.kind !== 'legend');
+    const ns = (sel?.kind === 'group' && isGroup(sel.id) ? groupLoad(sel.id) : selectedIds()).map(itemOf).filter((n) => n && n.kind !== 'legend');
     if (!ns.length) return false;
     apply(ns.every((n) => n.pinned) ? ns.map((n) => ({ op: 'unpin', id: n.id }))
       : ns.filter((n) => !n.pinned).map((n) => ({ op: 'pos', id: n.id, x: n.x, y: n.y })));
@@ -755,7 +842,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   function staleEdges() {
     const out = [];
     if (drag.kind === 'move' || drag.kind === 'size') {
-      const at = (id) => (drag.kind === 'size' ? (id === drag.id ? drag.at : drag.ids.includes(id) ? itemOf(id) : null) : drag.orig.has(id) ? dragAt(drag, id) : null);
+      const centre = (b) => ({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 });
+      const at = (id) => (drag.kind === 'size' ? (id === drag.id ? drag.at : drag.ids.includes(id) ? itemOf(id) : null)
+        : drag.orig.has(id) ? dragAt(drag, id) : drag.boxes?.has(id) ? centre(movedBox(drag, id)) : null);
       for (const e of model.edges) {
         const af = at(e.from), bt = at(e.to);
         if (!af && !bt) continue;
@@ -773,7 +862,13 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     const o = d.orig.get(id), a = d.orig.get(d.id);
     return { x: o.x + d.at.x - a.x, y: o.y + d.at.y - a.y };
   };
+  // where a container drag has the box of container `id` (the one dragged or one in it)
+  const movedBox = (d, id) => {
+    const b = d.boxes.get(id), a = d.orig.get(d.id), dx = d.at.x - a.x, dy = d.at.y - a.y;
+    return { x0: b.x0 + dx, y0: b.y0 + dy, x1: b.x1 + dx, y1: b.y1 + dy };
+  };
   // the nodes being dragged sit where the pointer put them, also on a map drawn for an earlier spot
+  // (a container dragged: its box and those in it too, with their titles)
   function placeDragged() {
     if (drag?.kind !== 'move' || !drag.moved) return;
     for (const id of drag.ids) {
@@ -781,6 +876,12 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (!n || !g) continue;
       const at = dragAt(drag, id);
       g.setAttribute('transform', `translate(${at.x - n.x} ${at.y - n.y})`);
+    }
+    for (const id of drag.boxes?.keys() ?? []) {
+      const now = groupBox(id), want = movedBox(drag, id);
+      if (!now) continue;
+      const t = `translate(${want.x0 - now.x0} ${want.y0 - now.y0})`;
+      for (const x of svg.querySelectorAll(`g.group[id="${CSS.escape(id)}"], g.group-tab[data-group="${CSS.escape(id)}"]`)) x.setAttribute('transform', t);
     }
   }
   const moveOps = (d) => d.ids.map((id) => ({ op: 'pos', id, ...dragAt(d, id) }));
@@ -817,11 +918,18 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     } else if (handle?.dataset.handle === 'connect' && sel?.kind === 'node') {
       const n = itemOf(sel.id);
       drag = { kind: 'connect', start, from: sel.id, ghost: { a: { x: n.x, y: n.y }, b: p } };
+    } else if (handle?.dataset.handle === 'connect' && sel?.kind === 'group') {
+      // from the container's box: the ghost starts on its right side, by the handle
+      const b = groupBox(sel.id);
+      if (!b) return;
+      drag = { kind: 'connect', start, from: sel.id, ghost: { a: { x: b.x1, y: (b.y0 + b.y1) / 2 }, b: p } };
     } else {
       // a pin mark is pressed like its box: a drag moves it, a click (in end()) unpins it
       const unpin = handle?.dataset.handle === 'pin' ? handle.dataset.id : null;
       const g = unpin ? { id: unpin } : t.closest('g.node, g.note:not(.lm-note-folded)');
       const edge = !g && t.closest('g.edge');
+      const tab = !g && !edge && t.closest('g.group-tab');
+      const grp = tab ? tab.dataset.group : !g && !edge ? t.closest('g.group')?.id : null;
       if (g && itemOf(g.id) && itemOf(g.id).kind !== 'legend') {
         const n = itemOf(g.id);
         // a box of the selection takes the others along (with Shift, any box does)
@@ -831,11 +939,23 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         drag = { kind: 'move', start, base, id: g.id, ids, orig, shift: e.shiftKey, off: { x: p.x - n.x, y: p.y - n.y }, at: { x: n.x, y: n.y }, unpin };
       } else if (edge) {
         drag = { kind: 'bend', start, base, from: edge.dataset.from, to: edge.dataset.to, p, line: lineAt(edge, e) };
+      } else if (!e.shiftKey && grp && sel?.kind === 'group' && isGroup(sel.id) && isGroup(grp) && within(grp, sel.id)) {
+        // the selected container (or one in it): a drag moves all it holds, snapped as its first
+        // box; a click (end() leaves it to the click handler) selects as a click on it does.
+        // (A container not selected pans: see below.)
+        const ids = groupLoad(sel.id).filter((id) => itemOf(id) && itemOf(id).kind !== 'legend');
+        if (!ids.length) return;
+        const first = ids.find((id) => itemOf(id).kind === 'node') ?? ids[0], n = itemOf(first);
+        const orig = new Map(ids.map((id) => [id, { x: itemOf(id).x, y: itemOf(id).y }]));
+        const boxes = new Map(groupsIn(sel.id).map((id) => [id, groupBox(id)]).filter(([, b]) => b));
+        drag = { kind: 'move', start, base, id: first, ids, orig, group: sel.id, boxes, off: { x: p.x - n.x, y: p.y - n.y }, at: { x: n.x, y: n.y } };
       } else if (e.shiftKey && e.pointerType !== 'touch') {
         // Shift on the background: select a rectangle (a click adds a container's boxes)
         drag = { kind: 'box', start, a: p, b: p, shift: true };
       } else {
-        return; // the background: a pan (a click clears the selection, or picks a container)
+        // the background, or a container not selected: a pan (a click clears the selection, or
+        // selects the container)
+        return;
       }
     }
     e.stopPropagation(); // no pan
@@ -864,7 +984,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       if (at.x === drag.at.x && at.y === drag.at.y) return;
       drag.at = at;
       moved();
-      if (drag.ids.length > 1) { if (sel?.kind !== 'nodes' || sel.ids.length !== drag.ids.length) selectIds(drag.ids); }
+      if (drag.group) { /* the container stays selected */ } else if (drag.ids.length > 1) { if (sel?.kind !== 'nodes' || sel.ids.length !== drag.ids.length) selectIds(drag.ids); }
       else if (sel?.kind !== 'node' || sel.id !== drag.id) sel = { kind: 'node', id: drag.id, mode: 'move' };
       placeDragged();
       draw();
@@ -930,6 +1050,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       onChange?.();
       return;
     }
+    // a click on the selected container: the click handler selects (its boxes, or one in it)
+    if (!d.moved && d.group) return;
     if (!d.moved) {
       // a click: select. (The overlay is drawn again on every click, so the browser's dblclick
       // never reaches a handle: a second click on the same via point soon after removes it.)
@@ -971,6 +1093,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       swallow();
     } else if (d.kind === 'move') {
       if (!apply(moveOps(d))) cancelPreview();
+      // the click that ends a container's drag does not select again
+      if (d.group) swallow();
     } else if (d.kind === 'size') {
       if (!d.size || !apply(sizeOps(d))) cancelPreview();
     } else if (d.kind === 'via') {
@@ -1011,12 +1135,16 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (!(e.target instanceof Element)) return;
     const hit = e.target.closest('[data-handle], g.node, g.note, g.edge');
     if (hit) return;
-    // a container (its box or its title): the boxes in it (with Shift: added to the selection)
+    // a container (its box or its title): the container; clicked again, the boxes in it; again, the
+    // container. With Shift: its boxes added to the selection
     const group = e.target.closest('g.group, g.group-tab');
     const id = group?.classList.contains('group-tab') ? group.dataset.group : group?.id;
-    if (id && model.groups.some((x) => x.id === id)) {
-      selectIds([...(e.shiftKey ? selectedIds() : []), ...membersOf(id)]);
-      if (!e.shiftKey && sel?.kind === 'nodes') sel.group = id;
+    if (id && isGroup(id)) {
+      if (e.shiftKey) selectIds([...selectedIds(), ...membersOf(id)]);
+      else if (sel?.kind === 'group' && sel.id === id && membersOf(id).length) {
+        selectIds(membersOf(id));
+        if (sel?.kind === 'nodes') sel.group = id;
+      } else sel = { kind: 'group', id };
       draw();
       onChange?.();
     } else if (sel && !e.shiftKey) { sel = null; draw(); onChange?.(); }
@@ -1034,9 +1162,9 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
       draw();
       onChange?.();
       editText();
-    } else if (title && model.groups.some((g) => g.id === title) && !e.shiftKey) {
-      selectIds(membersOf(title));
-      if (sel?.kind === 'nodes') sel.group = title;
+    } else if (title && isGroup(title) && !e.shiftKey) {
+      // (its two clicks selected the container, then its boxes: the container again)
+      sel = { kind: 'group', id: title };
       draw();
       onChange?.();
       editText({ kind: 'group', id: title });
@@ -1060,7 +1188,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         if (mode === 'size' && sel) sel = sel.kind === 'nodes' ? { ...sel, mode, main: sel.ids.includes(main) ? main : sel.ids[0] } : { ...sel, mode };
         if (group && sel?.kind === 'nodes') sel.group = group;
       }
-      if (sel && sel.kind !== 'node' && sel.kind !== 'nodes' && !edgeOf(sel.from, sel.to)) sel = null;
+      if (sel?.kind === 'group' && !isGroup(sel.id)) sel = null;
+      if (sel && sel.kind !== 'node' && sel.kind !== 'nodes' && sel.kind !== 'group' && !edgeOf(sel.from, sel.to)) sel = null;
       if (sel?.line && !edgeOf(sel.from, sel.to)?.lines.some((l) => l.id === sel.line)) sel = { kind: 'edge', from: sel.from, to: sel.to };
       if (sel?.kind === 'via' && !edgeOf(sel.from, sel.to)?.via[sel.i]) sel = { kind: 'edge', from: sel.from, to: sel.to };
       // the preview asked for last is the map now
@@ -1096,6 +1225,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     canUndo: () => undo.length > 0,
     canRedo: () => redo.length > 0,
     remove,
+    // Delete with contents, for the container selected (asks first)
+    removeDeep,
+    // a container's label (its id when it has none), for the hint
+    groupLabel: (id) => (model ? groupLabel(id) : id),
     editLines,
     // the text dialog for the one box, note or container selected (false: nothing to edit); what
     // it would edit (textTarget: { kind: 'node' | 'note' | 'group', id } or null)
@@ -1103,8 +1236,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     textTarget,
     selection: () => sel,
     // select what a statement of the source is about (main.mjs, from the caret in the sidebar):
-    // { kind: 'node', id } | { kind: 'edge', from, to } | { kind: 'group', id } (its boxes, as a
-    // click on it) | null (nothing). Something not on the map leaves the selection as it is.
+    // { kind: 'node', id } | { kind: 'edge', from, to } | { kind: 'group', id } (the container
+    // itself) | null (nothing). Something not on the map leaves the selection as it is.
     select(t) {
       if (!on || !model) return;
       if (t?.kind === 'node') {
@@ -1114,9 +1247,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
         if (!edgeOf(t.from, t.to)) return;
         sel = { kind: 'edge', from: t.from, to: t.to };
       } else if (t?.kind === 'group') {
-        if (!model.groups.some((g) => g.id === t.id)) return;
-        selectIds(membersOf(t.id));
-        if (sel?.kind === 'nodes') sel.group = t.id;
+        if (!isGroup(t.id)) return;
+        sel = { kind: 'group', id: t.id };
       } else if (!t) {
         if (!sel) return;
         sel = null;

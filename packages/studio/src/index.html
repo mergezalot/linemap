@@ -33,6 +33,7 @@
     <symbol id="i-edit" viewBox="0 0 16 16"><path d="M10.6 2.8 13.2 5.4 5.6 13 2.6 13.4 3 10.4zM9.2 4.2l2.6 2.6"/></symbol>
     <symbol id="i-text-edit" viewBox="0 0 16 16"><path d="M2 2.6h7.4M5.7 2.6v9.2M8.8 13.6l.4-2.2 3.9-3.9 1.8 1.8-3.9 3.9z"/></symbol>
     <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.8 4.4h10.4M6.4 4.4V2.8h3.2v1.6M4.2 4.4l.7 8.8h6.2l.7-8.8M6.8 7v4M9.2 7v4"/></symbol>
+    <symbol id="i-trash-all" viewBox="0 0 16 16"><rect x="1.6" y="1.6" width="12.8" height="12.8" rx="1.6" stroke-dasharray="2 1.6"/><path d="M4.8 5.6h6.4M7 5.6v-1h2v1M5.6 5.6l.5 5.8h3.8l.5-5.8"/></symbol>
     <symbol id="i-undo" viewBox="0 0 16 16"><path d="M5.6 3.4 2.6 6.4l3 3M2.8 6.4h6.6a3.6 3.6 0 0 1 0 7.2H6.8"/></symbol>
     <symbol id="i-redo" viewBox="0 0 16 16"><path d="m10.4 3.4 3 3-3 3M13.2 6.4H6.6a3.6 3.6 0 0 0 0 7.2h2.6"/></symbol>
     <symbol id="i-group" viewBox="0 0 16 16"><rect x="1.6" y="1.6" width="12.8" height="12.8" rx="1.6" stroke-dasharray="2 1.6"/><rect x="4" y="4.4" width="4" height="3.2" rx=".6"/><rect x="8" y="8.4" width="4" height="3.2" rx=".6"/></symbol>
@@ -166,7 +167,8 @@
   <button id="edit-merge" class="btn" title="Merge the containers of the boxes selected into the one clicked first" hidden><svg class="icon"><use href="#i-merge"/></svg><span class="lbl">Merge</span></button>
   <button id="edit-split" class="btn" title="Split: the boxes selected leave their container for a new one beside it" hidden><svg class="icon"><use href="#i-split"/></svg><span class="lbl">Split</span></button>
   <button id="edit-ungroup" class="btn" title="Ungroup: the container goes, its boxes stay" hidden><svg class="icon"><use href="#i-ungroup"/></svg><span class="lbl">Ungroup</span></button>
-  <button id="edit-delete" class="btn" title="Delete the selection (Del)"><svg class="icon"><use href="#i-trash"/></svg></button>
+  <button id="edit-delete" class="btn" title="Delete the selection (Del); a container: only it, its boxes stay"><svg class="icon"><use href="#i-trash"/></svg></button>
+  <button id="edit-delete-all" class="btn" title="Delete the container with everything in it…" hidden><svg class="icon"><use href="#i-trash-all"/></svg></button>
   <button id="edit-pin" class="btn" title="Pin every node and note where it is now"><svg class="icon"><use href="#i-pin"/></svg><span class="lbl">Pin all</span></button>
   <button id="edit-unpin" class="btn" title="Unpin every node and note: the layout places them"><svg class="icon"><use href="#i-unpin"/></svg><span class="lbl">Unpin all</span></button>
   <div class="tb-sep"></div>
@@ -262,6 +264,17 @@
   </form>
 </dialog>
 
+<dialog id="confirm-dialog" class="dialog small">
+  <form method="dialog">
+    <h2>Delete?</h2>
+    <p class="hint"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button class="btn primary danger" value="ok">Delete</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="text-dialog" class="dialog">
   <form method="dialog">
     <h2>DOT text</h2>
@@ -288,8 +301,8 @@
       <tr><th>Next theme</th><td><kbd>T</kbd></td></tr>
       <tr><th>Notes on / off</th><td><kbd>N</kbd>; off draws the map without them and puts a badge for each in its node: hover it to read the note, click it to keep the note open, click again to close it. Remembered for your next visit</td></tr>
       <tr><th>Source</th><td><kbd>S</kbd> or Source in the toolbar: the DOT text beside the map, in view and edit mode; type in it and the map follows after a short pause (one undo step each; a text that cannot be drawn keeps the last map and marks the line). What is selected on the map (in view mode: clicked) is marked in the text, the edges that name it fainter; the caret on a statement selects what it is about (in view mode: pins its lines). Drag its edge to widen it; <kbd>Tab</kbd> indents, <kbd>Esc</kbd> leaves the text, keys typed there are only text</td></tr>
-      <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, double-click a box or note (or select it and press <kbd>F2</kbd> or <kbd>Enter</kbd>, or Edit text in its toolbar) to edit its text, the same for a container clicked (or double-click its title) to rename it, select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; click one of several selected boxes again to give them all one size; Align in their toolbar (and the edit bar) lines them up on a side or centre, or spaces them evenly (the outermost two stay), and pins them; their toolbar (and the edit bar) groups them in a new container, merges their containers into the one clicked first, splits them off into a new container, or ungroups a container (click it to select its boxes); a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels; &lt;b&gt; &lt;i&gt; &lt;u&gt; &lt;s&gt; &lt;font color&gt; style its text); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
-      <tr><th>Cursors</th><td>open hand: a drag pans (closed while it does); pointing hand: a click selects or pins; four arrows: a drag moves it; double arrow: a drag resizes; crosshair: a drag draws an edge or a rectangle; plus: Add node places a box</td></tr>
+      <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, double-click a box or note (or select it and press <kbd>F2</kbd> or <kbd>Enter</kbd>, or Edit text in its toolbar) to edit its text, the same for a selected container (or double-click its title) to rename it; click a container to select it (click again: its boxes, again: the container), drag it once selected to move all in it (they are pinned; a drag on a container not selected pans), drag its <b>+</b> onto a box or container to connect them, <kbd>Del</kbd> removes only the container, Delete with contents in its toolbar (and the edit bar) everything in it after asking; select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; click one of several selected boxes again to give them all one size; Align in their toolbar (and the edit bar) lines them up on a side or centre, or spaces them evenly (the outermost two stay), and pins them; their toolbar (and the edit bar) groups them in a new container, merges their containers into the one clicked first, splits them off into a new container, or ungroups a container (click it twice to select its boxes); a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels; &lt;b&gt; &lt;i&gt; &lt;u&gt; &lt;s&gt; &lt;font color&gt; style its text); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
+      <tr><th>Cursors</th><td>open hand: a drag pans (closed while it does); pointing hand: a click selects or pins (a container: a drag on it still pans until it is selected); four arrows: a drag moves it; double arrow: a drag resizes; crosshair: a drag draws an edge or a rectangle; plus: Add node places a box</td></tr>
       <tr><th>Reload</th><td><kbd>R</kbd></td></tr>
       <tr><th>Open / paste</th><td>drop a file, or paste DOT text anywhere</td></tr>
     </table>

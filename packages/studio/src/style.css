@@ -50,6 +50,8 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .btn[aria-pressed="true"] { background: var(--press); color: var(--accent); }
 .btn.primary { background: var(--accent); color: #fff; }
 .btn.primary:hover { background: #2858b2; }
+.btn.primary.danger { background: var(--danger); }
+.btn.primary.danger:hover { background: #8f1e18; }
 .btn:disabled { opacity: .4; cursor: default; background: transparent; }
 .icon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .icon.small { width: 14px; height: 14px; color: var(--faint); }
@@ -315,6 +317,10 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 #map.editing g.node, #map.editing g.node *, #map.editing g.note:not(.lm-note-folded), #map.editing g.note:not(.lm-note-folded) * { cursor: move; }
 /* an edge (bundle or line) is selected by a click: the pointer, as in view mode (a drag on it bends it) */
 #map.editing g.edge, #map.editing g.edge * { cursor: pointer; }
+/* a container is selected by a click (a drag on it pans); once selected, a drag on it (or on one in
+   it) moves all it holds (editor.mjs marks them .lm-edit-on) */
+#map.editing g.group, #map.editing g.group *, #map.editing g.group-tab, #map.editing g.group-tab * { cursor: pointer; }
+#map.editing g.group.lm-edit-on, #map.editing g.group.lm-edit-on *, #map.editing g.group-tab.lm-edit-on, #map.editing g.group-tab.lm-edit-on * { cursor: move; }
 #map.editing.adding, #map.editing.adding * { cursor: copy !important; }
 #map.editing.adding .lm-edit-tool, #map.editing.adding .lm-edit-tool * { cursor: pointer !important; }
 /* while something is dragged it keeps the cursor of what was pressed (editor.mjs sets --drag-cursor) */
