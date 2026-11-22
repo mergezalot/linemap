@@ -34,6 +34,19 @@
 //                                                     in its parent (members and nested containers
 //                                                     move there); edges to its box go. If it sets
 //                                                     node or edge defaults it stays a plain subgraph
+//   { op: 'removeGroup', id, deep: true }             the container with all it holds: its block (with
+//                                                     nested containers and comments in it) goes, and
+//                                                     so do its member nodes' statements elsewhere,
+//                                                     the notes attached to members, and every edge
+//                                                     to or from a member or a container box in it
+// Text:
+//   { op: 'label', id, text }                         the label of a node, note or container (a
+//                                                     cluster id): set where it is set last (earlier
+//                                                     settings of it go), else added to its first
+//                                                     declaration. Quoted, line breaks as `\n`; a
+//                                                     note's text with rich tags as label=<…>, as
+//                                                     addNode. A container's is `label = "…"`.
+// labelSource(text, id) gives a label back as such a text, for a dialog to edit (see below).
 // editDot checks only what it needs to place a change; parseFlow on the result says whether the
 // flow is still valid (a loop, a label conflict, an unknown line).
 import { parse } from '@ts-graphviz/ast';
@@ -93,6 +106,24 @@ const ownAttr = (st, key) => st.s.children.filter((c) => c.type === 'Attribute' 
 const mentions = (st, id) => (st.kind === 'node' ? st.id === id : st.ends.some((ids) => ids.includes(id)));
 
 // ---------- writing ----------
+
+// The label of a node, note or container as text to edit: what `label` op takes back. A quoted
+// label with its escapes undone (`\n` as a real line break); an HTML-like one as its source
+// between < >, line breaks in it read as spaces and <br/> as a line break. No label: the
+// node's id, or the container's id less its cluster prefix (what the map shows). Unknown id throws.
+export function labelSource(text, id) {
+  const doc = scan(text);
+  const lit = labelSetters(doc, id).at(-1)?.attr.value;
+  if (lit) {
+    if (lit.quoted === 'html') return lit.value.replace(/[ \t]*\r?\n[ \t]*/g, ' ').replace(/<br\s*\/?>/gi, '\n');
+    if (lit.quoted) return lit.value.replace(/\\(\r?\n|.)/g, (_, c) => (/^[nlr]$/.test(c) ? '\n' : /\n/.test(c) ? '' : c));
+    return lit.value;
+  }
+  // a label from `node [label=…]` defaults, or none
+  const flow = readDot(text);
+  if (clusterBody(doc, id)) return flow.clusters.find((c) => c.id === id).attrs.label ?? id.replace(/^cluster_?/, '');
+  return flow.nodes.find((n) => n.id === id).attrs.label ?? id;
+}
 
 const KEYWORDS = /^(node|edge|graph|digraph|subgraph|strict)$/i;
 export function idText(id) {
@@ -323,6 +354,38 @@ const ownAttrsText = (doc, st, skip = []) => st.s.children
   .filter((c) => c.type === 'Attribute' && !skip.includes(c.key.value))
   .map((c) => doc.text.slice(c.location.start.offset, c.location.end.offset).replace(/[\s,;]+$/, ''));
 const inchText = (px) => String(Math.round((px / 72) * 100) / 100);
+
+// Where the label of a node or container is set, in text order: { st, attr }, st a statement as in
+// doc.stmts (for a container: { s } of a `label = …` or `graph [label=…]` statement in its body).
+function labelSetters(doc, id) {
+  if (clusterBody(doc, id)) {
+    const out = [];
+    for (const b of doc.bodies) {
+      if (b.node.type !== 'Subgraph' || b.node.id?.value !== id || b.cluster !== id) continue;
+      for (const c of b.node.children) {
+        if (c.type === 'Attribute' && c.key.value === 'label') out.push({ st: { s: c, body: b }, attr: c, alone: true });
+        if (c.type === 'AttributeList' && c.kind === 'Graph') {
+          const attr = c.children.filter((a) => a.type === 'Attribute' && a.key.value === 'label').at(-1);
+          if (attr) out.push({ st: { s: c, body: b }, attr, alone: c.children.filter((a) => a.type === 'Attribute').length === 1 });
+        }
+      }
+    }
+    return out;
+  }
+  if (!known(doc, id)) throw new Error(`no node ${id}`);
+  return doc.stmts.filter((st) => st.kind === 'node' && st.id === id && ownAttr(st, 'label'))
+    .map((st) => ({ st, attr: ownAttr(st, 'label'), alone: st.s.children.filter((c) => c.type === 'Attribute').length === 1 }));
+}
+// Put a statement first in a body (the graph or a subgraph).
+function prependTo(text, body, piece) {
+  const n = body.node;
+  const first = n.children[0];
+  if (!first) return appendTo(text, body, piece);
+  const open = text.indexOf('{', n.id?.location?.end.offset ?? n.location.start.offset);
+  const at = first.location.start.offset;
+  if (!text.slice(open, at).includes('\n')) return { at, end: at, text: `${piece}; ` };
+  return { at, end: at, text: `${piece}\n${text.slice(lineStart(text, at), at)}` };
+}
 
 const known = (doc, id) => doc.stmts.some((st) => mentions(st, id));
 // The clusters a node is in, outermost first: those around its deepest mention.
@@ -563,10 +626,68 @@ const OPS = {
     return out;
   },
 
+  // The last setting of the label gets the text; earlier ones go (a statement that set only the
+  // label goes too, unless it is what keeps the node in its container).
+  label(doc, { id, text }) {
+    const group = !!clusterBody(doc, id);
+    const setters = labelSetters(doc, id);
+    const flow = readDot(doc.text);
+    const note = !group && flow.nodes.find((n) => n.id === id)?.attrs.shape === 'note';
+    const value = note && hasRichTags(text) ? { raw: `<${toHtml(text)}>` } : { raw: quote(text) };
+    const out = setters.slice(0, -1).map(({ st, alone }) => {
+      if (group) return alone ? replaceStmt(doc.text, st.s, []) : removeAttr(doc.text, st, 'label');
+      const cluster = st.body.cluster;
+      const kept = doc.stmts.some((o) => o !== st && mentions(o, id) && (!cluster || o.body.chain.includes(cluster)));
+      return alone && kept ? replaceStmt(doc.text, st.s, []) : removeAttr(doc.text, st, 'label');
+    });
+    const last = setters.at(-1);
+    if (last) {
+      const v = last.attr.value.location;
+      out.push({ at: v.start.offset, end: v.end.offset, text: value.raw });
+    } else if (group) {
+      out.push(prependTo(doc.text, clusterBody(doc, id), `label = ${value.raw}`));
+    } else {
+      const decl = doc.stmts.filter((st) => st.kind === 'node' && st.id === id);
+      if (decl.length) out.push(setAttr(doc.text, decl.find((st) => st.s.children.some((c) => c.type === 'Attribute')) ?? decl[0], 'label', value));
+      else out.push(appendTo(doc.text, doc.stmts.find((st) => mentions(st, id)).body, `${idText(id)} [label=${value.raw}]`));
+    }
+    return out;
+  },
+
   // Edges to or from the container's box go (it is no box any more), then the container itself.
-  removeGroup(doc, { id }) {
+  // deep: everything in it goes too (_dropDeep).
+  removeGroup(doc, { id, deep = false }) {
     if (!clusterBody(doc, id)) throw new Error(`no container ${id}`);
+    if (deep) return { ops: [{ op: '_dropDeep', id }] };
     return { ops: [{ op: '_dropBox', id }, { op: '_unwrap', id }] };
+  },
+  // The container's blocks go whole (nested containers, comments and all). Members are the nodes
+  // whose deepest mention is in it or in a container nested in it; their statements elsewhere go,
+  // with notes attached to nothing but members, and every edge statement outside loses the edges
+  // to or from a member or one of the containers' boxes.
+  _dropDeep(doc, { id }) {
+    const clusters = new Set(doc.bodies.filter((b) => b.chain.includes(id)).map((b) => b.cluster));
+    const inside = (body) => body.chain.some((c) => clusters.has(c));
+    const gone = new Set();
+    for (const st of doc.stmts) {
+      for (const n of st.kind === 'node' ? [st.id] : st.ends.flat()) {
+        if (!clusters.has(n) && chainOf(doc, n).some((c) => clusters.has(c))) gone.add(n);
+      }
+    }
+    const flow = readDot(doc.text);
+    const notes = new Set(flow.nodes.filter((n) => n.attrs.shape === 'note').map((n) => n.id));
+    for (const note of notes) {
+      const to = flow.edges.flatMap((e) => (e.from === note ? [e.to] : e.to === note ? [e.from] : [])).filter((n) => !notes.has(n));
+      if (to.length && to.every((n) => gone.has(n))) gone.add(note);
+    }
+    // the outermost blocks of these containers
+    const blocks = doc.bodies.filter((b) => b.node.type === 'Subgraph' && clusters.has(b.cluster) && b.node.id?.value === b.cluster &&
+      !b.chain.slice(0, -1).some((c) => clusters.has(c)));
+    const out = blocks.map((b) => replaceStmt(doc.text, b.node, []));
+    const rest = { ...doc, stmts: doc.stmts.filter((st) => !inside(st.body)) };
+    for (const st of rest.stmts) if (st.kind === 'node' && gone.has(st.id)) out.push(replaceStmt(doc.text, st.s, []));
+    out.push(...rewriteEdges(rest, { dropNode: (n) => gone.has(n) || clusters.has(n) }));
+    return out;
   },
   _dropBox(doc, { id }) {
     return rewriteEdges(doc, { dropNode: (n) => n === id });

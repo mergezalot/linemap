@@ -24,7 +24,10 @@ const svg = render(layout(parseFlow(dotText)), { theme: 'dark' });
 - `positions(model)` gives the computed positions of unpinned nodes, ready to pin with `pos`;
   `legendPosition(model)` the legend's.
 - `editDot(text, ops)` changes DOT text (move or add a node, set an edge's `via`, add, remove or
-  reattach an edge) and leaves the rest of the file as it was written.
+  reattach an edge, set a label, group nodes, remove a container with or without its contents)
+  and leaves the rest of the file as it was written. The ops are listed in `src/edit.mjs`.
+- `labelSource(text, id)` gives the label of a node, note or container as text to edit (line
+  breaks as real ones, an HTML-like label as its source), which the `label` op takes back.
 - `statementsOf(text)` lists where the statements about each node, edge, container and line are
   in a DOT text (offsets and first and last line), for editors that relate text and map.
 

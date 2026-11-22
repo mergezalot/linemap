@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { editDot, parseFlow } from '../index.mjs';
+import { editDot, labelSource, parseFlow } from '../index.mjs';
 
 const FLOW = `digraph g {
   subgraph lines { A; B }
@@ -339,5 +339,153 @@ test('every example takes container edits and stays valid', () => {
     for (const n of model.nodes.slice(3)) assert.equal(grouped.items.get(n.id).group, n.group, `${f}: ${n.id} stays`);
     const out = parseFlow(editDot(text, { op: 'moveTo', ids }));
     for (const id of ids) assert.equal(out.items.get(id).group, null, `${f}: ${id}`);
+  }
+});
+
+const TEXTS = `digraph g {
+  subgraph lines { A }
+  a [label="Shop", pos="100,100"]
+  b
+  n [shape=note, label="hi"]
+  a -> n
+  subgraph cluster_x {
+    label = "X"
+    c [label=C]
+    subgraph cluster_y { d; e [label=<x<br/>y>] }
+  }
+  a -> c -> d [lines=A]
+}
+`;
+test('label: a node\'s label replaced where it is set, or added to its declaration', () => {
+  assert.deepEqual(diff(TEXTS, edit({ op: 'label', id: 'a', text: 'Big\nshop' }, TEXTS)), ['  a [label="Shop", pos="100,100"]', '  a [label="Big\\nshop", pos="100,100"]']);
+  assert.deepEqual(diff(TEXTS, edit({ op: 'label', id: 'b', text: 'Say "hi"' }, TEXTS)), ['  b', '  b [label="Say \\"hi\\""]']);
+  assert.deepEqual(diff(TEXTS, edit({ op: 'label', id: 'c', text: 'Cee' }, TEXTS)), ['    c [label=C]', '    c [label="Cee"]']);
+  // mentioned only in an edge: a declaration of its own where it is first mentioned
+  const t = 'digraph { subgraph lines { A } a -> b [lines=A] }';
+  assert.equal(edit({ op: 'label', id: 'b', text: 'B' }, t), 'digraph { subgraph lines { A } a -> b [lines=A]; b [label="B"] }');
+  assert.equal(parseFlow(edit({ op: 'label', id: 'a', text: 'two\nrows' })).items.get('a').label, 'two\nrows');
+  assert.throws(() => editDot(TEXTS, { op: 'label', id: 'zz', text: 'x' }), /no node zz/);
+});
+test('label: a note\'s text plain or rich; an HTML-like label replaced', () => {
+  assert.deepEqual(diff(TEXTS, edit({ op: 'label', id: 'n', text: 'one\ntwo' }, TEXTS)), ['  n [shape=note, label="hi"]', '  n [shape=note, label="one\\ntwo"]']);
+  const rich = edit({ op: 'label', id: 'n', text: '<b>Bold</b> & co\nnext' }, TEXTS);
+  assert.deepEqual(diff(TEXTS, rich), ['  n [shape=note, label="hi"]', '  n [shape=note, label=<<b>Bold</b> &amp; co<br/>next>]']);
+  assert.equal(parseFlow(rich).items.get('n').rich[0][0].b, true);
+  // a node that is no note keeps the tags as text
+  assert.deepEqual(diff(TEXTS, edit({ op: 'label', id: 'e', text: '<b>x</b>' }, TEXTS)), ['    subgraph cluster_y { d; e [label=<x<br/>y>] }', '    subgraph cluster_y { d; e [label="<b>x</b>"] }']);
+});
+test('label: a container\'s label, set or added first in its block', () => {
+  assert.deepEqual(diff(TEXTS, edit({ op: 'label', id: 'cluster_x', text: 'Ex' }, TEXTS)), ['    label = "X"', '    label = "Ex"']);
+  assert.deepEqual(diff(TEXTS, edit({ op: 'label', id: 'cluster_y', text: 'Why' }, TEXTS)),
+    ['    subgraph cluster_y { d; e [label=<x<br/>y>] }', '    subgraph cluster_y { label = "Why"; d; e [label=<x<br/>y>] }']);
+  const t = 'digraph {\n  subgraph cluster_a {\n    // members\n    a\n  }\n}\n';
+  assert.equal(edit({ op: 'label', id: 'cluster_a', text: 'A' }, t), 'digraph {\n  subgraph cluster_a {\n    label = "A"\n    // members\n    a\n  }\n}\n');
+  assert.equal(parseFlow(edit({ op: 'label', id: 'cluster_y', text: 'Why' }, TEXTS)).groupById.get('cluster_y').label, 'Why');
+});
+test('label set by several statements: the last gets the text, the others lose theirs', () => {
+  const t = `digraph {
+  a [label="one", shape=box]
+  a [label="two"]   // second
+  subgraph cluster_a {
+    label = "A1"
+    a [label="three", pos="1,2"]
+    graph [label="A2", style=dashed]
+    graph [label="A3"]
+  }
+}
+`;
+  assert.equal(edit({ op: 'label', id: 'a', text: 'new' }, t), `digraph {
+  a [shape=box]
+  // second
+  subgraph cluster_a {
+    label = "A1"
+    a [label="new", pos="1,2"]
+    graph [label="A2", style=dashed]
+    graph [label="A3"]
+  }
+}
+`);
+  assert.equal(edit({ op: 'label', id: 'cluster_a', text: 'B' }, t), `digraph {
+  a [label="one", shape=box]
+  a [label="two"]   // second
+  subgraph cluster_a {
+    a [label="three", pos="1,2"]
+    graph [style=dashed]
+    graph [label="B"]
+  }
+}
+`);
+});
+test('labelSource: the label as text to edit, and back through the label op unchanged', () => {
+  assert.equal(labelSource(TEXTS, 'a'), 'Shop');
+  assert.equal(labelSource(TEXTS, 'b'), 'b');
+  assert.equal(labelSource(TEXTS, 'e'), 'x\ny');
+  assert.equal(labelSource(TEXTS, 'cluster_x'), 'X');
+  assert.equal(labelSource(TEXTS, 'cluster_y'), 'y');
+  assert.equal(labelSource('digraph { a [label="q \\"x\\"\\nb\\\\c"] }', 'a'), 'q "x"\nb\\c');
+  assert.equal(labelSource('digraph { n [shape=note, label=<a <b>b</b>\n  c<br/>d &amp; e>] }', 'n'), 'a <b>b</b> c\nd &amp; e');
+  assert.throws(() => labelSource(TEXTS, 'zz'), /no node zz/);
+  for (const [id, text] of [['a', 'two\nrows "q" \\ x'], ['n', '<i>it</i> & <b>b</b>\n<font color="#ff0000">red</font> &lt;'], ['cluster_y', 'C\nD'], ['n', 'plain']]) {
+    const out = edit({ op: 'label', id, text }, TEXTS);
+    assert.equal(labelSource(out, id), text.replace('& ', '&amp; '), id);
+    assert.equal(edit({ op: 'label', id, text: labelSource(out, id) }, out), out, `${id} again`);
+  }
+});
+
+test('removeGroup deep: the container, nested ones, members, their notes and edges go', () => {
+  const t = `digraph {
+  subgraph lines { A; B }
+  // outside
+  a
+  subgraph cluster_x {
+    label = "X"
+    // inside
+    c
+    subgraph cluster_y { d }
+  }
+  d [pos="1,2"]
+  nd [shape=note]
+  d -> nd
+  na [shape=note]
+  a -> na
+  // the edges
+  a -> c [lines=A]   // in
+  d -> a [lines=B]
+  a -> cluster_y [lines=A]
+  a -> b [lines=A]
+}
+`;
+  assert.equal(edit({ op: 'removeGroup', id: 'cluster_x', deep: true }, t), `digraph {
+  subgraph lines { A; B }
+  // outside
+  a
+  na [shape=note]
+  a -> na
+  // the edges
+  // in
+  a -> b [lines=A]
+}
+`);
+  const inner = edit({ op: 'removeGroup', id: 'cluster_y', deep: true }, t);
+  const m = parseFlow(inner);
+  assert.ok(!m.groupById.has('cluster_y') && m.groupById.has('cluster_x'));
+  assert.deepEqual([...m.items.keys()].filter((k) => !k.startsWith('_')).sort(), ['a', 'b', 'c', 'na']);
+  assert.throws(() => editDot(t, { op: 'removeGroup', id: 'cluster_z', deep: true }), /no container cluster_z/);
+});
+test('every example takes label edits and deep container removal and stays valid', () => {
+  for (const f of ['examples/webshop.dot', 'examples/platform.dot', 'examples/postal.dot', 'docs/pipeline.dot']) {
+    const text = fs.readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
+    const model = parseFlow(text);
+    for (const n of [...model.nodes, ...model.notes].slice(0, 6)) {
+      const out = editDot(text, { op: 'label', id: n.id, text: 'New\ntext' });
+      assert.equal(parseFlow(out).items.get(n.id).label, 'New\ntext', `${f}: ${n.id}`);
+      assert.equal(parseFlow(editDot(text, { op: 'label', id: n.id, text: labelSource(text, n.id) })).items.get(n.id).label, n.label, `${f}: ${n.id} as it was`);
+    }
+    for (const g of model.groups) {
+      const after = parseFlow(editDot(text, { op: 'removeGroup', id: g.id, deep: true }));
+      assert.ok(!after.groupById.has(g.id), `${f}: ${g.id}`);
+      const under = (gid) => gid && (gid === g.id || under(model.groupById.get(gid).parent));
+      for (const n of model.nodes) assert.equal(after.items.has(n.id), !under(n.group), `${f}: ${n.id} after ${g.id} goes`);
+    }
   }
 });
