@@ -146,8 +146,65 @@ Each is one edit and one undo; the new or kept container's members stay selected
   menu, to keep the adorner short.
 - Every moved box is pinned at its new place (`pos`); one edit, one undo; snapping as for moves.
 
+### 12. studio: the DOT source as an editable sidebar (user request 2026-11-21)
+- A toolbar toggle (and a key) opens a sidebar beside the map with the live DOT text of the
+  current flow, in view and edit mode. Resizable by dragging its edge; open/closed and width
+  remembered (state.mjs / localStorage as other settings). On narrow screens it overlays the map.
+- No dependency: a `<textarea>` (monospace, no spellcheck, Tab inserts spaces) with a line-number
+  gutter kept in sync with scrolling. Syntax colouring is optional, only if cheap (overlay).
+- Text -> map: typing re-renders after a short pause (~300 ms) through `source.edit`, so dirty
+  state, save/download and watch behave as for map edits. A parse error keeps the last good map,
+  shows the message in the sidebar and marks the line (errors carry "DOT line N").
+  Undo/redo of the editor stays coherent: one text pause = one undo step; Ctrl+Z inside the
+  textarea is the textarea's own.
+- Map -> text: every map edit (and undo, reload, watch, loading another flow) updates the text,
+  keeping the caret and scroll where they were as far as possible; never while the user is in
+  the middle of typing (pending debounce wins).
+- Keys typed in the textarea never trigger studio shortcuts.
+- Docs: help table, README, main.mjs/editor header comments. Smoke checks (not runnable now).
+
+### 12a. studio: cursors tell panning from edge selection (user feedback 2026-11-21)
+- "pan and edge-selection have the same mouse pointer, that's confusing." Today (style.css):
+  `#stage` grab (pan), edit mode `g.edge` crosshair, `.lm-edit-handle` grab, view-mode lines
+  pointer. Find where they coincide (likely the handles/bends of a selected edge, or edge hit
+  areas not under `g.edge`) and make it unambiguous: background = grab (pan); anything clickable
+  to select (edges, lines) = pointer; things that drag-move (boxes, handles, bends) = move or a
+  resize cursor; grabbing only while a pan runs. Check every mode (view, edit, add, size).
+
+### 13. studio: source and map selection follow each other
+- Selecting a box, container or edge on the map highlights (and scrolls to) its statements in the
+  sidebar; moving the caret onto a statement selects that item on the map (edit mode) or focuses
+  it (view mode). Needs statement line ranges from core's DOT reader if it has none yet.
+
+### 14. core: edit text, delete a container with its contents
+- `{ op: 'label', id, text }` for a node, note or container: writes `label` on its declaration
+  (quoted; for notes `label=<…>` when the text has a supported rich tag, as `addNode` does);
+  removing the label when the text equals the id is fine but optional. Multi-line via `\n`.
+- `{ op: 'removeGroupDeep', id }` (or an option on `removeGroup`): the container, nested
+  containers, every member node, their notes and every edge touching any of them go.
+- Tests in `packages/core/test`.
+
+### 15. studio: edit the text of a node, note or container (user decision: a dialog)
+- Double-click, F2 or Enter on the one selected item, or an "Edit text" button in its adorner,
+  opens the multi-line text dialog (the note dialog, prefilled; heading says what is edited).
+  Notes keep their rich tags (prefill with the HTML-like source). One edit, one undo.
+- Works for a selected container too (rename). Closes the idea "rename a container".
+
+### 16. studio: containers can be selected themselves (user request 2026-11-21)
+- A click on a container selects the container itself (new selection kind, outlined as a box);
+  a second click on it selects its members (today's behaviour), a third goes back to the
+  container. Shift+click keeps adding members as today.
+- Container adorner: Delete (the container only, members stay: `removeGroup`, like Ungroup) ·
+  Delete with contents (confirm dialog, unit 14 op) · Edit text (unit 15) · connect handle `+`
+  (an edge from the container box to a node or container; DOT allows that already) .
+- Dragging a selected container moves all its members (and nested containers' members, and
+  notes) by the drag, pins them all at their new places; one edit, one undo; snapping as moves.
+- Del on a selected container = delete container only (members stay). Escape clears.
+- Update the multi-selection Ungroup rule (selection exactly a container's members) so it still
+  works on the second click.
+
 ## Ideas not yet planned
-- Rename a container from the adorner when the selection is exactly its members.
+- (Rename a container: now unit 15.)
 
 ## Progress
 - Done:
@@ -222,6 +279,37 @@ Each is one edit and one undo; the new or kept container's members stay selected
     `#edit-align` open one HTML popover `#align-menu` (keyboard accessible). Every selected box is
     pinned (not only moved ones); distribute needs >= 3 boxes and rounds to whole units (no grid).
     Smoke checks added, not run. Tests: core 79/79, studio unit 11/11, cli 32/32.
+  - unit 12 (98de250): `packages/studio/src/sourcepanel.mjs` (API `setText(text,{fresh,title})`,
+    `toggle`, `setOpen`, `isOpen`, `flush`, `pending()`, `goToLine(n)`, `textarea`); Source button
+    + S key; width/open in localStorage `linemap:source`; overlays at <= 860px. Commits via
+    `editor.commitText(text)` after 300 ms or blur (one undo); undrawable text is never committed,
+    error shown with a "Line N" button and a red band (LH 18, PAD 6). `pipeline.mjs errorText(err)`
+    adds "DOT line N, column C:". Limits: a pending text wins over a newer watched file; map
+    changes clear the textarea's own undo history. For unit 13: core's DOT reader keeps `line`
+    only for edges; node/attr/subgraph statements need line ranges.
+  - unit 12a (1b4d91e): grab only on the background, grabbing while panning (all modes); edges
+    pointer; ends/bends move; connect `+` crosshair; size handles their arrows; drags set
+    `--drag-cursor` via `dragCursor()` in editor.mjs. View mode: a click on a bundle's rim pins
+    its lines. Container bodies are still grab (pan) in edit mode: unit 16 must give them a
+    pointer/move cursor once they are selectable. Smoke cursor checks added, not run.
+  - unit 13 (3602808 core, a97159b studio): `statementsOf(text)` / `readDot().statements`
+    (kinds node, edge {pairs, ids}, group = whole block, line; offsets + line/endLine).
+    `sourcepanel.mark(ranges,{scroll})`, `onCaret(offset,text)`; `editor.select(t)`; main.mjs
+    "source <-> map" block (`caretPick`, `caretKey` guard feedback). Limits: attribute statements
+    not recorded; caret column ignored in edge chains; a one-box container selects as a node
+    (unit 16 changes container selection). Smoke checks added, not run. Core 82/82.
+  - unit 14 (d4e3f7c, core): `{op:'label', id, text}` (node, note — rich via toHtml when it has
+    a supported tag —, container; replaces the last setting, drops earlier ones);
+    `{op:'removeGroup', id, deep:true}` removes blocks, members (DOT membership: a node named only
+    in an edge inside the cluster counts), their notes and all touching edges; `labelSource(text,
+    id)` reads a label back for prefilling (rich: source with `<br/>` -> \n). Limits: a stray `; `
+    can stay on a line after removing one of several statements (existing `replaceStmt`).
+    Core 89/89.
+  - unit 15 (07047ef): Edit text via adorner `text` (`#i-text-edit`), edit bar `#edit-text`, F2/
+    Enter, double-click on a box/note or a container title; `askNote(dialog, title, {heading, ok,
+    placeholder, value, rich})`; `editText(target {kind node|note|group, id})`, `textTarget()`,
+    `exactly(g, ids)`. Limits: blank text cancels (a label can't be cleared); container text only
+    after a container click (`sel.group`); folded notes not editable. Smoke checks added, not run.
 - Resumed 2026-11-21 (new orchestrator session). Subagent #5 (ae328f70c4dc31f1d) did units 9 and
   10 and ended at ~185k tokens; unit 11 goes to a fresh subagent #6 (a0ed38398bace1fbc).
 - examples/platform.dot: the user's uncommitted change (28 lines) vanished from the working tree
@@ -229,4 +317,15 @@ Each is one edit and one undo; the new or kept container's members stay selected
 - Open for the user: the smoke test can't run until the Playwright system deps and a font are
   installed (`sudo pnpm exec playwright install-deps` + a font package), or the libs are unpacked
   into a scratchpad again.
-- All units done (2026-11-21). Subagent #6 (a0ed38398bace1fbc, ~75k) finished unit 11.
+- Units 1–12 done. Plan grew at the user's request: 12a, 13, 14, 15, 16 (decisions recorded in
+  the units). Subagent #6 (a0ed38398bace1fbc) did 11 and 12 (~140k+); subagent #7 (aa14b096d53dcd99b) did
+  12a and 13 (~115k+); subagent #8 (a0e5488a4a8d38267) did
+  14 and 15 (~135k+); unit 16 was started by subagent #9
+  (a3703b03a863d2ee9), which stopped when the session ended, unfinished.
+- Paused 2026-11-22 at the user's request. Unit 16 is partly done and NOT committed: editor.mjs
+  in the working tree (also saved as .git/unit16-wip.patch) has the `group` selection kind,
+  `groupLoad`, `groupBox`, `removeDeep` (needs an `askConfirm` dialog not yet wired in main.mjs),
+  Del on a container, header comment. Missing: click cycling, container adorner, drag-move,
+  connect from a container, cursors, source sync, main.mjs/index.html/README/smoke. Resume
+  subagent #9 or give a fresh one this note plus unit 16.
+- Next: unit 16.
