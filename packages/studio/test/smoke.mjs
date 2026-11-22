@@ -1018,7 +1018,7 @@ console.log('edit mode, saving to the file (linemap studio)');
 
   // the adorner: Delete · Pin/Unpin · Resize above the box; pin and unpin, then undo both
   const tools = () => page.evaluate(() => [...document.querySelectorAll('#map .lm-edit-tool')].map((t) => t.dataset.act + (t.classList.contains('on') ? '*' : '')).join(' '));
-  check(await tools() === 'delete unpin* resize note', `a pinned box has the adorner Delete · Unpin · Resize · Add note (${await tools()})`);
+  check(await tools() === 'delete unpin* resize note text', `a pinned box has the adorner Delete · Unpin · Resize · Add note · Edit text (${await tools()})`);
   {
     // above the box, or below it when a panel (here the edit bar) is in the way; clear of the + and
     // of every panel: each button is what a click there hits
@@ -1035,16 +1035,16 @@ console.log('edit mode, saving to the file (linemap studio)');
     check(r.side !== 'over' && r.clear && r.hit, `the adorner sits by the box, clear of the connect handle and of the panels (${JSON.stringify(r)})`);
   }
   await click(await handle('#map .lm-edit-tool[data-act="resize"]'));
-  check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-size').length) === 8 && await tools() === 'delete unpin* resize* note', `Resize in the adorner shows the handles (${await tools()})`);
+  check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-size').length) === 8 && await tools() === 'delete unpin* resize* note text', `Resize in the adorner shows the handles (${await tools()})`);
   await click(await handle('#map .lm-edit-tool[data-act="resize"]'));
   check(await page.evaluate(() => !document.querySelector('#map .lm-edit-size')), 'Resize again: back to moving');
   before = read();
   await click(await handle('#map .lm-edit-tool[data-act="unpin"]'));
   text = await changed(before, 'unpinning a');
-  check(/\n  a \[label="A", width=[\d.]+, height=[\d.]+\]/.test(text) && await tools() === 'delete pin resize note', `Unpin takes a's pos away (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
+  check(/\n  a \[label="A", width=[\d.]+, height=[\d.]+\]/.test(text) && await tools() === 'delete pin resize note text', `Unpin takes a's pos away (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
   await click(await handle('#map .lm-edit-tool[data-act="pin"]'));
   text = await changed(text, 'pinning a');
-  check(/a \[label="A", width=[\d.]+, height=[\d.]+, pos="-?\d+,-?\d+"\]/.test(text) && await tools() === 'delete unpin* resize note', `Pin writes a's pos (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
+  check(/a \[label="A", width=[\d.]+, height=[\d.]+, pos="-?\d+,-?\d+"\]/.test(text) && await tools() === 'delete unpin* resize note text', `Pin writes a's pos (${/a \[[^\]]*\]/.exec(text)?.[0]})`);
   await page.keyboard.press('Control+z');
   await page.keyboard.press('Control+z');
   await until(() => read() === before, 'undoing pin and unpin');
@@ -1080,7 +1080,7 @@ console.log('edit mode, saving to the file (linemap studio)');
     before = read();
     await click(await handle('#map .lm-edit-pin[data-id="b"]'));
     text = await changed(before, 'unpinning b by its mark');
-    check(/\n  b \[label="B"\]/.test(text) && await marks() === 'a c d' && await tools() === 'delete unpin* resize note', `a click on b's pin mark unpins b, a stays selected (${/b \[[^\]]*\]/.exec(text)?.[0]})`);
+    check(/\n  b \[label="B"\]/.test(text) && await marks() === 'a c d' && await tools() === 'delete unpin* resize note text', `a click on b's pin mark unpins b, a stays selected (${/b \[[^\]]*\]/.exec(text)?.[0]})`);
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing the unpin');
     check(read() === before, 'undo pins b again');
@@ -1120,7 +1120,7 @@ console.log('edit mode, saving to the file (linemap studio)');
       const g = document.getElementById('note_d');
       return { rows: g ? g.querySelectorAll('text tspan').length || g.querySelectorAll('text').length : 0 };
     });
-    check(r.rows === 3 && await tools() === 'delete pin resize', `the note is drawn with three lines and selected, unpinned (${JSON.stringify(r)}, ${await tools()})`);
+    check(r.rows === 3 && await tools() === 'delete pin resize text', `the note is drawn with three lines and selected, unpinned (${JSON.stringify(r)}, ${await tools()})`);
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing the note');
     check(read() === before && await page.evaluate(() => !document.getElementById('note_d')), 'one undo removes the note and its edge');
@@ -1137,6 +1137,82 @@ console.log('edit mode, saving to the file (linemap studio)');
     check(/note_d \[label=<A <b>bold<\/b> one<br\/>&amp; more>, shape=note\]/.test(text) && bold === 'bold', `a note with <b> is written as label=<…> and drawn bold (${/note_d[^\n]*/.exec(text)?.[0]}; ${bold})`);
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing the rich note');
+  }
+
+  // Edit text: F2, Enter, the adorner or a double-click opens the text dialog with the label as
+  // written; Escape cancels, Ctrl+Enter sets it (one edit, one undo); the box stays selected
+  {
+    const dialog = () => page.evaluate(() => {
+      const d = document.querySelector('#note-dialog');
+      return d.open ? { h: d.querySelector('h2').textContent, v: d.querySelector('textarea').value, rich: !d.querySelector('.rich-hint').hidden, ok: d.querySelector('button[value="ok"]').textContent } : null;
+    });
+    await page.keyboard.press('Escape');
+    await click(await nodeAt('d'));
+    before = read();
+    check(await page.isVisible('#edit-text'), 'Text… shows in the edit bar for a selected box');
+    await page.keyboard.press('F2');
+    await page.waitForSelector('#note-dialog[open]');
+    let o = await dialog();
+    check(o?.h === 'Edit the text of the box' && o.v === 'D' && !o.rich && o.ok === 'Save', `F2 opens the text dialog with the box's label, no rich-text hint (${JSON.stringify(o)})`);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+    check(!(await dialog()) && read() === before, 'Escape closes it, nothing changes');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#note-dialog[open]');
+    await page.fill('#note-dialog textarea', 'Dee\n"two"');
+    await page.keyboard.press('Control+Enter');
+    text = await changed(before, 'editing the text of d');
+    check(/d \[label="Dee\\n\\"two\\"", pos="0,500"\]/.test(text) && await tools() === 'delete unpin* resize note text', `Enter, then Ctrl+Enter writes d's label, d stays selected (${/d \[[^\]]*\]/.exec(text)?.[0]})`);
+    await page.keyboard.press('Control+z');
+    await changed(text, 'undoing the text');
+    check(read() === before, 'one undo puts the old label back');
+    // a double-click on a box: the dialog, no resize mode, no drag, nothing pinned or moved
+    const pt = await nodeAt('b');
+    await page.mouse.dblclick(pt.x, pt.y);
+    await page.waitForSelector('#note-dialog[open]');
+    o = await dialog();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    check(o?.v === 'B' && read() === before && await page.evaluate(() => !document.querySelector('#map .lm-edit-size')), `a double-click on b opens its text, nothing else changes (${JSON.stringify(o)})`);
+    // Enter on a focused button keeps its meaning
+    await page.focus('#zoom-fit');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(250);
+    check(!(await dialog()), 'Enter on a focused button does not open the text dialog');
+    // a note: its HTML-like source, tags kept, <br/> as a line break; the rich hint shows
+    await click(await nodeAt('d'));
+    await click(await handle('#map .lm-edit-tool[data-act="note"]'));
+    await page.waitForSelector('#note-dialog[open]');
+    await page.keyboard.type('A <b>bold</b> one');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('next');
+    await page.keyboard.press('Control+Enter');
+    const noted = await changed(before, 'adding a rich note for editing');
+    await page.waitForTimeout(300);
+    await click(await handle('#map .lm-edit-tool[data-act="text"]'));
+    await page.waitForSelector('#note-dialog[open]');
+    o = await dialog();
+    check(o?.h === 'Edit the note' && o.v === 'A <b>bold</b> one\nnext' && o.rich, `Edit text on a note opens its source with the tags (${JSON.stringify(o)})`);
+    await page.fill('#note-dialog textarea', 'A <i>new</i> one\nnext');
+    await page.keyboard.press('Control+Enter');
+    text = await changed(noted, 'editing the note');
+    check(/note_d \[label=<A <i>new<\/i> one<br\/>next>, shape=note\]/.test(text) && await page.evaluate(() => !!document.querySelector('#note_d tspan[font-style="italic"]')), `the note's text is written as label=<…> again (${/note_d \[[^\n]*/.exec(text)?.[0]})`);
+    await page.keyboard.press('Control+z');
+    await changed(text, 'undoing the note text');
+    await page.keyboard.press('Control+z');
+    await changed(noted, 'undoing the note');
+    check(read() === before, 'two undos: back to before the note');
+    // typing in the source sidebar: F2 and Enter are only text there
+    await click(await nodeAt('d'));
+    await page.keyboard.press('s');
+    await page.waitForTimeout(300);
+    await page.focus('#source-panel textarea');
+    await page.keyboard.press('F2');
+    await page.waitForTimeout(200);
+    check(!(await dialog()), 'F2 in the source sidebar opens no dialog');
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('s');
+    await page.waitForTimeout(300);
   }
 
   // one line of a bundle: click the selected edge on a lane
@@ -1462,7 +1538,7 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   let text = await changed(before, 'grouping a and b');
   const pair = body(text, 'cluster_pair');
   check(has(pair, 'a') && has(pair, 'b') && /label = "Pair"/.test(pair), `Group writes a new container around a and b (${pair?.replace(/\s+/g, ' ')})`);
-  check(/^2 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize align ungroup' && await bar() === 'ungroup', `its boxes stay selected; now exactly its boxes: Ungroup (${await tools()})`);
+  check(/^2 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize align ungroup text' && await bar() === 'ungroup', `its boxes stay selected; now exactly its boxes: Ungroup (${await tools()})`);
   const grouped = text;
   await click(await handle('#map .lm-edit-tool[data-act="ungroup"]'));
   text = await changed(grouped, 'ungrouping Pair');
@@ -1511,7 +1587,21 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   await page.keyboard.press('Escape');
   const corner = await page.evaluate(() => { const r = document.querySelector('#map g.group#cluster_x > rect').getBoundingClientRect(); return { x: r.x + 10, y: r.y + r.height - 10 }; });
   await click(corner);
-  check(/^3 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize align ungroup' && await bar() === 'ungroup', `a click on X: its boxes, Ungroup offered (${await tools()})`);
+  check(/^3 boxes:/.test(await hint()) && await tools() === 'delete unpin* resize align ungroup text' && await bar() === 'ungroup', `a click on X: its boxes, Ungroup offered (${await tools()})`);
+  // Edit text on a clicked container: rename it (its label prefilled), one undo
+  before = read();
+  await click(await handle('#map .lm-edit-tool[data-act="text"]'));
+  await page.waitForSelector('#note-dialog[open]');
+  {
+    const o = await page.evaluate(() => ({ h: document.querySelector('#note-dialog h2').textContent, v: document.querySelector('#note-dialog textarea').value }));
+    check(o.h === 'Rename the container' && o.v === 'X', `Edit text on a clicked container opens its label (${JSON.stringify(o)})`);
+  }
+  await page.fill('#note-dialog textarea', 'Ex');
+  await page.keyboard.press('Control+Enter');
+  text = await changed(before, 'renaming X');
+  check(/subgraph cluster_x \{ label="Ex";/.test(text) && /^3 boxes:/.test(await hint()), `the container's label is set, its boxes stay selected (${/subgraph cluster_x[^\n]*/.exec(text)?.[0]})`);
+  await undoTo(FLOW, 'undo rename');
+  await click(corner);
   before = read();
   await page.click('#edit-ungroup');
   text = await changed(before, 'ungrouping X');

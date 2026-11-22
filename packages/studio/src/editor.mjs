@@ -49,6 +49,12 @@
 // unpinned, in the node's container, attached by an edge without lines, as one edit (one undo);
 // the note is then selected. Text with <b>, <i>, <u>, <s>, <br/> or <font color="…"> is written as
 // an HTML-like label (label=<…>, line breaks as <br/>), any other text as a quoted string.
+// Edit text (adorner, edit bar, F2 or Enter in main.mjs, a double-click on a box or note, or on a
+// container's title): the text dialog, opened with the label as written (a note's HTML-like
+// label as its source, with its tags; line breaks as real ones), sets the label of the node, note
+// or container (`label` op), one edit, one undo; the selection stays. A container's text is
+// offered when exactly its boxes are selected by a click on it (sel.group). A text left blank or
+// unchanged changes nothing.
 // Pin/Unpin shows the state (the pin, highlighted, when pinned; a struck-out pin when not) and
 // switches it: pinning writes `pos` where the box is, unpinning lets the layout place it. It
 // hides while something is dragged. The edit bar keeps the same actions for the keyboard.
@@ -64,7 +70,7 @@
 // it started with until it ends (--drag-cursor on the host). The source sidebar's edge: ew-resize.
 // The overlay (selection, handles, adorner, pin marks) is drawn into the map's SVG in map units, after every
 // render; it keeps its size on screen.
-import { editDot, parseFlow } from '@linemap/core';
+import { editDot, labelSource, parseFlow } from '@linemap/core';
 import { arrange, DISTRIBUTES } from './arrange.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -112,6 +118,8 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     ids = [...new Set(ids)].filter((id) => itemOf(id) && itemOf(id).kind !== 'legend');
     sel = !ids.length ? null : ids.length === 1 ? { kind: 'node', id: ids[0], mode: 'move' } : { kind: 'nodes', ids };
   };
+  // the boxes ids are exactly those of container g
+  const exactly = (g, ids) => { const m = membersOf(g); return m.length === ids.length && m.every((id) => ids.includes(id)); };
   // the boxes and notes in a container, at any depth
   function membersOf(group) {
     const inside = (id) => { for (let g = id; g; g = model.groups.find((x) => x.id === g)?.parent) if (g === group) return true; return false; };
@@ -291,7 +299,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
   async function addNote() {
     const n = sel?.kind === 'node' && itemOf(sel.id);
     if (n?.kind !== 'node') return;
-    const text = await askNote(n.label);
+    const text = await askNote(`A note on ${n.label}`);
     if (!text) return;
     const id = newId(`note_${n.id}`);
     if (apply([{ op: 'addNode', id, label: text, shape: 'note', group: n.group ?? undefined }, { op: 'addEdge', from: n.id, to: id }])) {
@@ -314,6 +322,41 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     }
     draw();
     onChange?.();
+  }
+
+  // ---------- text ----------
+  // What Edit text would edit: { kind: 'node' | 'note' | 'group', id }, or null. A container: when
+  // exactly its boxes are selected, by a click on it.
+  function textTarget() {
+    if (!model) return null;
+    if (sel?.kind === 'node') {
+      const n = itemOf(sel.id);
+      return n && n.kind !== 'legend' ? { kind: n.kind, id: n.id } : null;
+    }
+    if (sel?.kind === 'nodes' && sel.group && model.groups.some((g) => g.id === sel.group) && exactly(sel.group, sel.ids)) return { kind: 'group', id: sel.group };
+    return null;
+  }
+  // The text dialog for a node, note or container (target: what textTarget gives), its label set
+  // as one edit; the selection as it was
+  async function editText(target = textTarget()) {
+    if (!target) return false;
+    const { kind, id } = target;
+    const label = kind === 'group' ? groupLabel(id) : itemOf(id)?.label ?? id;
+    let current;
+    try { current = labelSource(getText(), id); } catch { current = label; }
+    const first = label.split('\n')[0];
+    const what = kind === 'group' ? { heading: 'Rename the container', placeholder: 'Its label', title: `Container ${id}` }
+      : kind === 'note' ? { heading: 'Edit the note', placeholder: 'Text of the note', title: `Note ${id}` }
+        : { heading: 'Edit the text of the box', placeholder: 'Text of the box', title: `Box ${id}${first !== id ? ` (${first})` : ''}` };
+    const keep = sel;
+    const text = await askNote(what.title, { heading: what.heading, ok: 'Save', placeholder: what.placeholder, value: current, rich: kind === 'note' });
+    if (text == null || text === current) return true;
+    if (apply({ op: 'label', id, text })) {
+      sel = keep;
+      draw();
+      onChange?.();
+    }
+    return true;
   }
 
   // ---------- containers ----------
@@ -365,7 +408,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     // Split: all from one container, not all of it
     if (direct[0] && direct.every((g) => g === direct[0]) && !all(direct[0])) plan.split = { from: direct[0] };
     // Ungroup: exactly a container's boxes (the one clicked, else the innermost such one)
-    const same = (g) => { const m = membersOf(g); return m.length === ids.length && m.every((id) => ids.includes(id)); };
+    const same = (g) => exactly(g, ids);
     const ung = sel.group && model.groups.some((g) => g.id === sel.group) && same(sel.group) ? sel.group
       : model.groups.filter((g) => same(g.id)).sort((a, b) => chainOf(b.id).length - chainOf(a.id).length)[0]?.id;
     if (ung) plan.ungroup = { id: ung };
@@ -590,6 +633,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
             : { act: 'pin', icon: 'i-unpin', title: 'Not pinned: click to pin it where it is (P)' },
           { act: 'resize', icon: 'i-resize', on: sizing, title: sizing ? 'Resizing: click to move it again (or click the box)' : 'Resize (or click the box again)' },
           ...(n.kind === 'node' ? [{ act: 'note', icon: 'i-note-add', title: 'Add a note to this box' }] : []),
+          { act: 'text', icon: 'i-text-edit', title: `Edit the text of the ${n.kind === 'note' ? 'note' : 'box'} (F2, Enter or double-click)` },
         ],
       };
     }
@@ -612,6 +656,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
           { act: 'resize', icon: 'i-resize', on: sizing, title: sizing ? 'Resizing all to one size: click to move them again (or click one of them)' : 'Resize them all to one size (or click one of them again)' },
           ...(openAlign ? [{ act: 'align', icon: 'i-align-left', title: 'Align or distribute them…' }] : []),
           ...containerTools(),
+          ...(textTarget()?.kind === 'group' ? [{ act: 'text', icon: 'i-text-edit', title: `Rename ${groupLabel(sel.group)} (F2, Enter or double-click its title)` }] : []),
         ],
       };
     }
@@ -682,6 +727,7 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (act === 'delete') return remove();
     if (act === 'lines') return editLines();
     if (act === 'note') return addNote();
+    if (act === 'text') return editText();
     // the menu (main.mjs) is put by the button
     if (act === 'align') return openAlign?.(svg.querySelector('.lm-edit-tool[data-act="align"]'));
     if (act === 'pin' || act === 'unpin') return togglePin();
@@ -979,7 +1025,22 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     if (!on || !svg || !(e.target instanceof Element)) return;
     e.stopPropagation(); // no zoom
     e.preventDefault();
-    if (!e.target.closest('g.node, g.note, g.edge, .lm-edit')) {
+    // a box or note: edit its text (the second click of the two switched it to resizing: back to
+    // moving); a container's title: its label
+    const box = e.target.closest('g.node, g.note:not(.lm-note-folded)');
+    const tab = e.target.closest('g.group-tab'), title = tab ? tab.dataset.group : e.target.closest('g.group > text')?.parentNode.id;
+    if (box && !e.target.closest('.lm-edit') && itemOf(box.id) && itemOf(box.id).kind !== 'legend') {
+      sel = { kind: 'node', id: box.id, mode: 'move' };
+      draw();
+      onChange?.();
+      editText();
+    } else if (title && model.groups.some((g) => g.id === title) && !e.shiftKey) {
+      selectIds(membersOf(title));
+      if (sel?.kind === 'nodes') sel.group = title;
+      draw();
+      onChange?.();
+      editText({ kind: 'group', id: title });
+    } else if (!e.target.closest('g.node, g.note, g.edge, .lm-edit')) {
       addNodeAt(toMap(e));
     }
   });
@@ -1036,6 +1097,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     canRedo: () => redo.length > 0,
     remove,
     editLines,
+    // the text dialog for the one box, note or container selected (false: nothing to edit); what
+    // it would edit (textTarget: { kind: 'node' | 'note' | 'group', id } or null)
+    editText: () => editText(),
+    textTarget,
     selection: () => sel,
     // select what a statement of the source is about (main.mjs, from the caret in the sidebar):
     // { kind: 'node', id } | { kind: 'edge', from, to } | { kind: 'group', id } (its boxes, as a

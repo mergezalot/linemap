@@ -77,11 +77,19 @@ export function askLabel(dialog, { heading = 'New node', ok = 'Add', placeholder
   });
 }
 
-// New note dialog: resolves with the text typed (several lines; trailing blanks dropped), or
-// null. title: what the note is for. Ctrl+Enter (⌘+Enter) adds, Escape cancels.
-export function askNote(dialog, title) {
+// The text dialog (a new note, or the text of a node, note or container): resolves with the text
+// typed (several lines; trailing blanks dropped), or null (also when it is left blank). title: a
+// line under the heading; heading, ok, placeholder: the dialog's title, button and empty field
+// (else those for a new note); value: the text it opens with; rich: whether the hint on rich text
+// tags shows (only notes draw them). Ctrl+Enter (⌘+Enter) confirms, Escape cancels.
+export function askNote(dialog, title, { heading = 'New note', ok = 'Add note', placeholder = 'Text of the note', value = '', rich = true } = {}) {
   const ta = dialog.querySelector('textarea');
+  dialog.querySelector('h2').textContent = heading;
   dialog.querySelector('.hint').textContent = title;
+  dialog.querySelector('.rich-hint').hidden = !rich;
+  dialog.querySelector('button[value="ok"]').textContent = ok;
+  ta.placeholder = placeholder;
+  ta.setAttribute('aria-label', placeholder);
   return new Promise((resolve) => {
     const enter = (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); dialog.close('ok'); } };
     ta.addEventListener('keydown', enter);
@@ -91,9 +99,10 @@ export function askNote(dialog, title) {
       resolve(dialog.returnValue === 'ok' && text.trim() ? text : null);
     }, { once: true });
     dialog.returnValue = '';
-    ta.value = '';
+    ta.value = value;
     dialog.showModal();
     ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
   });
 }
 

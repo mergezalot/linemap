@@ -33,7 +33,7 @@ const el = {
   tooltip: $('tooltip'), toast: $('toast'), drop: $('drop'), fileInput: $('file-input'),
   pasteDialog: $('paste-dialog'), positionsDialog: $('positions-dialog'), help: $('help'),
   flows: $('linemap-flows'),
-  edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editLines: $('edit-lines'),
+  edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editLines: $('edit-lines'), editText: $('edit-text'),
   editPin: $('edit-pin'), editUnpin: $('edit-unpin'),
   editAlign: $('edit-align'), alignMenu: $('align-menu'), editGroup: $('edit-group'), editMerge: $('edit-merge'), editSplit: $('edit-split'), editUngroup: $('edit-ungroup'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
   editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'), editDone: $('edit-done'),
@@ -135,7 +135,7 @@ const editor = createEditor({
   toast: (msg) => toast(msg),
   askLabel: (opts) => askLabel(el.labelDialog, opts),
   askLines: (lines, checked, title, opts) => askLines(el.linesDialog, lines, checked, title, opts),
-  askNote: (title) => askNote(el.noteDialog, `A note on ${title}`),
+  askNote: (title, opts) => askNote(el.noteDialog, title, opts),
   openAlign: (anchor) => toggleAlign(anchor),
   // (a selection made on the map: the caret on the same statement as before selects it again)
   onChange: () => { updateEditBar(); if (!caretPick) caretKey = null; syncMarks({ scroll: !caretPick }); },
@@ -438,7 +438,7 @@ const HINTS = {
   none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box · Shift+drag the background or click a container to select several · drag the background to pan',
   nodes: 'Drag one to move them all · click one again to resize them all · Align… lines them up · Shift+click adds or removes a box · Del removes them',
   nodesSize: 'Drag a handle: every box takes that size, each around its centre · click one to move them again · Del removes them',
-  node: 'Drag to move · click again to resize · drag the + onto another box to connect them · Del removes the box and its edges',
+  node: 'Drag to move · click again to resize · double-click or F2 edits its text · drag the + onto another box to connect them · Del removes the box and its edges',
   size: 'Drag a handle to resize · click again to move · Del removes the box and its edges',
   edge: 'Drag an end onto another box to reattach · click again for the line under the pointer · Lines… picks its lines · Del removes the edge',
   line: 'drag an end onto another box to move only this line · Del takes it off this edge · click again for the whole bundle',
@@ -455,6 +455,7 @@ function updateEditBar() {
   el.editRedo.disabled = !editor.canRedo();
   el.editDelete.disabled = !sel;
   el.editLines.hidden = !(sel?.kind === 'edge' || sel?.kind === 'via');
+  el.editText.hidden = !editor.textTarget();
   // the container actions, where they apply to the boxes selected
   const acts = editor.containerActions();
   for (const [act, b] of [['group', el.editGroup], ['merge', el.editMerge], ['split', el.editSplit], ['ungroup', el.editUngroup]]) b.hidden = !acts.includes(act);
@@ -485,6 +486,7 @@ el.editDone.addEventListener('click', () => setEditing(false));
 el.editAdd.addEventListener('click', () => editor.startAdding());
 el.editDelete.addEventListener('click', () => editor.remove());
 el.editLines.addEventListener('click', () => editor.editLines());
+el.editText.addEventListener('click', () => editor.editText());
 el.editPin.addEventListener('click', () => editor.pinAll());
 el.editUnpin.addEventListener('click', () => editor.unpinAll());
 for (const act of ['group', 'merge', 'split', 'ungroup']) el[`edit${act[0].toUpperCase()}${act.slice(1)}`].addEventListener('click', () => editor.containerAction(act));
@@ -785,6 +787,9 @@ window.addEventListener('keydown', (e) => {
       : !mod && !e.altKey && (e.key === 'Delete' || e.key === 'Backspace') ? editor.remove
         : !mod && !e.altKey && k === 'p' && editor.togglePin() ? () => {}
           : !mod && !e.altKey && k === 'l' && (editor.selection()?.kind === 'edge' || editor.selection()?.kind === 'via') ? editor.editLines
+            // F2, or Enter (not on a button, link or menu, where it means a click): the text of the box,
+            // note or container selected
+            : !mod && !e.altKey && !e.shiftKey && (e.key === 'F2' || (e.key === 'Enter' && !e.target.closest?.('button, a[href], select, summary, [role="button"], [role="menuitem"], [role="option"]'))) && editor.textTarget() ? editor.editText
         : e.key === 'Escape' && editor.escape() ? () => {} : null;
     if (act) { e.preventDefault(); act(); return; }
   }
