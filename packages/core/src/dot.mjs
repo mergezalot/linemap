@@ -29,6 +29,16 @@ const attrsOf = (stmt) => {
   }
   return out;
 };
+// Where the statements about each thing are in a DOT text: a list of { kind, start, end (offsets,
+// end exclusive, trailing blanks left out), line, endLine (1-based, inclusive) } in text order:
+//   { kind: 'node', id }            a node statement (`a [..]`; also one that only restates `pos`)
+//   { kind: 'edge', pairs, ids }    an edge statement: each edge [from, to] it makes (a -> b -> c
+//                                   makes two), and every id it names (nodes, notes, clusters)
+//   { kind: 'group', id }           a `subgraph cluster… { }` block, all of it (one per block)
+//   { kind: 'line', id }            a line declared in `subgraph lines`
+// Throws as readDot does on a text it cannot read.
+export const statementsOf = (source) => readDot(source).statements;
+
 const where = (stmt) => `line ${stmt.location?.start.line ?? '?'}`;
 
 export function readDot(source) {
@@ -36,7 +46,18 @@ export function readDot(source) {
   if (!graph) throw new Error('no graph in DOT file');
   if (!graph.directed) throw new Error('the graph must be a digraph');
 
-  const out = { id: graph.id?.value ?? 'graph', attrs: {}, lines: [], clusters: [], nodes: [], edges: [] };
+  const out = { id: graph.id?.value ?? 'graph', attrs: {}, lines: [], clusters: [], nodes: [], edges: [], statements: [] };
+  // where each statement is in the text (see statementsOf)
+  const at = (stmt, entry) => {
+    const loc = stmt.location;
+    if (!loc) return;
+    // the parser's end runs on over trailing blanks and line breaks; stop at the last character
+    let end = loc.end.offset;
+    while (end > loc.start.offset && /\s/.test(source[end - 1])) end--;
+    let endLine = loc.start.line;
+    for (let i = loc.start.offset; i < end; i++) if (source[i] === '\n') endLine++;
+    out.statements.push({ ...entry, start: loc.start.offset, end, line: loc.start.line, endLine });
+  };
   const nodeById = new Map();
   const clusterById = new Map();
 
@@ -75,8 +96,10 @@ export function readDot(source) {
         if (scope.inLines) {
           if (out.lines.some((l) => l.id === s.id.value)) throw new Error(`DOT ${where(s)}: line "${s.id.value}" declared twice`);
           out.lines.push({ id: s.id.value, attrs: { ...scope.node, ...attrsOf(s) } });
+          at(s, { kind: 'line', id: s.id.value });
         } else {
           mention(s.id.value, scope, attrsOf(s), s, true);
+          at(s, { kind: 'node', id: s.id.value });
         }
       } else if (s.type === 'Edge') {
         if (scope.inLines) throw new Error(`DOT ${where(s)}: edges do not belong in "subgraph lines"`);
@@ -86,6 +109,7 @@ export function readDot(source) {
         for (let i = 1; i < ends.length; i++) {
           for (const from of ends[i - 1]) for (const to of ends[i]) out.edges.push({ from, to, attrs, line: s.location?.start.line });
         }
+        at(s, { kind: 'edge', pairs: ends.slice(1).flatMap((tos, i) => ends[i].flatMap((from) => tos.map((to) => [from, to]))), ids: [...new Set(ends.flat())] });
       } else if (s.type === 'Subgraph') {
         const id = s.id?.value;
         const inner = { ...scope };
@@ -101,6 +125,7 @@ export function readDot(source) {
           }
           inner.cluster = c;
           innerTarget = c.attrs;
+          at(s, { kind: 'group', id });
         }
         walk(s.children, inner, innerTarget);
       }

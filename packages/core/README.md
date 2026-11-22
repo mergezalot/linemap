@@ -25,6 +25,8 @@ const svg = render(layout(parseFlow(dotText)), { theme: 'dark' });
   `legendPosition(model)` the legend's.
 - `editDot(text, ops)` changes DOT text (move or add a node, set an edge's `via`, add, remove or
   reattach an edge) and leaves the rest of the file as it was written.
+- `statementsOf(text)` lists where the statements about each node, edge, container and line are
+  in a DOT text (offsets and first and last line), for editors that relate text and map.
 
 The command line is [`@linemap/cli`](https://www.npmjs.com/package/@linemap/cli): `npx @linemap/cli export flow.dot`.
 The DOT format, themes and the studio are described in the
