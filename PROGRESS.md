@@ -322,10 +322,14 @@ Each is one edit and one undo; the new or kept container's members stay selected
   12a and 13 (~115k+); subagent #8 (a0e5488a4a8d38267) did
   14 and 15 (~135k+); unit 16 was started by subagent #9
   (a3703b03a863d2ee9), which stopped when the session ended, unfinished.
-- Paused 2026-11-22 at the user's request. Unit 16 is partly done and NOT committed: editor.mjs
-  in the working tree (also saved as .git/unit16-wip.patch) has the `group` selection kind,
-  `groupLoad`, `groupBox`, `removeDeep` (needs an `askConfirm` dialog not yet wired in main.mjs),
-  Del on a container, header comment. Missing: click cycling, container adorner, drag-move,
-  connect from a container, cursors, source sync, main.mjs/index.html/README/smoke. Resume
-  subagent #9 or give a fresh one this note plus unit 16.
-- Next: unit 16.
+- unit 16 (6224b82): selection kind `{kind:'group', id}`; click cycles container -> its boxes
+  -> container; container adorner Delete (container only) · Delete with contents
+  (`#confirm-dialog`, `askConfirm`, `#i-trash-all`, edit bar `#edit-delete-all`) · Pin/Unpin all
+  · Edit text; `+` connects from a container (`cluster_x -> a`); a drag on a selected container
+  moves and pins everything in it (one undo), a drag on an unselected one pans; source sidebar
+  marks/selects the container block. Limits: note links lag during the live drag; no smoke check
+  for the caret on a container block. Smoke checks added, not run.
+- All units (1–16) done 2026-11-22. .git/unit16-wip.patch is obsolete.
+- Open for the user: the smoke test has not run since unit 8 (needs
+  `sudo pnpm exec playwright install-deps` + a font package); examples/platform.dot change lost
+  during unit 10, cause unknown.
