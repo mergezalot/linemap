@@ -39,7 +39,7 @@
     "@ts-graphviz/ast": "3.0.6"
   },
   "devDependencies": {
-    "@msagl/core": "1.1.24",
+    "@msagl/core": "1.1.25",
     "esbuild": "0.28.2"
   },
   "publishConfig": {

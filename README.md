@@ -218,7 +218,6 @@ Limits:
 closed; if you ship changes to linemap's own files, publish those files under the MPL too.
 Third-party code keeps its own license:
 
-- MSAGL (`@msagl/core`, MIT, Microsoft) is a dependency, patched for an obstacle bug
-  (`patches/`). `pnpm install` bundles the parts linemap uses into `packages/core/vendor/msagl.mjs`
+- MSAGL (`@msagl/core`, MIT, Microsoft) is a dependency. `pnpm install` bundles the parts linemap uses into `packages/core/vendor/msagl.mjs`
   (not in git), with the license texts of MSAGL and its dependencies at the top. The studio
   carries them too.

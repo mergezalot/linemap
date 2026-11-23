@@ -162,9 +162,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@msagl/core@1.1.24': 09117d1df3a20c23f0c3ff5906205c7a86a69e8e4396a46684c16893dcb88aba
-
 importers:
 
   .: {}
@@ -185,8 +182,8 @@ importers:
         version: 3.0.6
     devDependencies:
       '@msagl/core':
-        specifier: 1.1.24
-        version: 1.1.24(patch_hash=09117d1df3a20c23f0c3ff5906205c7a86a69e8e4396a46684c16893dcb88aba)
+        specifier: 1.1.25
+        version: 1.1.25
       esbuild:
         specifier: 0.28.2
         version: 0.28.2
@@ -361,8 +358,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@msagl/core@1.1.24':
-    resolution: {integrity: sha512-yBk+EpL93CdZyVEaaPLj44zZX3ovLHttjW10lsM4PFYZYJUz+S2XI3QdyKyKJNSWc/hHVqwd1VWAkMr3UGK/Cg==}
+  '@msagl/core@1.1.25':
+    resolution: {integrity: sha512-tGu1cr8oL2L/NFRZ2Es3OJTvPD0eKO3LGRr1ps2MciVKzyyzlYG4s8H0z1ifvzSPiknP3+G+b1OW+/MQo8FFFA==}
 
   '@ts-graphviz/ast@3.0.6':
     resolution: {integrity: sha512-9QOBQFanq0n7Ju9opTURHSvqXOqzHkplls3kkD6veWXNuJwaH8lzZUIEksU4i2gjAjRi+RafQWSWATZDKCCt8g==}
@@ -482,7 +479,7 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@msagl/core@1.1.24(patch_hash=09117d1df3a20c23f0c3ff5906205c7a86a69e8e4396a46684c16893dcb88aba)':
+  '@msagl/core@1.1.25':
     dependencies:
       queue-typescript: 1.0.1
       reliable-random: 0.0.1

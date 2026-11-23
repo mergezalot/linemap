@@ -3,9 +3,6 @@
 // imports, which node cannot load, and its index does not export Shape.) vendor/ is not in git:
 // `pnpm install` runs this (core's `prepare` script).
 //   node scripts/build-msagl.mjs       (pnpm --filter @linemap/core build:msagl)
-// @msagl/core is patched (patches/@msagl__core@1.1.24.patch): its sparse visibility graph
-// incremented the overlap depth on leaving an obstacle, so every obstacle after the first was
-// invisible to the router.
 //
 // Licenses: @msagl/core and most of what it pulls in are MIT; reliable-random is Apache-2.0.
 // Both want their notice kept with every copy, so the full text of each bundled package's
@@ -89,7 +86,7 @@ const notices = list.map((p) => `${'='.repeat(78)}\n${p.name} ${p.version} (${p.
 if (notices.includes('*/')) throw new Error('a license text contains "*/"');
 
 const header = 'vendor/msagl.mjs: parts of @msagl/core (https://github.com/microsoft/msagljs), bundled and\n' +
-  'minified by scripts/build-msagl.mjs, with a patch (patches/@msagl__core@1.1.24.patch). Do not edit.\n' +
+  'minified by scripts/build-msagl.mjs. Do not edit.\n' +
   `It contains these packages: ${list.map((p) => `${p.name} ${p.version} (${p.license})`).join(', ')}.\n` +
   'Their licenses follow.\n\n';
 fs.mkdirSync(out, { recursive: true });
