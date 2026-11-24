@@ -141,7 +141,8 @@ const legend = createLegend({
   onHideAll: () => state.set({ hidden: new Set(shown.base.lines.map((l) => l.id)) }),
   onHover: (ids) => highlight.hoverLines(ids),
 });
-const search = createSearch({ input: el.search, list: el.results, onSelect: select });
+// a pick from the toolbar's search also brings its statement into view in the source, if open
+const search = createSearch({ input: el.search, list: el.results, onSelect: (e) => { select(e); caretToStatement(e, { focus: false }); } });
 const editor = createEditor({
   host: el.map,
   getText: () => source.current()?.text ?? '',
@@ -176,7 +177,18 @@ const sourcePanel = createSourcePanel({
   },
   onToggle: (open) => { el.sourceBtn.setAttribute('aria-pressed', String(open)); if (open) syncMarks({ scroll: 'always' }); },
   onCaret: (offset, text) => caretTo(offset, text),
+  findMap: (q) => (shown ? search.match(q, 6).map((e) => ({ ...e, color: e.color && esc(e.color), html: search.marked(e.label, q) })) : []),
+  onPickMap: (e) => { select(e); caretToStatement(e, { focus: true }); },
 });
+// the caret on the statement that declares a search entry (node, note, container or line), so
+// typing goes on there; focus: into the text (else only scrolled to, for the next time it is used)
+function caretToStatement(e, { focus }) {
+  const cur = source.current();
+  if (!cur || !sourcePanel.isOpen()) return;
+  const kind = e.kind === 'container' ? 'group' : e.kind === 'note' ? 'node' : e.kind;
+  const st = statements(cur.text).find((x) => x.kind === kind && x.id === e.id);
+  if (st) sourcePanel.caretAt(st.start, { focus });
+}
 el.sourceBtn.setAttribute('aria-pressed', String(sourcePanel.isOpen()));
 el.sourceBtn.addEventListener('click', () => sourcePanel.toggle());
 // a press on the map leaves the text, so Del and the other keys reach the map again (and what was

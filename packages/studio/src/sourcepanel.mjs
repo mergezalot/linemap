@@ -22,7 +22,9 @@
 // Find: Ctrl+F in the text (or the head's search button) opens a row under the head; every match
 // of what is typed there (ignoring case) is drawn behind the text, the current one stronger and in
 // view. Enter / Shift+Enter go to the next / previous one; Esc closes it and leaves the caret on
-// the current match, selected.
+// the current match, selected. Under it, what on the map matches (findMap(q): the map search's
+// entries): Down goes into that list, Up back out; Enter or a click there goes to it on the map
+// (onPickMap(entry), which puts the caret on its statement) and closes the row.
 // Open or closed and the width (drag the panel's edge, or arrow keys on it) are remembered.
 // On wide screens the map makes room for it; on narrow ones (CSS) it lies over the map.
 const DELAY = 300;  // ms of no typing before the text is committed
@@ -31,7 +33,7 @@ const PAD = 6;      // top padding of the text, px (style.css)
 const MIN_W = 240;
 const KEY = 'linemap:source';
 
-export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
+export function createSourcePanel({ panel, store, commit, onToggle, onCaret, findMap, onPickMap }) {
   const $ = (s) => panel.querySelector(s);
   const ta = $('.src-text'), lines = $('.src-lines'), band = $('.src-band'), status = $('.src-status');
   const goto = $('.src-goto'), msg = $('.src-msg'), name = $('.src-name'), resize = $('.src-resize'), close = $('.src-close');
@@ -51,6 +53,9 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
   const foundBox = document.createElement('div');
   foundBox.className = 'src-found';
   band.before(foundBox);
+  const mapList = $('.src-find-map');
+  let mapHits = [];    // the map's entries that match
+  let mapAt = -1;      // the one chosen with the arrow keys (-1: none, Enter steps the text)
   let hits = [];       // [{ start, end, line }] of what is looked for
   let hit = -1;        // the current one
 
@@ -190,6 +195,25 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
     });
     foundBox.replaceChildren(...shown);
   }
+  function showMap() {
+    const q = findInput.value;
+    mapHits = q && findMap ? findMap(q) : [];
+    mapAt = -1;
+    mapList.hidden = !mapHits.length;
+    mapList.innerHTML = mapHits.map((e, i) => `<li role="option" data-i="${i}" aria-selected="false">` +
+      (e.color ? `<span class="swatch" style="background:${e.color}"></span>` : '') +
+      `<span class="lbl">${e.html}</span><span class="kind">${e.kind}</span></li>`).join('');
+  }
+  function setMapAt(i) {
+    mapAt = Math.max(-1, Math.min(i, mapHits.length - 1));
+    for (const li of mapList.children) li.setAttribute('aria-selected', String(Number(li.dataset.i) === mapAt));
+  }
+  function pickMap(i) {
+    const e = mapHits[i];
+    if (!e) return;
+    closeFind({ toText: false });
+    onPickMap?.(e);
+  }
   function showCount() {
     const q = findInput.value;
     findCount.textContent = !q ? '' : hits.length ? `${hit + 1}/${hits.length}` : 'none';
@@ -232,6 +256,7 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
     findInput.focus();
     findInput.select();
     refind({ from: ta.selectionStart });
+    showMap();
   }
   function closeFind({ toText = true } = {}) {
     if (findRow.hidden) return;
@@ -241,22 +266,32 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
     hits = [];
     hit = -1;
     foundBox.replaceChildren();
+    mapHits = [];
+    mapList.hidden = true;
     if (toText) {
       ta.focus();
       if (h) ta.setSelectionRange(h.start, h.end);
     }
   }
   findBtn.addEventListener('click', () => (findRow.hidden ? openFind() : closeFind()));
-  findInput.addEventListener('input', () => { hit = -1; refind({ from: ta.selectionStart }); });
+  findInput.addEventListener('input', () => { hit = -1; refind({ from: ta.selectionStart }); showMap(); });
   findInput.addEventListener('keydown', (e) => {
     e.stopPropagation(); // no studio shortcut
-    if (e.key === 'Enter') { e.preventDefault(); step(e.shiftKey ? -1 : 1); }
+    if (e.key === 'ArrowDown' && mapHits.length) { e.preventDefault(); setMapAt(mapAt + 1); }
+    else if (e.key === 'ArrowUp' && mapAt >= 0) { e.preventDefault(); setMapAt(mapAt - 1); }
+    else if (e.key === 'Enter' && mapAt >= 0) { e.preventDefault(); pickMap(mapAt); }
+    else if (e.key === 'Enter') { e.preventDefault(); step(e.shiftKey ? -1 : 1); }
     else if (e.key === 'Escape') { e.preventDefault(); closeFind(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') { e.preventDefault(); findInput.select(); }
   });
   $('.src-find-next').addEventListener('click', () => step(1));
   $('.src-find-prev').addEventListener('click', () => step(-1));
   $('.src-find-close').addEventListener('click', () => closeFind());
+  // mousedown: before the input's blur
+  mapList.addEventListener('mousedown', (e) => {
+    const li = e.target.closest('li[data-i]');
+    if (li) { e.preventDefault(); pickMap(Number(li.dataset.i)); }
+  });
 
   // ---------- text -> map ----------
   function apply() {
@@ -366,6 +401,15 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
     // typed and not on the map yet: pending, or not drawable
     pending: () => !!timer || broken,
     goToLine,
+    // the caret to offset `at` of the text, in view; focus: into the text, to type there
+    caretAt(at, { focus = true } = {}) {
+      if (focus) ta.focus();
+      ta.setSelectionRange(at, at);
+      const y = (ta.value.slice(0, at).split('\n').length - 1) * LH, view = ta.clientHeight - 2 * PAD;
+      if (y < ta.scrollTop || y + LH > ta.scrollTop + view) ta.scrollTop = Math.max(0, y - view / 3);
+      ta.scrollLeft = 0;
+      scrolled();
+    },
     textarea: ta,
   };
 }

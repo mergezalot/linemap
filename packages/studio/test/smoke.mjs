@@ -1733,6 +1733,16 @@ console.log('source sidebar: the DOT text beside the map, both ways');
   check(Number(f2.count.split('/')[0]) === Number(f1.count.split('/')[0]) % Number(f1.count.split('/')[1]) + 1, `Enter goes to the next match (${f1.count} -> ${f2.count})`);
   await page.keyboard.press('Escape');
   check(await page.evaluate(() => { const t = document.querySelector('.src-text'); return document.querySelector('.src-find').hidden && document.activeElement === t && t.value.slice(t.selectionStart, t.selectionEnd).toLowerCase() === 'lines='; }), 'Esc closes it, the match selected in the text');
+  // the find row also lists what on the map matches: Down and Enter go there, the caret on its statement
+  await page.keyboard.press('Control+f');
+  await page.keyboard.type('alpha');
+  const listed = await page.evaluate(() => [...document.querySelectorAll('.src-find-map li')].map((li) => li.textContent));
+  check(listed.length === 1 && /Alpha/.test(listed[0]) && /node/.test(listed[0]), `the find row lists the map's matches (${listed.join(', ')})`);
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  const went = await page.evaluate(() => { const t = document.querySelector('.src-text'); return { row: document.querySelector('.src-find').hidden, focus: document.activeElement === t, line: t.value.split('\n')[t.value.slice(0, t.selectionStart).split('\n').length - 1].trim() }; });
+  check(went.row && went.focus && /^a \[label="Alpha"/.test(went.line), `Down, Enter: goes to it, the caret on its statement, typing goes on there (${went.line})`);
   await page.click('#source-panel .src-close');
   check(!(await page.isVisible('#source-panel')), 'Close shuts it');
   check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join('; ')}` : ''}`);
