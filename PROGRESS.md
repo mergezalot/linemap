@@ -332,3 +332,7 @@ Each is one edit and one undo; the new or kept container's members stay selected
   kept the focus on a toolbar button, so Enter clicked it instead of editing the text) and stale
   checks from units 9/11/16 (b4b2df7).
 - Open for the user: examples/platform.dot change lost during unit 10, cause unknown.
+- 2026-11-24: merged master (0.4.0). Test review: smoke 396 -> 281 checks, 129 s -> 75 s (view
+  interactions once on webshop; checks that repeat core's tests dropped; clicks pause 150 ms, not
+  500; saves awaited). CLI: 4 redundant tests dropped. Core and studio unit tests kept as they are.
+  New smoke checks: one per path through the studio; DOT text and layout details belong in core.
