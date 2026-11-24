@@ -7,7 +7,7 @@ name: Release
 # No npm token: each package lists this workflow as its trusted publisher on npmjs.com
 # (package settings -> Trusted publishing -> GitHub Actions, workflow file release.yml), and
 # npm adds provenance on its own. A version already on npm is skipped, so a tag can release
-# just some of the packages.
+# just some of the packages. Nothing is published unless all of ci.yml passes on the tag.
 
 on:
   push:
@@ -17,7 +17,11 @@ permissions:
   contents: read
 
 jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   publish:
+    needs: ci
     runs-on: ubuntu-latest
     permissions:
       contents: write # the GitHub release
@@ -32,8 +36,6 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm install -g npm@latest # trusted publishing needs npm 11.5.1 or later
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
-      - run: pnpm pack-check
 
       - name: Tag matches the package versions
         run: |

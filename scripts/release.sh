@@ -69,6 +69,16 @@ done
 git fetch --quiet --tags origin
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/master)" ] || fail "master and origin/master differ, pull or push first"
 
+# and only when CI passed on it (release.yml runs CI again on the tag; this just fails before a tag is spent)
+head=$(git rev-parse HEAD)
+runs=$(curl -fsS --max-time 10 "https://api.github.com/repos/mergezalot/linemap/actions/workflows/ci.yml/runs?head_sha=$head&per_page=1" 2>/dev/null) ||
+  fail "can't ask GitHub for the CI status of $head"
+field() { { grep -m1 -oE "\"$1\": *(\"[^\"]*\"|null)" <<<"$runs" || true; } | sed -E 's/^"[^"]*": *"?//; s/"$//'; }
+ci_status=$(field status) ci_conclusion=$(field conclusion)
+[ -n "$ci_status" ] || fail "CI has not run on $head"
+[ "$ci_status" = completed ] || fail "CI is still running on $head ($ci_status)"
+[ "$ci_conclusion" = success ] || fail "CI failed on $head ($ci_conclusion): $(field html_url)"
+
 # patch|minor|major count like npm version: on a prerelease, the bump first just drops the -pre
 [[ $current =~ $semver ]] || fail "packages/core version $current is not x.y.z"
 major=${BASH_REMATCH[1]} minor=${BASH_REMATCH[2]} patch=${BASH_REMATCH[3]} pre=${BASH_REMATCH[4]}
