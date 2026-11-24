@@ -1,4 +1,4 @@
-// One-shot actions: download the SVG, copy text, small dialogs.
+// One-shot actions: download a file, small dialogs.
 
 export function download(name, text, type = 'image/svg+xml') {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -7,25 +7,6 @@ export function download(name, text, type = 'image/svg+xml') {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-// Clipboard first; where that is not allowed (file://, permissions), show the text in a dialog.
-export async function copyOrShow(text, dialog) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    showText(dialog, text);
-    return false;
-  }
-}
-
-function showText(dialog, text) {
-  const ta = dialog.querySelector('textarea');
-  ta.value = text;
-  dialog.showModal();
-  ta.focus();
-  ta.select();
 }
 
 export function toaster(el) {

@@ -189,7 +189,7 @@ selects several boxes, to move together, align or distribute evenly (Align), or 
 containers, split them off into a new one, or ungroup a container. A note's text may use `<b>`,
 `<i>`, `<u>`, `<s>` and `<font color>`. In edit mode the DOT text is beside the map: type in it and the map follows after a short pause (each pause one undo step, saved like a
 map edit); a text that cannot be drawn keeps the last map and marks the line in error. Under `linemap studio` each edit is saved to the DOT file, changing only the lines it
-must; elsewhere download or copy the edited DOT text, or the page with it baked in. The SVG download is the map as shown:
+must; elsewhere download the edited DOT file (above the source), or the page with it baked in. The SVG download is the map as shown:
 hidden lines, through, theme and notes left out. The address keeps these settings and the view,
 so a link reopens the same map (a `notes=` in it wins over the remembered one). Press `?` for keys.
 

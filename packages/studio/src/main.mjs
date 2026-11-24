@@ -18,7 +18,7 @@ import { createSearch } from './search.mjs';
 import { createEditor } from './editor.mjs';
 import { createSourcePanel } from './sourcepanel.mjs';
 import { createSplit } from './split.mjs';
-import { download, copyOrShow, askLabel, askLines, askNote, askConfirm, toaster } from './actions.mjs';
+import { download, askLabel, askLines, askNote, askConfirm, toaster } from './actions.mjs';
 
 const $ = (id) => document.getElementById(id);
 // All page elements are looked up now, before any map is inserted: ids from the DOT file end up
@@ -37,8 +37,8 @@ const el = {
   edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editDeleteAll: $('edit-delete-all'), editLines: $('edit-lines'), editText: $('edit-text'),
   editPin: $('edit-pin'), editUnpin: $('edit-unpin'),
   editAlign: $('edit-align'), alignMenu: $('align-menu'), editGroup: $('edit-group'), editMerge: $('edit-merge'), editSplit: $('edit-split'), editUngroup: $('edit-ungroup'), editUndo: $('edit-undo'), editRedo: $('edit-redo'),
-  editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'),
-  labelDialog: $('label-dialog'), noteDialog: $('note-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'), confirmDialog: $('confirm-dialog'),
+  editDot: $('edit-dot'), editPage: $('edit-page'),
+  labelDialog: $('label-dialog'), noteDialog: $('note-dialog'), linesDialog: $('lines-dialog'), confirmDialog: $('confirm-dialog'),
 };
 
 // The toolbar wraps on narrow screens; the stage starts below it.
@@ -482,7 +482,7 @@ function updateEditBar() {
   // (a file linemap studio serves is saved at once; a failed save says so itself)
   if (source.dirty() && !toldDirty) {
     toldDirty = true;
-    toast('Edits stay in this page: download the .dot or copy it to keep them');
+    toast('Edits stay in this page: download the .dot (above the source) to keep them');
   }
 }
 el.edit.addEventListener('click', () => setEditing(!editor.on()));
@@ -554,13 +554,6 @@ el.editDot.addEventListener('click', () => {
   const cur = source.current();
   if (!cur) return;
   download(dotName(), cur.text, 'text/vnd.graphviz');
-  source.markClean();
-  updateEditBar();
-});
-el.editCopy.addEventListener('click', async () => {
-  const cur = source.current();
-  if (!cur) return;
-  if (await copyOrShow(cur.text, el.textDialog)) toast('Copied the DOT text');
   source.markClean();
   updateEditBar();
 });

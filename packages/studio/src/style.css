@@ -394,10 +394,8 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; padding: 4px;
 }
 .edit-bar .btn.primary { padding: 0 12px; margin-left: 4px; }
-.edit-hint {
-  position: fixed; top: calc(var(--tb-h) + 58px); left: calc(50% - var(--src-right) / 2); transform: translateX(-50%); z-index: 9; pointer-events: none;
-  max-width: calc(100vw - 24px); padding: 3px 10px; border-radius: 12px; background: var(--tb-bg); color: var(--muted); font-size: 12px; text-align: center;
-}
+/* there for screen readers, not seen */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .dialog.small { width: min(380px, calc(100vw - 32px)); }
 .dialog .field {
   width: 100%; height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--field); color: inherit; outline: none;
@@ -418,6 +416,7 @@ body.source-open { --src-right: var(--src-w); }
 .src-title { font-weight: 600; color: var(--ink); }
 .src-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .src-find-btn, .src-collapse { padding: 0 6px; }
+.src-dl { padding: 0 6px; gap: 4px; font-size: 12px; }
 /* collapsed: a strip at the edge, the rest hidden */
 .src-expand { display: none; }
 .source-panel.collapsed > :not(.src-expand) { display: none; }

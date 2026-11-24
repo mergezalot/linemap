@@ -149,6 +149,8 @@
   <button class="src-expand" title="Show the source" aria-label="Show the source"><svg class="icon"><use href="#i-code"/></svg><span>Source</span></button>
   <div class="src-head">
     <svg class="icon"><use href="#i-code"/></svg><span class="src-title">Source</span><span class="src-name"></span>
+    <button id="edit-dot" class="btn src-dl" title="Download the DOT file with the edits"><svg class="icon"><use href="#i-download"/></svg><span>.dot</span></button>
+    <button id="edit-page" class="btn src-dl" title="Download this page with the edited flows in it" hidden><svg class="icon"><use href="#i-download"/></svg><span class="lbl">Page</span></button>
     <button class="btn src-find-btn" title="Find in the source (Ctrl+F in the text)" aria-label="Find in the source" aria-expanded="false"><svg class="icon"><use href="#i-search"/></svg></button>
     <button class="btn src-collapse" title="Collapse the source: the map gets the room" aria-label="Collapse the source" aria-expanded="true"><svg class="icon"><use href="#i-collapse"/></svg></button>
   </div>
@@ -186,12 +188,9 @@
   <div class="tb-sep"></div>
   <button id="edit-undo" class="btn" title="Undo (Ctrl+Z)"><svg class="icon"><use href="#i-undo"/></svg></button>
   <button id="edit-redo" class="btn" title="Redo (Ctrl+Shift+Z)"><svg class="icon"><use href="#i-redo"/></svg></button>
-  <div class="tb-sep"></div>
-  <button id="edit-dot" class="btn" title="Download the DOT file with the edits"><svg class="icon"><use href="#i-download"/></svg><span class="lbl">.dot</span></button>
-  <button id="edit-copy" class="btn" title="Copy the DOT text"><svg class="icon"><use href="#i-paste"/></svg><span class="lbl">Copy</span></button>
-  <button id="edit-page" class="btn" title="Download this page with the edited flows in it" hidden><svg class="icon"><use href="#i-download"/></svg><span class="lbl">Page</span></button>
 </div>
-<div id="edit-hint" class="edit-hint" hidden></div>
+<!-- what can be done with what is selected: for screen readers (the help has it for everyone) -->
+<div id="edit-hint" class="sr-only" role="status" hidden></div>
 <!-- Align / distribute, opened from the edit bar or a multi-selection's toolbar (put by its button) -->
 <div id="align-menu" class="popover menu align-menu" role="menu" aria-label="Align or distribute" hidden>
   <button class="item" role="menuitem" data-how="left"><svg class="icon"><use href="#i-align-left"/></svg><span class="nm">Align left sides</span></button>
@@ -266,15 +265,6 @@
   </form>
 </dialog>
 
-<dialog id="text-dialog" class="dialog">
-  <form method="dialog">
-    <h2>DOT text</h2>
-    <p class="hint">The flow with the edits; copy it into the file.</p>
-    <textarea name="text" rows="18" readonly spellcheck="false"></textarea>
-    <div class="dialog-actions"><button class="btn primary" value="ok">Close</button></div>
-  </form>
-</dialog>
-
 <dialog id="help" class="dialog help">
   <form method="dialog">
     <div class="about"><img class="about-logo" src="/*@LOGO@*/" alt=""><div><div class="about-name">linemap</div><div class="about-tag">Flowcharts as metro maps · <a href="https://github.com/mergezalot/linemap" target="_blank" rel="noopener">github.com/mergezalot/linemap</a></div></div></div>
@@ -296,25 +286,31 @@
           <dt>Reload</dt><dd><kbd>R</kbd></dd>
           <dt>Open a file</dt><dd><kbd>Ctrl</kbd> <kbd>O</kbd> · drop · paste</dd>
         </dl>
+        <h3>Source, in edit mode</h3>
+        <dl>
+          <dt>Find</dt><dd><kbd>Ctrl</kbd> <kbd>F</kbd> in the text</dd>
+          <dt>Leave the text</dt><dd><kbd>Esc</kbd></dd>
+        </dl>
       </section>
       <section>
         <h3>Edit <kbd>E</kbd></h3>
         <dl>
           <dt>Move · bend</dt><dd>drag a box · a line</dd>
+          <dt>Resize</dt><dd>click a selected box again, drag a handle</dd>
           <dt>New box</dt><dd>double-click the map</dd>
           <dt>Connect</dt><dd>drag a box's <b>+</b> onto another</dd>
+          <dt>Reattach</dt><dd>drag a selected edge's end onto a box</dd>
+          <dt>One line</dt><dd>click a selected edge again</dd>
+          <dt>Remove a bend</dt><dd>double-click it</dd>
           <dt>Edit text</dt><dd>double-click · <kbd>F2</kbd></dd>
+          <dt>Container</dt><dd>click: select · again: its boxes · drag: all in it</dd>
           <dt>Select several</dt><dd><kbd>Shift</kbd>+drag · <kbd>Shift</kbd>-click</dd>
+          <dt>Same size</dt><dd>click one of several selected again</dd>
           <dt>Pin · unpin</dt><dd><kbd>P</kbd></dd>
           <dt>Lines of an edge</dt><dd><kbd>L</kbd></dd>
           <dt>Remove</dt><dd><kbd>Del</kbd></dd>
           <dt>Undo · redo</dt><dd><kbd>Ctrl</kbd> <kbd>Z</kbd> · <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd></dd>
           <dt>Off the grid</dt><dd><kbd>Alt</kbd> while dragging</dd>
-        </dl>
-        <h3>Source, in edit mode</h3>
-        <dl>
-          <dt>Find</dt><dd><kbd>Ctrl</kbd> <kbd>F</kbd> in the text</dd>
-          <dt>Leave the text</dt><dd><kbd>Esc</kbd></dd>
         </dl>
       </section>
     </div>
