@@ -4,6 +4,7 @@ on:
   push:
     branches: ['**'] # not tags: release.yml tests those itself
   pull_request:
+  workflow_call: # release.yml runs all of CI on the tag before publishing
 
 permissions:
   contents: read

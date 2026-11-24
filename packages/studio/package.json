@@ -1,6 +1,6 @@
 {
   "name": "@linemap/studio",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Flow diagrams with pinned nodes and transit-map style line bundles. The studio as one self-contained HTML file; used by the linemap CLI.",
   "keywords": [
     "flowchart",
