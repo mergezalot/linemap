@@ -297,7 +297,7 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
     // legend hover
     hoverLines: (ids) => { if (!last.key) setHover(ids); },
     pin: (ids) => setPinned(new Set(ids.filter((id) => ix?.byLine.has(id)))),
-    clearPins: () => { if (pinned.size) setPinned(new Set()); },
+    clearPins: () => { svg?.querySelector(':scope > .lm-found')?.remove(); if (pinned.size) setPinned(new Set()); },
     // folds every note kept open
     foldNotes: () => { for (const id of [...opened]) toggleNote(id); },
     openNotes: () => [...opened],
@@ -314,12 +314,25 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
       }
       return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
     },
-    flash(el) {
-      if (!el) return;
-      el.classList.remove('flash');
-      void el.getBoundingClientRect(); // restart the animation
-      el.classList.add('flash');
-      el.addEventListener('animationend', () => el.classList.remove('flash'), { once: true });
+    // What was found (search, the source's caret) is outlined: one rectangle over the map, drawn
+    // once and left as it is (no animation, nothing repainted), until the next one, the pins are
+    // cleared, or the map is drawn again. null: none.
+    adorn(el) {
+      svg?.querySelector(':scope > .lm-found')?.remove();
+      if (!el || !svg) return;
+      const b = el.getBBox();
+      const m = svg.getScreenCTM()?.inverse().multiply(el.getScreenCTM() ?? svg.getScreenCTM());
+      if (!m) return;
+      const pts = [[b.x, b.y], [b.x + b.width, b.y + b.height]].map(([x, y]) => new DOMPoint(x, y).matrixTransform(m));
+      const pad = 8;
+      const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      r.setAttribute('class', 'lm-found');
+      r.setAttribute('x', String(Math.min(pts[0].x, pts[1].x) - pad));
+      r.setAttribute('y', String(Math.min(pts[0].y, pts[1].y) - pad));
+      r.setAttribute('width', String(Math.abs(pts[1].x - pts[0].x) + 2 * pad));
+      r.setAttribute('height', String(Math.abs(pts[1].y - pts[0].y) + 2 * pad));
+      r.setAttribute('rx', '10');
+      svg.append(r);
     },
   };
 }

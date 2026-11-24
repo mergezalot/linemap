@@ -5,7 +5,7 @@
 // Its selection and the map's follow each other (below "source <-> map"): what is selected on the
 // map (edit mode), or clicked last (view mode: a node, note, bundle or line, container title,
 // legend row), has its statements marked in the text; the caret put on a statement selects that
-// thing on the map (edit mode) or pins its lines and flashes it (view mode).
+// thing on the map (edit mode) or pins its lines and outlines it (view mode).
 import { statementsOf, markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE } from '@linemap/core';
 import { createState, readHash, hashWriter } from './state.mjs';
 import { createPipeline } from './pipeline.mjs';
@@ -276,19 +276,19 @@ function caretTo(offset, text) {
   focusThing(t);
   syncMarks({ scroll: false });
 }
-// view mode: pin the lines of what the caret is on and flash it
+// view mode: pin the lines of what the caret is on and outline it
 function focusThing(t) {
   const m = shown.model;
   const g = (sel) => [...el.map.querySelectorAll(sel)];
   if (!t) { highlight.clearPins(); return; }
-  if (t.kind === 'line') { highlight.pin([t.id]); return; }
+  if (t.kind === 'line') { highlight.adorn(null); highlight.pin([t.id]); return; }
   const edges = t.kind === 'edge' ? m.edges.filter((e) => e.from === t.from && e.to === t.to)
     : t.kind === 'node' ? m.edges.filter((e) => e.from === t.id || e.to === t.id) : [];
   const ids = [...new Set(edges.flatMap((e) => e.lines.map((l) => l.id)))];
   if (ids.length) highlight.pin(ids); else highlight.clearPins();
   const box = t.kind === 'edge' ? g('g.edge').find((x) => x.dataset.from === t.from && x.dataset.to === t.to)
     : g(t.kind === 'group' ? 'g.group' : 'g.node, g.note').find((x) => x.id === t.id);
-  if (box) highlight.flash(box);
+  highlight.adorn(box ?? null);
 }
 // view mode: a click on the map picks what it is on (nothing: the background)
 el.map.addEventListener('click', (e) => {
@@ -791,6 +791,7 @@ function select(entry) {
       state.set({ hidden: h });
       return;
     }
+    highlight.adorn(null);
     highlight.pin([entry.id]);
     zoomToLine(entry.id);
     return;
@@ -807,7 +808,7 @@ function select(entry) {
     const b = g.querySelector('rect').getBBox();
     viewport.zoomTo({ x: b.x - 20, y: b.y - 20, w: b.width + 40, h: b.height + 40 });
   }
-  setTimeout(() => highlight.flash(g), 200);
+  highlight.adorn(g);
 }
 
 // ---------- actions ----------
