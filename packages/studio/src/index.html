@@ -274,26 +274,47 @@
 <dialog id="help" class="dialog help">
   <form method="dialog">
     <div class="about"><img class="about-logo" src="/*@LOGO@*/" alt=""><div><div class="about-name">linemap</div><div class="about-tag">Flowcharts as metro maps · <a href="https://github.com/mergezalot/linemap" target="_blank" rel="noopener">github.com/mergezalot/linemap</a></div></div></div>
-    <h2>Keys and gestures</h2>
-    <table>
-      <tr><th>Zoom</th><td><kbd>Ctrl</kbd>+wheel, pinch, <kbd>+</kbd> <kbd>-</kbd>, double-click</td></tr>
-      <tr><th>Fit</th><td><kbd>0</kbd></td></tr>
-      <tr><th>Pan</th><td>drag the background, or drag with the middle button (also over boxes); wheel or two-finger scroll (<kbd>Shift</kbd>+wheel: sideways); arrow keys</td></tr>
-      <tr><th>Highlight a line</th><td>hover it, or its legend row</td></tr>
-      <tr><th>Pin a line</th><td>click it; <kbd>Shift</kbd>-click adds; <kbd>Esc</kbd> clears</td></tr>
-      <tr><th>Pin a node's lines</th><td>click the node (or the rim of a bundle, for its lines); <kbd>Shift</kbd>-click adds</td></tr>
-      <tr><th>Open a node's link</th><td><kbd>Ctrl</kbd>-click (<kbd>⌘</kbd>-click on a Mac)</td></tr>
-      <tr><th>Hide a line</th><td>click its legend row; <kbd>Alt</kbd>/<kbd>Shift</kbd>-click: only this line</td></tr>
-      <tr><th>Search</th><td><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>F</kbd></td></tr>
-      <tr><th>Next theme</th><td><kbd>T</kbd></td></tr>
-      <tr><th>Notes on / off</th><td><kbd>N</kbd>; off draws the map without them and puts a badge for each in its node: hover it to read the note, click it to keep the note open, click again to close it. Remembered for your next visit</td></tr>
-      <tr><th>Source</th><td><kbd>S</kbd> or Source in the toolbar: the DOT text beside the map, in view and edit mode; type in it and the map follows after a short pause (one undo step each; a text that cannot be drawn keeps the last map and marks the line). What is selected on the map (in view mode: clicked) is marked in the text, the edges that name it fainter; the caret on a statement selects what it is about (in view mode: pins its lines). Drag its edge to widen it; <kbd>Tab</kbd> indents, <kbd>Esc</kbd> leaves the text, keys typed there are only text</td></tr>
-      <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, double-click a box or note (or select it and press <kbd>F2</kbd> or <kbd>Enter</kbd>, or Edit text in its toolbar) to edit its text, the same for a selected container (or double-click its title) to rename it; click a container to select it (click again: its boxes, again: the container), drag it once selected to move all in it (they are pinned; a drag on a container not selected pans), drag its <b>+</b> onto a box or container to connect them, <kbd>Del</kbd> removes only the container, Delete with contents in its toolbar (and the edit bar) everything in it after asking; select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; click one of several selected boxes again to give them all one size; Align in their toolbar (and the edit bar) lines them up on a side or centre, or spaces them evenly (the outermost two stay), and pins them; their toolbar (and the edit bar) groups them in a new container, merges their containers into the one clicked first, splits them off into a new container, or ungroups a container (click it twice to select its boxes); a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels; &lt;b&gt; &lt;i&gt; &lt;u&gt; &lt;s&gt; &lt;font color&gt; style its text); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
-      <tr><th>Cursors</th><td>open hand: a drag pans (closed while it does); pointing hand: a click selects or pins (a container: a drag on it still pans until it is selected); four arrows: a drag moves it; double arrow: a drag resizes; crosshair: a drag draws an edge or a rectangle; plus: Add node places a box</td></tr>
-      <tr><th>Reload</th><td><kbd>R</kbd></td></tr>
-      <tr><th>Open / paste</th><td><kbd>Ctrl</kbd> <kbd>O</kbd>, drop a file, or paste DOT text anywhere; New and Follow saves are in the file name's menu</td></tr>
-    </table>
-    <p class="hint">The address keeps hidden lines, through settings, the theme, notes off and the view, so a link shows the same map.</p>
+    <!-- a cheat sheet: what each key or gesture does, in a few words; in edit mode the bar under
+         the edit bar says what can be done with what is selected -->
+    <div class="keys">
+      <section>
+        <h3>Map</h3>
+        <dl>
+          <dt>Zoom</dt><dd><kbd>Ctrl</kbd>+wheel · pinch · <kbd>+</kbd> <kbd>-</kbd></dd>
+          <dt>Fit</dt><dd><kbd>0</kbd></dd>
+          <dt>Pan</dt><dd>drag · wheel · arrow keys</dd>
+          <dt>Pin lines</dt><dd>click a line or node · <kbd>Shift</kbd> adds · <kbd>Esc</kbd> clears</dd>
+          <dt>Hide a line</dt><dd>click its legend row · <kbd>Shift</kbd>: only it</dd>
+          <dt>Open a link</dt><dd><kbd>Ctrl</kbd>-click a node</dd>
+          <dt>Search</dt><dd><kbd>/</kbd> · <kbd>Ctrl</kbd> <kbd>F</kbd></dd>
+          <dt>Next theme</dt><dd><kbd>T</kbd></dd>
+          <dt>Notes on / off</dt><dd><kbd>N</kbd></dd>
+          <dt>Reload</dt><dd><kbd>R</kbd></dd>
+          <dt>Open a file</dt><dd><kbd>Ctrl</kbd> <kbd>O</kbd> · drop · paste</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Edit <kbd>E</kbd></h3>
+        <dl>
+          <dt>Move · bend</dt><dd>drag a box · a line</dd>
+          <dt>New box</dt><dd>double-click the map</dd>
+          <dt>Connect</dt><dd>drag a box's <b>+</b> onto another</dd>
+          <dt>Edit text</dt><dd>double-click · <kbd>F2</kbd></dd>
+          <dt>Select several</dt><dd><kbd>Shift</kbd>+drag · <kbd>Shift</kbd>-click</dd>
+          <dt>Pin · unpin</dt><dd><kbd>P</kbd></dd>
+          <dt>Lines of an edge</dt><dd><kbd>L</kbd></dd>
+          <dt>Remove</dt><dd><kbd>Del</kbd></dd>
+          <dt>Undo · redo</dt><dd><kbd>Ctrl</kbd> <kbd>Z</kbd> · <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd></dd>
+          <dt>Off the grid</dt><dd><kbd>Alt</kbd> while dragging</dd>
+        </dl>
+        <h3>Source <kbd>S</kbd></h3>
+        <dl>
+          <dt>Find</dt><dd><kbd>Ctrl</kbd> <kbd>F</kbd> in the text</dd>
+          <dt>Leave the text</dt><dd><kbd>Esc</kbd></dd>
+        </dl>
+      </section>
+    </div>
+    <p class="hint">In edit mode, the bar under the edit bar says what you can do with what is selected. The address keeps the view and settings, so a link shows the same map.</p>
     <p class="hint licenses">linemap is free software under the Mozilla Public License 2.0. It includes MSAGL (MIT, Microsoft). The license texts are in this page's source.</p>
     <p class="hint copyright">© 2026 Michael Karlen</p>
     <div class="dialog-actions"><button class="btn primary" value="ok">Close</button></div>

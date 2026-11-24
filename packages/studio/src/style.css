@@ -326,10 +326,14 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .dialog textarea:focus { border-color: #b9c8e6; box-shadow: 0 0 0 3px rgba(47, 100, 200, .12); background: #fff; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .dialog-actions .btn { height: 32px; padding: 0 14px; }
-.help table { border-collapse: collapse; width: 100%; }
-.help th { text-align: left; font-weight: 500; color: var(--muted); padding: 7px 16px 7px 0; white-space: nowrap; vertical-align: top; }
-.help td { padding: 7px 0; }
-.help tr + tr > * { border-top: 1px solid var(--line); }
+.dialog.help { width: min(760px, calc(100vw - 32px)); }
+.help .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 32px; }
+.help h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); }
+.help dl + h3 { margin-top: 16px; }
+.help dl { display: grid; grid-template-columns: 8.5em 1fr; gap: 5px 14px; margin: 0; }
+.help dt { color: var(--muted); white-space: nowrap; }
+.help dd { margin: 0; }
+@media (max-width: 640px) { .help .keys { grid-template-columns: 1fr; gap: 16px; } }
 .help .hint { margin: 14px 0 0; }
 .help .about { display: flex; align-items: center; gap: 14px; margin: 2px 0 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
 .help .about-logo { width: 48px; height: 48px; flex: none; }
