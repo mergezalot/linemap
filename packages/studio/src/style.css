@@ -470,7 +470,7 @@ body.source-open { --src-right: var(--src-w); }
 .source-panel.resizing { user-select: none; }
 
 /* before the first map: only the ways to load one */
-body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .edit-group, body.nomap .search, body.nomap #export, body.nomap .tb-sep, body.nomap .zoom { display: none; }
+body.nomap .through-group, body.nomap .dirs-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .edit-group, body.nomap .search, body.nomap #export, body.nomap .tb-sep, body.nomap .zoom { display: none; }
 
 /* ---------- narrow screens ---------- */
 /* Labels go before the toolbar would wrap: main.mjs sets .compact when the file name would be
@@ -509,7 +509,7 @@ body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, bod
   .tb-more .fancy-btn { border: 1px solid var(--line); }
   .tb-more .theme-btn .icon.small { margin-left: auto; }
   .tb-more .split { display: flex; flex-wrap: wrap; }
-  .tb-more #through-split .split-main { flex: 1; }
+  .tb-more #through-split .split-main, .tb-more #dirs-split .split-main { flex: 1; }
   .tb-more > .tb-sep:first-child { display: none; } /* (it parts the file name from the rest on wide screens) */
   .tb-more .through-menu, .tb-more .theme-menu { flex-basis: 100%; }
   .tb-more .through-menu { position: static; margin-top: 4px; min-width: 0; max-width: none; box-shadow: none; }

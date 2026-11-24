@@ -26,7 +26,7 @@ const $ = (id) => document.getElementById(id);
 const el = {
   toolbar: document.querySelector('.toolbar'),
   fileName: $('file-name'), recent: $('recent'), sourcePanel: $('source-panel'),
-  through: $('through'), notes: $('notes'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
+  through: $('through'), dirs: $('dirs'), notes: $('notes'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
   search: $('search'), results: $('results'), export: $('export'), helpBtn: $('help-btn'),
   menuBtn: $('menu-btn'), more: $('tb-more'),
   banner: $('banner'), stage: $('stage'), map: $('map'), empty: $('empty'), busy: $('busy'), legend: $('legend'),
@@ -350,7 +350,28 @@ const throughSplit = createSplit(document.getElementById('through-split'), {
   onMain: () => state.set({ mode: MODES[(MODES.indexOf(state.get().mode) + 1) % MODES.length] }),
   renderMenu: () => MODES.map((m) => `<button class="item" role="menuitemradio" aria-checked="${m === state.get().mode}" data-value="${m}"><svg class="icon"><use href="#i-through-${m}"/></svg><span class="txt"><span class="nm">${THROUGH[m].label}</span><span class="desc">${THROUGH[m].desc}</span></span><svg class="icon check"><use href="#i-check"/></svg></button>`).join(''),
   onPick: (m) => { if (m !== state.get().mode) state.set({ mode: m }); },
-  onOpen: () => { el.recent.hidden = true; themeSplit.close(); },
+  onOpen: () => { el.recent.hidden = true; themeSplit.close(); dirsSplit.close(); },
+});
+// line directions (experimental): a split button, a click switches between 4 and 8, the arrow
+// also offers the file's own (`diagonals`)
+const DIRS = {
+  file: { label: 'As in file', title: 'Line directions: as in the file', desc: 'As the file says (diagonals=true: 8)' },
+  4: { label: '4 directions', title: 'Line directions: 4, right angles only', desc: 'Lines bend at right angles' },
+  8: { label: '8 directions', title: 'Line directions: 8, corners cut at 45° (experimental)', desc: 'Corners cut at 45° where there is room (experimental)' },
+};
+const DIR_MODES = Object.keys(DIRS).sort((a, b) => (a === 'file' ? -1 : b === 'file' ? 1 : a - b));
+// what a click switches to: the other of 4 and 8 from what is drawn now
+const nextDirs = () => {
+  const { dirs } = state.get();
+  const eight = dirs === 'file' ? !!shown?.base.diagonals : dirs === '8';
+  return eight ? '4' : '8';
+};
+el.dirs.querySelector('.stack').innerHTML = DIR_MODES.map((m) => `<span data-m="${m}">${DIRS[m].label}</span>`).join('');
+const dirsSplit = createSplit(document.getElementById('dirs-split'), {
+  onMain: () => state.set({ dirs: nextDirs() }),
+  renderMenu: () => DIR_MODES.map((m) => `<button class="item" role="menuitemradio" aria-checked="${m === state.get().dirs}" data-value="${m}"><svg class="icon"><use href="#i-dirs-${m}"/></svg><span class="txt"><span class="nm">${DIRS[m].label}</span><span class="desc">${DIRS[m].desc}</span></span><svg class="icon check"><use href="#i-check"/></svg></button>`).join(''),
+  onPick: (m) => { if (m !== state.get().dirs) state.set({ dirs: m }); },
+  onOpen: () => { el.recent.hidden = true; themeSplit.close(); throughSplit.close(); },
 });
 // notes on, or off: the map without them, a badge for each (hover one to read it, click to keep
 // it open); remembered for the next visit
@@ -387,7 +408,7 @@ const themeSplit = createSplit(document.getElementById('theme-split'), {
   attr: 'theme',
   onMain: () => { const cur = effectiveTheme(), base = baseOf(cur); setTheme(isFancy(cur) ? base : base + FANCY); },
   onPick: setTheme,
-  onOpen: () => { el.recent.hidden = true; throughSplit.close(); },
+  onOpen: () => { el.recent.hidden = true; throughSplit.close(); dirsSplit.close(); },
 });
 const showThemes = (open) => { if (!open) themeSplit.close(); };
 // The page around the map follows the theme: dark chrome for dark maps.
@@ -410,6 +431,11 @@ function updateToolbar() {
   el.through.querySelector('use').setAttribute('href', `#i-through-${mode}`);
   for (const l of el.through.querySelectorAll('.stack > span')) l.classList.toggle('on', l.dataset.m === mode);
   el.through.title = `${THROUGH[mode].title}. Click: ${THROUGH[next].label.toLowerCase()}`;
+  const { dirs } = state.get();
+  el.dirs.dataset.dirs = dirs;
+  el.dirs.querySelector('use').setAttribute('href', `#i-dirs-${dirs}`);
+  for (const l of el.dirs.querySelectorAll('.stack > span')) l.classList.toggle('on', l.dataset.m === dirs);
+  el.dirs.title = `${DIRS[dirs].title}. Click: ${DIRS[nextDirs()].label.toLowerCase()}`;
   const theme = state.get().theme ?? effectiveTheme();
   for (const b of el.theme.querySelectorAll('button')) b.setAttribute('aria-checked', String(b.dataset.theme === theme));
   for (const r of el.theme.querySelectorAll('.row')) r.classList.toggle('on', r.dataset.base === baseOf(theme));
@@ -658,6 +684,7 @@ el.fileName.addEventListener('click', (e) => {
   if (!el.recent.hidden) { el.recent.hidden = true; return; }
   showThemes(false);
   throughSplit.close();
+  dirsSplit.close();
   renderRecent();
   el.recent.hidden = false;
 });
@@ -822,7 +849,7 @@ window.addEventListener('keydown', (e) => {
       const cur = effectiveTheme(), next = BASES[(BASES.indexOf(baseOf(cur)) + 1) % BASES.length];
       setTheme(isFancy(cur) && THEMES[next + FANCY] ? next + FANCY : next);
     },
-    Escape: () => { el.recent.hidden = true; showThemes(false); throughSplit.close(); setMenu(false); highlight.clearPins(); highlight.foldNotes(); hideBanner(); },
+    Escape: () => { el.recent.hidden = true; showThemes(false); throughSplit.close(); dirsSplit.close(); setMenu(false); highlight.clearPins(); highlight.foldNotes(); hideBanner(); },
   };
   const fn = keys[e.key];
   if (!fn || (!shown && !['/', '?', 'Escape', 's'].includes(e.key))) return;

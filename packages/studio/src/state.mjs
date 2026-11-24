@@ -1,8 +1,8 @@
-// The view settings that change the drawing (hidden lines, lines through nodes, the theme, notes
-// off) and the URL hash that carries them, plus the file and the view rectangle, so a link shows
+// The view settings that change the drawing (hidden lines, lines through nodes, directions, the
+// theme, notes off) and the URL hash that carries them, plus the file and the view rectangle, so a link shows
 // the same map:
-//   #src=flows/a.dot&hide=A,B&through=all&theme=dark&notes=off&view=x,y,w,h
-// theme null = the DOT file's own theme, else minimal. notes: true shows them; false lays the map
+//   #src=flows/a.dot&hide=A,B&through=all&dirs=8&theme=dark&notes=off&view=x,y,w,h
+// dirs 'file' = the DOT file's `diagonals`, '4' or '8' overrides it. theme null = the DOT file's own theme, else minimal. notes: true shows them; false lays the map
 // out without them and puts a badge for each in its node. `src` is in the hash, not the query, so
 // it works in pages with baked-in flows too: hosts such as Notion put their own ?src= into the
 // query. The hash is written with history.replaceState (no history spam).
@@ -10,8 +10,9 @@
 import { THEME_NAMES } from '@linemap/core';
 
 const MODES = ['file', 'all', 'none'];
+export const DIRS = ['file', '4', '8'];
 
-const emptySettings = () => ({ hidden: new Set(), mode: 'file', theme: null, notes: true });
+const emptySettings = () => ({ hidden: new Set(), mode: 'file', dirs: 'file', theme: null, notes: true });
 
 // One settings object, replaced (never mutated) on every change, and one change event.
 export function createState(initial = emptySettings()) {
@@ -46,6 +47,7 @@ export function readHash(hash = location.hash) {
     if (k === 'src') src = dec(v) || null;
     else if (k === 'hide') settings.hidden = new Set(v.split(',').filter(Boolean).map(dec));
     else if (k === 'through' && MODES.includes(v)) settings.mode = v;
+    else if (k === 'dirs' && DIRS.includes(v) && v !== 'file') settings.dirs = v;
     else if (k === 'theme' && THEME_NAMES.includes(v)) settings.theme = v;
     else if (k === 'notes' && (v === 'on' || v === 'off')) { settings.notes = v === 'on'; given.add('notes'); }
     else if (k === 'view') {
@@ -61,6 +63,7 @@ export function hashOf(settings, view, src = null) {
   if (src) parts.push(`src=${encSrc(src)}`);
   if (settings.hidden.size) parts.push(`hide=${[...settings.hidden].map(enc).join(',')}`);
   if (settings.mode !== 'file') parts.push(`through=${settings.mode}`);
+  if (settings.dirs && settings.dirs !== 'file') parts.push(`dirs=${settings.dirs}`);
   if (settings.theme) parts.push(`theme=${settings.theme}`);
   if (!settings.notes) parts.push('notes=off');
   if (view) parts.push(`view=${[view.x, view.y, view.w, view.h].map((v) => Math.round(v)).join(',')}`);

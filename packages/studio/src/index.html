@@ -24,6 +24,11 @@
          none (the line ends at the box); the line in the accent colour -->
     <symbol id="i-through-file" viewBox="0 0 16 16"><path d="M4.4 1.8h4.8l2.6 2.6v9.8H4.4z"/><path d="M1.2 9.4h13.6" style="stroke: var(--accent)"/></symbol>
     <symbol id="i-through-all" viewBox="0 0 16 16"><rect x="4.6" y="3.6" width="6.8" height="8.8" rx="1.4"/><path d="M1.2 8h13.6" style="stroke: var(--accent)"/></symbol>
+    <!-- line directions: as in the file (a page a line bends across at 45°), 4 (a right-angle bend),
+         8 (a 45° bend) -->
+    <symbol id="i-dirs-file" viewBox="0 0 16 16"><path d="M4.4 1.8h4.8l2.6 2.6v9.8H4.4z"/><path d="M1.2 11.6h3.2l6.4-6.4h4" style="stroke: var(--accent)"/></symbol>
+    <symbol id="i-dirs-4" viewBox="0 0 16 16"><path d="M1.5 12.5h7v-9h6" style="stroke: var(--accent)"/></symbol>
+    <symbol id="i-dirs-8" viewBox="0 0 16 16"><path d="M1.5 12.5h3.5l7-7h2.5" style="stroke: var(--accent)"/></symbol>
     <symbol id="i-through-none" viewBox="0 0 16 16"><rect x="4.6" y="3.6" width="6.8" height="8.8" rx="1.4"/><path d="M1.2 8h2.2M12.6 8h2.2" style="stroke: var(--accent)"/></symbol>
     <symbol id="i-chevron-up" viewBox="0 0 16 16"><path d="m4.5 9.8 3.5-3.5 3.5 3.5"/></symbol>
     <symbol id="i-collapse" viewBox="0 0 16 16"><path d="m4 4.5 3.5 3.5L4 11.5M8.5 4.5 12 8l-3.5 3.5"/></symbol>
@@ -82,6 +87,15 @@
         <button id="through" class="btn split-main" data-mode="file"><svg class="icon"><use href="#i-through-file"/></svg><span class="lbl"><span class="stack"></span></span></button>
         <button class="btn split-arrow" aria-haspopup="menu" aria-expanded="false" aria-label="Lines through nodes: choose" title="Lines through nodes: choose"><svg class="icon small"><use href="#i-chevron"/></svg></button>
         <div id="through-menu" class="popover menu through-menu" role="menu" aria-label="Lines through nodes" hidden></div>
+      </div>
+    </div>
+    <div class="tb-group dirs-group">
+      <!-- a split button: a click switches between 4 and 8 directions, the arrow also offers the
+           file's own; main.mjs sets the icon, label and title -->
+      <div class="split" id="dirs-split">
+        <button id="dirs" class="btn split-main" data-dirs="file"><svg class="icon"><use href="#i-dirs-file"/></svg><span class="lbl"><span class="stack"></span></span></button>
+        <button class="btn split-arrow" aria-haspopup="menu" aria-expanded="false" aria-label="Line directions: choose" title="Line directions: choose"><svg class="icon small"><use href="#i-chevron"/></svg></button>
+        <div id="dirs-menu" class="popover menu through-menu" role="menu" aria-label="Line directions" hidden></div>
       </div>
     </div>
     <div class="tb-group theme-group">

@@ -22,12 +22,13 @@ export { editDot, labelSource, statementsOf, parseFlow, crowding, render, canThr
 //   notes        'show' (default) or 'hide': lay out and route the map as if the notes were not
 //                there, so boxes and lines may take their room. The notes left out move to
 //                `model.hiddenNotes`, unplaced; render draws none of them, unless asked for icons.
+//   diagonals    true or false overrides the file's `diagonals` (experimental: 45° corners).
 //   legend       false: `legendpos` is ignored, so nothing keeps clear of it; for an SVG without
 //                a legend (render with { legend: false }), or one whose legend is drawn elsewhere.
 //                A legend rendered anyway goes outside the map, by its `legend` anchor.
 // Routing (MSAGL) comes after placement, so it never moves a box.
 export const NOTE_MODES = ['show', 'hide'];
-export function layout(model, { hiddenLines, through, fixed, notes = 'show', legend = true } = {}) {
+export function layout(model, { hiddenLines, through, fixed, notes = 'show', legend = true, diagonals } = {}) {
   // Stages write into the model (positions, paths, strands), so a second run would build on the
   // first one's results.
   if (model.laidOut) throw new Error('layout: this model is already laid out; parse the DOT text again');
@@ -48,6 +49,7 @@ export function layout(model, { hiddenLines, through, fixed, notes = 'show', leg
       n.through = nodes?.get(n.id) ?? (mode === 'all' ? true : mode === 'none' ? false : n.through);
     }
   }
+  if (diagonals !== undefined) model.diagonals = !!diagonals;
   if (!legend) {
     model.items.delete(LEGEND_ID);
     model.legend.at = null;

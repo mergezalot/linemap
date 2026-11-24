@@ -219,6 +219,29 @@ for (const src of EXAMPLES) {
   await rerun(page, () => page.click('#through'));
   check(afterAll === 'none' && await throughMode(page) === 'file', `a click goes on to the next mode (all -> ${afterAll} -> ${await throughMode(page)})`);
 
+  // directions: a click switches to 8, the map gets 45° segments and keeps its boxes; the menu
+  // goes back to the file's own
+  const boxes = () => page.evaluate(() => [...document.querySelectorAll('#map g.node')].map((g) => g.getBBox()).map((b) => `${Math.round(b.x)},${Math.round(b.y)}`).join(' '));
+  // a lane's drawn path has a diagonal: a straight 40 px piece (its middle on the line between its
+  // ends, which corners and curves through nodes are not) that moves as far across as along
+  const diagonals = () => page.evaluate(() => [...document.querySelectorAll('#map svg path[data-line]')].some((p) => {
+    const n = p.getTotalLength();
+    for (let d = 0; d + 40 < n; d += 5) {
+      const [a, m, b] = [p.getPointAtLength(d), p.getPointAtLength(d + 20), p.getPointAtLength(d + 40)];
+      const straight = Math.abs(m.x - (a.x + b.x) / 2) < 0.3 && Math.abs(m.y - (a.y + b.y) / 2) < 0.3;
+      if (straight && Math.abs(Math.abs(a.x - b.x) - Math.abs(a.y - b.y)) < 0.5) return true;
+    }
+    return false;
+  }));
+  const before = await boxes();
+  check(!(await diagonals()), 'directions as in file: no diagonals');
+  await rerun(page, () => page.click('#dirs'));
+  check(await page.evaluate(() => document.getElementById('dirs').dataset.dirs) === '8' && await diagonals(), 'a click on directions: 8, with diagonals');
+  check(await boxes() === before, 'directions move no box');
+  await shot(page, `${name}-4-dirs-8`);
+  await rerun(page, async () => { await page.click('#dirs-split .split-arrow'); await page.click('#dirs-menu [data-value="file"]'); });
+  check(await page.evaluate(() => document.getElementById('dirs').dataset.dirs) === 'file' && !(await diagonals()), 'directions back to the file\'s own');
+
   // click a node: pins its lines (no rerun, no through toggle); again: unpins
   const target = await page.evaluate(() => {
     for (const g of document.querySelectorAll('#map g.node')) {

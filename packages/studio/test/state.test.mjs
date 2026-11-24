@@ -25,3 +25,12 @@ test('no src, no src part', () => {
   assert.equal(hashOf(settings(), null, null), '');
   assert.equal(hashOf(settings([], 'all'), { x: 1, y: 2, w: 3, h: 4 }), '#through=all&view=1,2,3,4');
 });
+
+test('dirs: 4 or 8 goes into the hash and back; the file\'s own is left out', () => {
+  const s = { ...settings(), dirs: '8' };
+  assert.equal(hashOf(s, null), '#dirs=8');
+  assert.equal(readHash('#dirs=8').settings.dirs, '8');
+  assert.equal(readHash('#dirs=4').settings.dirs, '4');
+  assert.equal(hashOf({ ...settings(), dirs: 'file' }, null), '');
+  for (const h of ['#dirs=6', '#dirs=file', '#dirs=']) assert.equal(readHash(h).settings.dirs, 'file');
+});
