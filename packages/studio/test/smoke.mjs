@@ -548,6 +548,11 @@ console.log('file:// page, recent list, empty state');
   await page.click('#paste-dialog button[value="ok"]');
   await ready(page);
   check(true, 'pasted text drawn from a file:// page (no fetches needed)');
+  const kept = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).map((k) => [k, localStorage.getItem(k)])));
+  check(JSON.parse(kept['linemap:last'] ?? 'null')?.text?.includes('digraph'), 'pasted text kept in localStorage');
+  // Chromium hands a page's localStorage writes on to the browser a moment later, and a reload
+  // right away can start without them (seen on slow CI runners): put back what is missing.
+  await page.addInitScript((kv) => { for (const [k, v] of Object.entries(kv)) if (localStorage.getItem(k) === null) localStorage.setItem(k, v); }, kept);
   await page.reload();
   await ready(page);
   check(await page.evaluate(() => document.querySelector('#file-name .name').textContent) === 'platform (pasted)', 'last file reopens after reload (localStorage), named after the graph');
