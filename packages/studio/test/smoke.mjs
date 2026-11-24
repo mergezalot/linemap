@@ -247,9 +247,10 @@ for (const src of EXAMPLES) {
     }), [target.id, svgBefore]);
     check(now.same && now.through === target.was, `click node ${target.id}: no rerun, through unchanged`);
     check(now.pinned > 0 && now.focus, `click node ${target.id} pins its lines (${now.pinned})`);
+    check(await page.evaluate(() => { const f = document.querySelectorAll('#map .lm-found'); return f.length === 1 && f[0].getAnimations().length === 0 && !document.querySelector('#map .flash'); }), 'and outlines it, nothing flashing');
     await page.mouse.click(target.x, target.y);
     await page.waitForTimeout(100);
-    check(await page.evaluate(() => !document.querySelector('#legend li.on')), `click node ${target.id} again unpins`);
+    check(await page.evaluate(() => !document.querySelector('#legend li.on') && !document.querySelector('#map .lm-found')), `click node ${target.id} again unpins, the outline goes`);
     await page.keyboard.press('Escape');
   } else check(false, 'found a node to click');
 
