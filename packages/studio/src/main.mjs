@@ -43,6 +43,23 @@ const el = {
 // The toolbar wraps on narrow screens; the stage starts below it.
 new ResizeObserver(() => document.documentElement.style.setProperty('--tb-h', `${el.toolbar.offsetHeight}px`)).observe(el.toolbar);
 
+// Labels fold away when the toolbar would not fit with them: fonts differ in width, so no fixed
+// breakpoint knows when that is. The file name gives way first, down to FILE_MIN px (or its own
+// width); squeezed below that, the labels go. Narrow screens fold the controls into a menu instead.
+const FILE_MIN = 120;
+const narrow = matchMedia('(max-width: 860px)');
+let fitQueued = false;
+function fitToolbar() {
+  fitQueued = false;
+  const tb = el.toolbar, name = el.fileName.querySelector('.name');
+  tb.classList.remove('compact');
+  if (!narrow.matches && name.clientWidth < Math.min(name.scrollWidth, FILE_MIN)) tb.classList.add('compact');
+}
+const queueFit = () => { if (!fitQueued) { fitQueued = true; requestAnimationFrame(fitToolbar); } };
+new ResizeObserver(queueFit).observe(el.toolbar);
+new MutationObserver(queueFit).observe(el.toolbar, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
+narrow.addEventListener('change', queueFit);
+
 const toast = toaster(el.toast);
 // flows baked into the page (build --embed)
 let embedded = [];

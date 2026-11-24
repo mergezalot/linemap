@@ -84,7 +84,8 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .menu-btn { display: none; order: 5; }
 .lbl.in-menu { display: none; }
 .file-name { font-weight: 550; }
-.file-name .name { overflow: hidden; text-overflow: ellipsis; }
+.file-name .name { overflow: hidden; text-overflow: ellipsis; min-width: 0; } /* min-width: or it never shrinks */
+.brand, .file-name .icon { flex: none; }
 
 .seg { display: inline-flex; padding: 2px; border-radius: 7px; background: var(--seg-bg); }
 .seg button {
@@ -415,17 +416,16 @@ body.source-open { --src-right: var(--src-w); }
 body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .edit-group, body.nomap .search, body.nomap #export, body.nomap #positions, body.nomap .tb-sep, body.nomap .zoom { display: none; }
 
 /* ---------- narrow screens ---------- */
-/* Labels go before the toolbar would wrap (width measured with a short file name; a longer one
-   is cut short with an ellipsis instead). */
+/* Labels go before the toolbar would wrap: main.mjs sets .compact when the file name would be
+   squeezed too far (a long one is cut short with an ellipsis first). */
 .toolbar { flex-wrap: nowrap; }
 .brand-group, .file { min-width: 0; }
 .file-name { max-width: min(32ch, 100%); }
-@media (max-width: 1200px) {
-  .btn .lbl, .tb-label, .brand-name { display: none; }
-  .search input { width: 150px; }
-}
+.toolbar.compact .btn .lbl, .toolbar.compact .tb-label, .toolbar.compact .brand-name { display: none; }
+.toolbar.compact .search input { width: 150px; }
 /* narrow screens: one row (file, search, menu button); the rest folds into a menu under it */
 @media (max-width: 860px) {
+  .btn .lbl, .tb-label, .brand-name { display: none; } /* the menu shows its own again, below */
   .search { flex: 1 1 80px; min-width: 80px; max-width: 320px; margin-left: auto; }
   .search input { width: 100%; }
   .spacer { display: none; }
