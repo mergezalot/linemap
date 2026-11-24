@@ -13,13 +13,14 @@
   <defs>
     <symbol id="i-open" viewBox="0 0 16 16"><path d="M1.8 4.2c0-.7.5-1.2 1.2-1.2h3l1.4 1.6h5.6c.7 0 1.2.5 1.2 1.2v6.4c0 .7-.5 1.2-1.2 1.2H3c-.7 0-1.2-.5-1.2-1.2z"/></symbol>
     <symbol id="i-paste" viewBox="0 0 16 16"><rect x="3" y="2.8" width="10" height="11.4" rx="1.4"/><path d="M6 2.8V2h4v.8M5.8 7h4.4M5.8 9.8h4.4"/></symbol>
-    <symbol id="i-reload" viewBox="0 0 16 16"><path d="M13.2 8a5.2 5.2 0 1 1-1.6-3.8M13.2 2.2v2.6h-2.6"/></symbol>
+    <symbol id="i-new" viewBox="0 0 16 16"><path d="M9.2 1.8H4.2c-.7 0-1.2.5-1.2 1.2v10c0 .7.5 1.2 1.2 1.2h7.6c.7 0 1.2-.5 1.2-1.2V5.6zM9.2 1.8v3.8H13M8 7.6v4.2M5.9 9.7h4.2"/></symbol>
     <symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.5 8S4 3.6 8 3.6 14.5 8 14.5 8 12 12.4 8 12.4 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></symbol>
     <symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2.2v8M4.8 7.2 8 10.4l3.2-3.2M2.6 13.6h10.8"/></symbol>
     <symbol id="i-pin" viewBox="0 0 16 16"><path d="M8 14.2s4.6-4.3 4.6-7.6a4.6 4.6 0 0 0-9.2 0c0 3.3 4.6 7.6 4.6 7.6z"/><circle cx="8" cy="6.6" r="1.6"/></symbol>
     <symbol id="i-unpin" viewBox="0 0 16 16"><path d="M8 14.2s4.6-4.3 4.6-7.6a4.6 4.6 0 0 0-9.2 0c0 3.3 4.6 7.6 4.6 7.6z"/><circle cx="8" cy="6.6" r="1.6"/><path d="m2.4 2.4 11.2 11.2"/></symbol>
     <symbol id="i-resize" viewBox="0 0 16 16"><path d="M9.4 2.6h4v4M13.4 2.6 9 7M6.6 13.4h-4v-4M2.6 13.4 7 9"/></symbol>
     <symbol id="i-help" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.3a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.4"/><circle cx="8" cy="11.4" r=".4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="m3.2 8.4 3 3 6.6-6.8"/></symbol>
     <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
     <symbol id="i-minus" viewBox="0 0 16 16"><path d="M3 8h10"/></symbol>
     <symbol id="i-fit" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></symbol>
@@ -57,8 +58,8 @@
   <div class="tb-group brand-group">
     <span class="brand"><img class="logo" src="/*@LOGO@*/" alt=""><span class="brand-name">linemap</span></span>
     <div class="file">
-      <button id="file-name" class="btn file-name" title="Recent files" aria-haspopup="menu">
-        <span class="name">No file</span><svg class="icon small"><use href="#i-chevron"/></svg>
+      <button id="file-name" class="btn file-name" title="File: new, open, recent (Ctrl+O opens)" aria-haspopup="menu">
+        <span class="name">No file</span><span class="live" title="Following saves: the map redraws when the file changes" hidden></span><svg class="icon small"><use href="#i-chevron"/></svg>
       </button>
       <div id="recent" class="popover menu" role="menu" hidden></div>
     </div>
@@ -66,13 +67,6 @@
   <!-- the controls that fold into the menu button on narrow screens; on wide ones the box is
        transparent (display: contents) and they sit in the toolbar -->
   <div id="tb-more" class="tb-more">
-    <div class="tb-group file-group">
-      <button id="open" class="btn" title="Open a DOT file"><svg class="icon"><use href="#i-open"/></svg><span class="lbl">Open</span></button>
-      <button id="paste" class="btn" title="Paste DOT text"><svg class="icon"><use href="#i-paste"/></svg><span class="lbl">Paste</span></button>
-      <button id="reload" class="btn" title="Reload (R)"><svg class="icon"><use href="#i-reload"/></svg><span class="lbl in-menu">Reload</span></button>
-      <button id="source-btn" class="btn" aria-pressed="false" aria-controls="source-panel" title="The DOT source beside the map, to read and edit (S)" hidden><svg class="icon"><use href="#i-code"/></svg><span class="lbl">Source</span></button>
-      <button id="watch" class="btn" title="Watch the file: redraw when it is saved (kept when you reload the page)" aria-pressed="false" hidden><svg class="icon"><use href="#i-eye"/></svg><span class="lbl">Watch</span></button>
-    </div>
     <div class="tb-sep"></div>
     <div class="tb-group through-group">
       <span class="tb-label">Through</span>
@@ -99,6 +93,7 @@
     </div>
     <div class="tb-group edit-group">
       <button id="edit" class="btn" aria-pressed="false" title="Edit the map: move, add and connect boxes, bend lines (E)"><svg class="icon"><use href="#i-edit"/></svg><span class="lbl">Edit</span></button>
+      <button id="source-btn" class="btn" aria-pressed="false" aria-controls="source-panel" title="The DOT source beside the map, to read and edit (S)" hidden><svg class="icon"><use href="#i-code"/></svg><span class="lbl">Source</span></button>
     </div>
     <div class="tb-group out-group">
       <button id="export" class="btn" title="Download the map as SVG"><svg class="icon"><use href="#i-download"/></svg><span class="lbl">SVG</span></button>
@@ -129,10 +124,10 @@
     <div class="flows" hidden><h2>In this file</h2><div class="links"></div></div>
     <div class="empty-actions">
       <button class="btn primary" data-act="open"><svg class="icon"><use href="#i-open"/></svg>Open file</button>
-      <button class="btn" data-act="paste"><svg class="icon"><use href="#i-paste"/></svg>Paste text</button>
+      <button class="btn" data-act="new"><svg class="icon"><use href="#i-new"/></svg>New flow</button>
     </div>
     <ul class="ways">
-      <li>or drop a <code>.dot</code> file anywhere on this page</li>
+      <li>or drop a <code>.dot</code> file, or paste DOT text, anywhere on this page</li>
       <li>or add <code>#src=path/to/flow.dot</code> to the address (served over http)</li>
     </ul>
     <div class="examples" hidden><h2>Examples</h2><div class="links"></div></div>
@@ -207,16 +202,6 @@
 <div id="drop" class="drop" hidden><div>Drop a DOT file to open it</div></div>
 <input id="file-input" type="file" accept=".dot,.gv,.txt,text/plain,text/vnd.graphviz" hidden>
 
-<dialog id="paste-dialog" class="dialog">
-  <form method="dialog">
-    <h2>Paste DOT text</h2>
-    <textarea name="text" rows="14" spellcheck="false" placeholder="digraph flow { ... }"></textarea>
-    <div class="dialog-actions">
-      <button class="btn" value="cancel" formnovalidate>Cancel</button>
-      <button class="btn primary" value="ok">Show map</button>
-    </div>
-  </form>
-</dialog>
 
 <dialog id="positions-dialog" class="dialog">
   <form method="dialog">
@@ -304,7 +289,7 @@
       <tr><th>Edit</th><td><kbd>E</kbd>, then drag a box to move it, drag a line to bend it, double-click the map for a new box; select a box and drag its <b>+</b> onto another to connect them, double-click a box or note (or select it and press <kbd>F2</kbd> or <kbd>Enter</kbd>, or Edit text in its toolbar) to edit its text, the same for a selected container (or double-click its title) to rename it; click a container to select it (click again: its boxes, again: the container), drag it once selected to move all in it (they are pinned; a drag on a container not selected pans), drag its <b>+</b> onto a box or container to connect them, <kbd>Del</kbd> removes only the container, Delete with contents in its toolbar (and the edit bar) everything in it after asking; select a line and drag its ends to reattach it; <kbd>Shift</kbd>+drag the background to select the boxes in a rectangle; click one of several selected boxes again to give them all one size; Align in their toolbar (and the edit bar) lines them up on a side or centre, or spaces them evenly (the outermost two stay), and pins them; their toolbar (and the edit bar) groups them in a new container, merges their containers into the one clicked first, splits them off into a new container, or ungroups a container (click it twice to select its boxes); a pin marks a pinned box, click it to unpin the box; the toolbar above a selected box adds a note to it (<kbd>Ctrl</kbd> <kbd>Enter</kbd> adds, <kbd>Esc</kbd> cancels; &lt;b&gt; &lt;i&gt; &lt;u&gt; &lt;s&gt; &lt;font color&gt; style its text); <kbd>Del</kbd> removes, <kbd>Ctrl</kbd> <kbd>Z</kbd> undoes. <kbd>Alt</kbd> while dragging: off the grid</td></tr>
       <tr><th>Cursors</th><td>open hand: a drag pans (closed while it does); pointing hand: a click selects or pins (a container: a drag on it still pans until it is selected); four arrows: a drag moves it; double arrow: a drag resizes; crosshair: a drag draws an edge or a rectangle; plus: Add node places a box</td></tr>
       <tr><th>Reload</th><td><kbd>R</kbd></td></tr>
-      <tr><th>Open / paste</th><td>drop a file, or paste DOT text anywhere</td></tr>
+      <tr><th>Open / paste</th><td><kbd>Ctrl</kbd> <kbd>O</kbd>, drop a file, or paste DOT text anywhere; New and Follow saves are in the file name's menu</td></tr>
     </table>
     <p class="hint">The address keeps hidden lines, through settings, the theme, notes off and the view, so a link shows the same map.</p>
     <p class="hint licenses">linemap is free software under the Mozilla Public License 2.0. It includes MSAGL (MIT, Microsoft). The license texts are in this page's source.</p>

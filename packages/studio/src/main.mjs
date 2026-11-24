@@ -17,21 +17,21 @@ import { createLegend } from './legend.mjs';
 import { createSearch } from './search.mjs';
 import { createEditor } from './editor.mjs';
 import { createSourcePanel } from './sourcepanel.mjs';
-import { download, positionsText, copyOrShow, askText, askLabel, askLines, askNote, askConfirm, toaster } from './actions.mjs';
+import { download, positionsText, copyOrShow, askLabel, askLines, askNote, askConfirm, toaster } from './actions.mjs';
 
 const $ = (id) => document.getElementById(id);
 // All page elements are looked up now, before any map is inserted: ids from the DOT file end up
 // as element ids in the SVG and could shadow ours.
 const el = {
   toolbar: document.querySelector('.toolbar'),
-  fileName: $('file-name'), recent: $('recent'), open: $('open'), paste: $('paste'), reload: $('reload'), watch: $('watch'), sourceBtn: $('source-btn'), sourcePanel: $('source-panel'),
+  fileName: $('file-name'), recent: $('recent'), sourceBtn: $('source-btn'), sourcePanel: $('source-panel'),
   through: $('through'), notes: $('notes'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
   search: $('search'), results: $('results'), export: $('export'), positions: $('positions'), helpBtn: $('help-btn'),
   menuBtn: $('menu-btn'), more: $('tb-more'),
   banner: $('banner'), stage: $('stage'), map: $('map'), empty: $('empty'), busy: $('busy'), legend: $('legend'),
   zoomIn: $('zoom-in'), zoomOut: $('zoom-out'), zoomFit: $('zoom-fit'),
   tooltip: $('tooltip'), toast: $('toast'), drop: $('drop'), fileInput: $('file-input'),
-  pasteDialog: $('paste-dialog'), positionsDialog: $('positions-dialog'), help: $('help'),
+  positionsDialog: $('positions-dialog'), help: $('help'),
   flows: $('linemap-flows'),
   edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editDeleteAll: $('edit-delete-all'), editLines: $('edit-lines'), editText: $('edit-text'),
   editPin: $('edit-pin'), editUnpin: $('edit-unpin'),
@@ -433,12 +433,11 @@ function updateToolbar() {
   el.notes.title = notes ? 'Notes: shown. Click to draw the map without them, with a badge for each (N)' : 'Notes: off, a badge for each; hover one to read it, click to keep it open. Click to show them all (N)';
   const cur = source.current();
   el.fileName.querySelector('.name').textContent = cur?.name ?? 'No file';
-  el.fileName.title = cur?.src ? `${cur.src} · recent files` : 'Recent files';
+  el.fileName.title = `${cur?.src ? `${cur.src} · ` : ''}File: new, open, recent (Ctrl+O opens)`;
+  el.fileName.querySelector('.live').hidden = !source.watching();
   document.title = cur ? `${cur.name} · linemap` : 'linemap studio';
-  el.watch.hidden = !source.canWatch();
   el.sourceBtn.hidden = !cur;
-  el.watch.setAttribute('aria-pressed', String(source.watching()));
-  for (const b of [el.export, el.positions, el.reload, el.zoomIn, el.zoomOut, el.zoomFit, el.edit]) b.disabled = !shown;
+  for (const b of [el.export, el.positions, el.zoomIn, el.zoomOut, el.zoomFit, el.edit]) b.disabled = !shown;
   document.body.classList.toggle('nomap', !shown);
   updateEditBar();
 }
@@ -629,25 +628,33 @@ const source = createSource({
 
 source.bindDrop(el.drop);
 source.bindPaste();
-el.open.addEventListener('click', () => el.fileInput.click());
+const openFile = () => el.fileInput.click();
 el.fileInput.addEventListener('change', () => {
   const f = el.fileInput.files[0];
   if (f) source.loadFile(f);
   el.fileInput.value = '';
 });
-async function pasteDialog() {
-  const text = await askText(el.pasteDialog);
-  if (text) source.loadText(text);
+// New: a small flow to start from, with the source open beside it to write the rest
+const STARTER = `digraph untitled {
+  subgraph lines {
+    A [label="Line A"]
+  }
+  start [label="Start"]
+  end   [label="End"]
+  start -> end [lines=A]
 }
-el.paste.addEventListener('click', pasteDialog);
-el.reload.addEventListener('click', () => source.reload());
-el.watch.addEventListener('click', () => {
+`;
+function newFlow() {
+  source.loadText(STARTER, 'untitled');
+  sourcePanel.setOpen(true);
+}
+function toggleFollow() {
   const on = !source.watching();
   source.setWatch(on, { remember: true });
-  toast(on ? 'Watching the file: the map follows every save' : 'Stopped watching');
-});
+  toast(on ? 'Following saves: the map redraws when the file changes' : 'Not following saves');
+}
 
-// recent files menu
+// the file menu, under the file name: new, open, follow saves, the baked-in flows, recent files
 const ago = (t) => {
   const s = (Date.now() - t) / 1000;
   return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : `${Math.round(s / 86400)} d ago`;
@@ -659,7 +666,11 @@ function renderRecent() {
   const list = source.recent();
   const flows = source.embedded();
   const cur = source.current();
-  el.recent.innerHTML = (flows.length > 1
+  const ic = (id) => `<svg class="icon"><use href="#i-${id}"/></svg>`;
+  el.recent.innerHTML = `<button class="item" role="menuitem" data-act="new">${ic('new')}<span class="nm">New</span></button>` +
+    `<button class="item" role="menuitem" data-act="open">${ic('open')}<span class="nm">Open…</span><kbd>Ctrl+O</kbd></button>` +
+    (source.canWatch() ? `<button class="item" role="menuitemcheckbox" aria-checked="${source.watching()}" data-act="follow">${ic('eye')}<span class="nm">Follow saves</span><svg class="icon check"><use href="#i-check"/></svg></button>` : '') +
+    '<div class="hint">or paste or drop DOT text anywhere</div><hr>' + (flows.length > 1
     ? `<div class="head">In this file</div>` + flows.map((f, i) => `<button class="item" role="menuitem" data-flow="${i}"${cur && !cur.src && cur.name === f.name && cur.text === f.text ? ' aria-current="true"' : ''}><span class="nm">${esc(f.name)}</span></button>`).join('') + '<hr>'
     : '') + `<div class="head">Recent</div>` + (list.length
     ? list.map((r, i) => `<button class="item" role="menuitem" data-i="${i}"><span class="nm">${esc(r.name)}</span><span class="when">${ago(r.time)}</span></button>`).join('') +
@@ -678,6 +689,9 @@ el.recent.addEventListener('click', (e) => {
   if (!b) return;
   el.recent.hidden = true;
   if (b.dataset.act === 'clear') { source.clearRecent(); renderEmpty(); return; }
+  if (b.dataset.act === 'new') { newFlow(); return; }
+  if (b.dataset.act === 'open') { openFile(); return; }
+  if (b.dataset.act === 'follow') { toggleFollow(); return; }
   if (b.dataset.flow !== undefined) { source.loadEmbedded(Number(b.dataset.flow)); return; }
   const r = source.recent()[Number(b.dataset.i)];
   if (r) openRecent(r);
@@ -731,8 +745,8 @@ function setEmpty(on) {
 el.empty.addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
-  if (b.dataset.act === 'open') el.fileInput.click();
-  else if (b.dataset.act === 'paste') pasteDialog();
+  if (b.dataset.act === 'open') openFile();
+  else if (b.dataset.act === 'new') newFlow();
   else if (b.dataset.flow !== undefined) source.loadEmbedded(Number(b.dataset.flow));
   else if (b.dataset.i !== undefined) { const r = source.recent()[Number(b.dataset.i)]; if (r) openRecent(r); }
 });
@@ -803,6 +817,7 @@ window.addEventListener('keydown', (e) => {
   if (document.querySelector('dialog[open]')) return;
   const typing = e.target.closest?.('input, textarea, [contenteditable]');
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && shown) { e.preventDefault(); search.focus(); return; }
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'o') { e.preventDefault(); openFile(); return; }
   if (editor.on() && !typing) {
     const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
     const act = mod && k === 'z' ? (e.shiftKey ? editor.redo : editor.undo) : mod && k === 'y' ? editor.redo
@@ -867,7 +882,6 @@ function openEmbedded() {
 }
 if (initial.src) {
   openSrc(initial.src).then((ok) => {
-    if (ok) source.restoreWatch();
     if (ok || !embedded.length) return;
     keepBanner = embedded.length === 1; // the baked-in flow is drawn under the error, which stays
     openEmbedded();

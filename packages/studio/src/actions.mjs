@@ -31,18 +31,6 @@ function showText(dialog, text) {
   ta.select();
 }
 
-// Paste dialog: resolves with the text, or null when cancelled.
-export function askText(dialog) {
-  const ta = dialog.querySelector('textarea');
-  return new Promise((resolve) => {
-    dialog.addEventListener('close', () => resolve(dialog.returnValue === 'ok' && ta.value.trim() ? ta.value : null), { once: true });
-    dialog.returnValue = '';
-    dialog.showModal();
-    ta.focus();
-    ta.select();
-  });
-}
-
 export function toaster(el) {
   let timer = 0;
   return (msg) => {

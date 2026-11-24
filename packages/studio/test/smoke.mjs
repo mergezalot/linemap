@@ -39,6 +39,25 @@ async function newPage(width = 1400, height = 860) {
 }
 const shot = async (page, name) => { if (shots) await page.screenshot({ path: path.join(shots, `${name}.png`) }); };
 const ready = (page) => page.waitForSelector('#map svg [data-line]', { state: 'attached', timeout: 20000 });
+// paste as from the clipboard, outside any text field: the page opens DOT text pasted anywhere
+const pasteText = (page, text) => page.evaluate((t) => {
+  const dt = new DataTransfer();
+  dt.setData('text/plain', t);
+  document.body.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true }));
+}, text);
+// the file menu under the file name: pick an action, or see whether it offers one
+async function fileMenu(page, act) {
+  await page.click('#file-name');
+  await page.click(`#recent [data-act="${act}"]`);
+}
+async function fileMenuHas(page, act) {
+  await page.click('#file-name');
+  const has = await page.isVisible(`#recent [data-act="${act}"]`);
+  await page.click('#file-name');
+  return has;
+}
+// the dot beside the file name: the map follows saves
+const following = (page) => page.isVisible('#file-name .live');
 // wait for the next map: the svg element is replaced on every rerun
 async function rerun(page, action) {
   const before = await page.evaluateHandle(() => document.querySelector('#map svg'));
@@ -361,9 +380,7 @@ console.log('state in the hash');
   }));
   check(o.name === 'postal.dot' && o.mode === 'all', `a #src= change opens that file with its settings (${o.name}, through ${o.mode})`);
   // a file opened by hand drops the src from the hash
-  await page.click('#paste');
-  await page.fill('#paste-dialog textarea', 'digraph pasted { subgraph lines { A } a -> b [lines=A] }');
-  await rerun(page, () => page.click('#paste-dialog button[value="ok"]'));
+  await rerun(page, () => pasteText(page, 'digraph pasted { subgraph lines { A } a -> b [lines=A] }'));
   await page.waitForTimeout(400);
   check(!new URL(page.url()).hash.includes('src='), `pasted text: no src in the hash (${new URL(page.url()).hash})`);
   check(page.errors.length === 0, 'no page errors');
@@ -461,9 +478,7 @@ console.log('errors keep the last map');
   const page = await newPage();
   await page.goto(`${base}#src=examples/webshop.dot`);
   await ready(page);
-  await page.click('#paste');
-  await page.fill('#paste-dialog textarea', 'digraph broken { subgraph lines { A [color="#f00"] } a -> b [lines=Z] }');
-  await page.click('#paste-dialog button[value="ok"]');
+  await pasteText(page, 'digraph broken { subgraph lines { A [color="#f00"] } a -> b [lines=Z] }');
   await page.waitForSelector('#banner:not([hidden])');
   const b = await page.evaluate(() => ({
     msg: document.querySelector('#banner .msg').textContent,
@@ -485,25 +500,26 @@ console.log('watch');
   const page = await newPage();
   await page.goto(`${base}#src=${rel}`);
   await ready(page);
-  check(await page.isVisible('#watch'), 'watch button shown for #src over http');
-  await page.click('#watch');
+  check(await following(page), 'a file the studio serves follows saves from the start (the dot beside its name)');
   const vb = await viewBox(page);
   fs.writeFileSync(file, text.replace('label="Order",', 'label="Orders (edited)",'));
   await page.waitForFunction(() => [...document.querySelectorAll('#legend .lb')].some((e) => e.textContent === 'Orders (edited)'), null, { timeout: 5000 })
     .then(() => check(true, 'edit to the file shows up within the poll interval'), () => check(false, 'edit to the file shows up'));
   check(await viewBox(page) === vb, 'view kept across the reload');
-  // watch is remembered for this URL: on after a reload of the page, and it still follows saves
+  // switched off in the file menu: remembered for this URL, so it stays off after a reload
+  await fileMenu(page, 'follow');
+  check(!(await following(page)), 'Follow saves in the file menu switches it off');
   await page.reload();
   await ready(page);
-  check(await page.getAttribute('#watch', 'aria-pressed') === 'true', 'watch is on again after a page reload (localStorage)');
+  check(!(await following(page)), 'and it stays off after a reload (localStorage)');
+  // and on again: follows the next save, also after a reload
+  await fileMenu(page, 'follow');
+  await page.reload();
+  await ready(page);
+  check(await following(page), 'switched on again, it is on after a reload');
   fs.writeFileSync(file, text.replace('label="Order",', 'label="Orders (again)",'));
   await page.waitForFunction(() => [...document.querySelectorAll('#legend .lb')].some((e) => e.textContent === 'Orders (again)'), null, { timeout: 5000 })
     .then(() => check(true, 'and follows the next save'), () => check(false, 'and follows the next save'));
-  // switched off: stays off after a reload
-  await page.click('#watch');
-  await page.reload();
-  await ready(page);
-  check(await page.getAttribute('#watch', 'aria-pressed') === 'false', 'watch switched off stays off after a reload');
   fs.unlinkSync(file);
   await page.close();
 }
@@ -521,18 +537,37 @@ console.log('watch without localStorage');
   });
   await page.goto(`${base}#src=${rel}`);
   await ready(page);
-  await page.click('#watch');
-  check(await page.getAttribute('#watch', 'aria-pressed') === 'true', 'watch switches on with storage blocked');
+  check(await following(page), 'follows saves with storage blocked');
   fs.writeFileSync(file, text.replace('label="Order",', 'label="Orders (blocked)",'));
   await page.waitForFunction(() => [...document.querySelectorAll('#legend .lb')].some((e) => e.textContent === 'Orders (blocked)'), null, { timeout: 5000 })
     .then(() => check(true, 'and follows saves'), () => check(false, 'and follows saves'));
+  await fileMenu(page, 'follow');
+  check(!(await following(page)), 'switches off with storage blocked');
   await page.reload();
   await ready(page);
-  check(await page.getAttribute('#watch', 'aria-pressed') === 'false', 'after a reload it is off (nothing could be kept)');
+  check(await following(page), 'after a reload it is on again, as by default (nothing could be kept)');
   await rerun(page, () => page.click('#notes'));
   check(await page.evaluate(() => document.querySelectorAll('#map g.note.lm-note-folded').length > 0), 'notes switch off with storage blocked');
   check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
   fs.unlinkSync(file);
+  await page.close();
+}
+
+console.log('file menu: new, open');
+{
+  const page = await newPage();
+  await page.goto(base);
+  await page.waitForSelector('#empty:not([hidden])');
+  await page.click('#empty [data-act="new"]');
+  await ready(page);
+  const n = await page.evaluate(() => ({ name: document.querySelector('#file-name .name').textContent, src: !document.getElementById('source-panel').hidden }));
+  check(n.name === 'untitled' && n.src, `New flow draws a starting flow with its source open (${n.name})`);
+  check(!(await following(page)), 'a new flow has no file to follow');
+  const chooser = page.waitForEvent('filechooser', { timeout: 3000 }).then(() => true, () => false);
+  await page.keyboard.press('Control+o');
+  check(await chooser, 'Ctrl+O opens the file picker');
+  check(await fileMenuHas(page, 'new') && await fileMenuHas(page, 'open') && !(await fileMenuHas(page, 'follow')), 'the file menu offers New and Open, and no Follow saves for a file without a URL');
+  check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
   await page.close();
 }
 
@@ -543,9 +578,7 @@ console.log('file:// page, recent list, empty state');
   await page.waitForSelector('#empty:not([hidden])');
   check(true, 'empty state without a file');
   await shot(page, 'empty-state');
-  await page.click('#empty [data-act="paste"]');
-  await page.fill('#paste-dialog textarea', fs.readFileSync(path.join(here, '../../../examples/platform.dot'), 'utf8'));
-  await page.click('#paste-dialog button[value="ok"]');
+  await pasteText(page, fs.readFileSync(path.join(here, '../../../examples/platform.dot'), 'utf8'));
   await ready(page);
   check(true, 'pasted text drawn from a file:// page (no fetches needed)');
   const kept = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).map((k) => [k, localStorage.getItem(k)])));
@@ -690,7 +723,7 @@ console.log('flows baked in (build --embed), under the same CSP');
     await ready(page);
     const name = await page.evaluate(() => document.querySelector('#file-name .name').textContent);
     check(name === 'postal.dot' && !(await bannerShown(page)), `#src= wins over the baked-in flow (${name})`);
-    check(await page.isVisible('#watch'), 'and can be watched');
+    check(await fileMenuHas(page, 'follow') && !(await following(page)), 'and can follow saves, off by default (another server: it would poll)');
     // a src that cannot be loaded: the baked-in flow, under the error
     await page.goto('https://embed.test/embed.html#src=missing.dot');
     await ready(page);
@@ -1285,7 +1318,9 @@ console.log('edit mode, saving to the file (linemap studio)');
   text = await changed(before, 'deleting a -> d');
   check(!/a -> d/.test(text) && /\n    d\n|cluster_x \{[^}]*d \[/.test(text), 'Delete removes the selected edge, d stays in X');
 
-  // the file changed on disk meanwhile: the edit is not saved over it
+  // the file changed on disk meanwhile: the edit is not saved over it (following saves off, or
+  // the page would pick the change up first)
+  await fileMenu(page, 'follow');
   const disk = read().replace('label="A"', 'label="A on disk"');
   fs.writeFileSync(file, disk);
   await drag(await nodeAt('c'), { ...(await nodeAt('c')), x: (await nodeAt('c')).x + 60 });

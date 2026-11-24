@@ -125,6 +125,13 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .menu .empty-note { padding: 8px; color: var(--muted); }
 .menu .item:disabled { opacity: .45; cursor: default; background: none; }
+.menu .item > .icon { flex: none; color: var(--muted); }
+.menu .item kbd { margin-left: auto; color: var(--faint); font: 11px/1 inherit; }
+.menu .item .check { margin-left: auto; width: 14px; height: 14px; flex: none; color: var(--accent); visibility: hidden; }
+.menu .item[aria-checked="true"] .check { visibility: visible; }
+.menu .hint { padding: 6px 8px 4px; color: var(--faint); font-size: 12px; }
+/* beside the file name: the map follows saves to the file */
+.file-name .live { width: 7px; height: 7px; flex: none; border-radius: 50%; background: #1f9d55; box-shadow: 0 0 0 3px rgba(31, 157, 85, .18); }
 .align-menu { position: fixed; top: 0; left: 0; min-width: 220px; }
 .results { right: 0; width: 320px; max-height: 60vh; overflow-y: auto; }
 .results .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

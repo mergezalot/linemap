@@ -1,11 +1,11 @@
 // Where the DOT text comes from: flows baked into the page (build --embed), a #src= URL, file
 // picker, drag-and-drop, paste. Remembers the last file and a short recent list in localStorage
 // (not the baked-in flows: several embeds of one site share it), and can watch a #src URL.
-// Watch only works for a file the studio fetches over http (#src=, e.g. under `linemap studio`);
-// a file opened, dropped or pasted cannot be watched. Switching Watch keeps the URL's state in
-// localStorage, which only a page load reads (restoreWatch): reloading the page, in any tab of
-// this browser, keeps watching a URL that was watched. Opening another file in the page does
-// not look it up. A list, not one value, so tabs watching different files each get theirs back.
+// Following saves (watching) only works for a file the studio fetches over http (#src=); a file
+// opened, dropped or pasted cannot be followed. It is on by default for a file `linemap studio`
+// serves (one it can save), off for other servers (it polls). Switching it keeps the URL's choice
+// in localStorage, read when a URL is loaded. Lists, not one value, so tabs on different files
+// each get theirs back.
 // Edits (edit mode) replace the text in place: a file the server can save (`linemap studio`, which
 // sends `x-linemap-save: put`) is written back at once, with the ETag it was read with, so a file
 // changed on disk meanwhile is never overwritten; anything else keeps the edits in the page (and
@@ -14,7 +14,8 @@
 const LAST = 'linemap:last';
 const RECENT = 'linemap:recent';
 const MAX_RECENT = 8;
-const WATCHED = 'linemap:watched';
+const WATCHED = 'linemap:watched';     // switched on by hand
+const UNWATCHED = 'linemap:unwatched'; // switched off by hand
 const MAX_WATCHED = 20;
 const WATCH_MS = 1000;
 
@@ -47,13 +48,21 @@ export function createSource({ onText, onError, onWatch, onSave, embedded = [] }
     onText({ text, name, src, flow, fresh });
   }
 
-  // URLs with Watch on, most recent first, as absolute URLs (the same file under ./x and x).
+  // URLs switched on or off by hand, most recent first, as absolute URLs (the same file under ./x and x).
   const watchKey = (src) => { try { return new URL(src, location.href).href; } catch { return String(src); } };
-  const watched = () => (store.get(WATCHED) ?? []).filter((s) => typeof s === 'string');
+  const listed = (k) => (store.get(k) ?? []).filter((s) => typeof s === 'string');
   function rememberWatch(src, on) {
     const key = watchKey(src);
-    const rest = watched().filter((s) => s !== key);
-    store.set(WATCHED, (on ? [key, ...rest] : rest).slice(0, MAX_WATCHED));
+    for (const [k, has] of [[WATCHED, on], [UNWATCHED, !on]]) {
+      const rest = listed(k).filter((s) => s !== key);
+      store.set(k, (has ? [key, ...rest] : rest).slice(0, MAX_WATCHED));
+    }
+  }
+  // whether the current file follows saves when loaded: as switched last, or by default
+  function followByDefault() {
+    if (!current?.src || !isHttp()) return false;
+    const key = watchKey(current.src);
+    return listed(WATCHED).includes(key) || (current.save === 'put' && !listed(UNWATCHED).includes(key));
   }
 
   function remember(text, name, src) {
@@ -74,6 +83,7 @@ export function createSource({ onText, onError, onWatch, onSave, embedded = [] }
     try {
       const { text, etag, save } = await fetchText(src);
       emit(text, baseName(src), src, fresh, { etag, save });
+      setWatch(followByDefault());
       return true;
     } catch (err) {
       const hint = location.protocol === 'file:'
@@ -221,8 +231,8 @@ export function createSource({ onText, onError, onWatch, onSave, embedded = [] }
     markClean: () => { if (current) current.dirty = false; },
     canSave: () => current?.save === 'put',
     embedded: () => embedded, setWatch, bindDrop, bindPaste,
-    // on page load only: watch the file just loaded if it was watched when the page was left
-    restoreWatch: () => { if (current?.src && watched().includes(watchKey(current.src))) setWatch(true); },
+    // the last file, reopened from storage on a page load: follow it if it was followed
+    restoreWatch: () => { if (current?.src && listed(WATCHED).includes(watchKey(current.src))) setWatch(true); },
     current: () => current,
     watching: () => !!watchTimer,
     canWatch: () => !!(current?.src && isHttp()),

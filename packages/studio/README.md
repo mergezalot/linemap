@@ -13,7 +13,7 @@ Most people want the command line, which uses this package:
 npx @linemap/cli export flow.dot -o flow.html        # the studio with the flow baked in
 npx @linemap/cli export a.dot b.dot -o flows.html    # several, picked on the start screen
 npx @linemap/cli export                              # the empty studio: linemap.html
-npx @linemap/cli studio                              # serve the DOT files here, with Watch
+npx @linemap/cli studio                              # serve the DOT files here; the map follows saves
 ```
 
 From code:

@@ -123,7 +123,7 @@ npx @linemap/cli export flow.dot -o map.svg [--positions] [--legend show|hide]
 npx @linemap/cli export flow.dot -o flow.html         # the studio with the flow baked in
 npx @linemap/cli export a.dot b.dot -o flows.html     # several, picked on the start screen
 npx @linemap/cli export                               # the empty studio: linemap.html
-npx @linemap/cli studio [dir] [--port 8000] [--open]  # serve the DOT files under dir, with Watch
+npx @linemap/cli studio [dir] [--port 8000] [--open]  # serve the DOT files under dir; the map follows saves
 ```
 
 `export` writes what the output's extension says: `.svg` is the static map, `.html` is the
@@ -176,8 +176,8 @@ pnpm studio                     # serves http://localhost:8000/studio.html#src=e
 pnpm export a.dot b.dot -o flows.html   # bakes flows into the page, e.g. for Notion
 ```
 
-Open a file with the toolbar, by dropping it on the page, by pasting DOT text, or with `#src=` in the address, also in a page with flows baked in; there, a flow you pick is kept in the address too (`#src=flow.dot`), so a reload or a shared link shows it.
-**Watch** redraws on every save (for a file the studio serves, as under `linemap studio`). The legend hides and solos lines; the toolbar switches lines
+Open a file from the menu under its name (or `Ctrl+O`), by dropping it on the page, by pasting DOT text, or with `#src=` in the address, also in a page with flows baked in; there, a flow you pick is kept in the address too (`#src=flow.dot`), so a reload or a shared link shows it.
+A file the studio serves (as under `linemap studio`) is redrawn on every save; switch that off with Follow saves in the file menu. The legend hides and solos lines; the toolbar switches lines
 through nodes and the theme without moving any box. **Notes** off (or `N`) draws the map
 without the notes, like `--notes hide`, and puts a badge for each in its node: hover it to read
 the note, click it to keep the note open beside it, click again (or press `Esc`) to close it.
