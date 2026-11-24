@@ -165,6 +165,25 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 #map > svg { transition: background-color .2s; }
 
 /* theme buttons: a small swatch of the theme, then its name */
+/* split button: the main part and its arrow read as one control, split by a line on hover */
+.split { position: relative; display: inline-flex; align-items: center; }
+/* (either part may come first; a hidden one leaves the other whole) */
+.split > .btn { border-radius: 0; }
+.split > .btn:first-child, .split > .btn[hidden] + .btn { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+.split > .btn:last-of-type, .split > .btn:has(+ .btn[hidden]) { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+.split .split-main:first-child { padding-right: 7px; }
+.split .split-arrow:first-child { padding-right: 7px; }
+.split .split-main:first-child + .split-arrow { padding: 0 5px; }
+.split:hover > .btn, .split > .split-arrow[aria-expanded="true"] { background: var(--hover); }
+.split > .btn + .btn { box-shadow: inset 1px 0 0 transparent; }
+.split:hover > .btn + .btn:not([hidden]), .split:has(> .split-arrow[aria-expanded="true"]) > .btn + .btn { box-shadow: inset 1px 0 0 var(--line); }
+.split > .btn:active, .split > .split-arrow[aria-expanded="true"] { background: var(--press); }
+/* labels stacked in one cell, only the current one seen: the button is as wide as the longest */
+.stack { display: inline-grid; }
+.stack > span { grid-area: 1 / 1; visibility: hidden; text-align: left; }
+.stack > span.on { visibility: visible; }
+.menu .item .txt { display: flex; flex-direction: column; min-width: 0; }
+.menu .item .desc { color: var(--muted); font-size: 12px; }
 .theme-pick { position: relative; }
 .theme-btn .cur { display: inline-flex; align-items: center; gap: 7px; }
 .theme-menu { min-width: 180px; }
@@ -176,7 +195,6 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .theme-menu .row.on > .item:first-child { background: var(--press); }
 .theme-menu .row.on .nm { font-weight: 600; }
 .theme-menu .item.fancy[aria-checked="true"] { background: var(--press); color: #d99a00; }
-.theme-bar { display: flex; align-items: center; gap: 2px; }
 .fancy-btn { padding: 0 7px; color: var(--faint); }
 .fancy-btn:hover { color: inherit; }
 .fancy-btn[aria-pressed="true"] { color: #d99a00; }
@@ -451,13 +469,18 @@ body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, bod
   .tb-more .btn { height: 36px; padding: 0 10px; gap: 10px; }
   .tb-more .btn .lbl, .tb-more .tb-label { display: inline; }
   .tb-more .tb-sep { width: auto; height: 1px; margin: 4px 0; }
-  .tb-more .through-group, .tb-more .theme-group { padding: 6px 10px 8px; gap: 6px; }
+  .tb-more .theme-group { padding: 6px 10px 8px; gap: 6px; }
   .tb-more .tb-label { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); }
   .tb-more .seg { display: flex; }
   /* the theme list opens in place, inside the menu */
   .tb-more .theme-btn { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--field); }
   .tb-more .fancy-btn { border: 1px solid var(--line); }
   .tb-more .theme-btn .icon.small { margin-left: auto; }
+  .tb-more .split { display: flex; flex-wrap: wrap; }
+  .tb-more #through-split .split-main { flex: 1; }
+  .tb-more > .tb-sep:first-child { display: none; } /* (it parts the file name from the rest on wide screens) */
+  .tb-more .through-menu, .tb-more .theme-menu { flex-basis: 100%; }
+  .tb-more .through-menu { position: static; margin-top: 4px; min-width: 0; max-width: none; box-shadow: none; }
   .tb-more .theme-menu { position: static; margin-top: 4px; min-width: 0; max-width: none; box-shadow: none; }
   .tb-more .seg button { flex: 1; height: 30px; justify-content: center; }
   .tb-more .out-group { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 4px; }

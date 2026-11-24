@@ -17,6 +17,7 @@ import { createLegend } from './legend.mjs';
 import { createSearch } from './search.mjs';
 import { createEditor } from './editor.mjs';
 import { createSourcePanel } from './sourcepanel.mjs';
+import { createSplit } from './split.mjs';
 import { download, positionsText, copyOrShow, askLabel, askLines, askNote, askConfirm, toaster } from './actions.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -346,9 +347,19 @@ function show(result, meta) {
 // ---------- settings ----------
 state.onChange(() => { run(); updateToolbar(); syncHash(); });
 
-el.through.addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-mode]');
-  if (b && b.dataset.mode !== state.get().mode) state.set({ mode: b.dataset.mode });
+// lines through nodes: a split button, a click goes on to the next mode, the arrow lists them
+const THROUGH = {
+  file: { label: 'As in file', title: 'Lines through nodes: as in the file', desc: 'Each node as its file says' },
+  all: { label: 'Through all', title: 'Lines through nodes: through every box, queue and cylinder', desc: 'Lines run through every box, queue and cylinder' },
+  none: { label: 'Through none', title: 'Lines through nodes: none, lines end at every node', desc: 'Lines end at every node' },
+};
+const MODES = Object.keys(THROUGH);
+el.through.querySelector('.stack').innerHTML = MODES.map((m) => `<span data-m="${m}">${THROUGH[m].label}</span>`).join('');
+const throughSplit = createSplit(document.getElementById('through-split'), {
+  onMain: () => state.set({ mode: MODES[(MODES.indexOf(state.get().mode) + 1) % MODES.length] }),
+  renderMenu: () => MODES.map((m) => `<button class="item" role="menuitemradio" aria-checked="${m === state.get().mode}" data-value="${m}"><svg class="icon"><use href="#i-through-${m}"/></svg><span class="txt"><span class="nm">${THROUGH[m].label}</span><span class="desc">${THROUGH[m].desc}</span></span><svg class="icon check"><use href="#i-check"/></svg></button>`).join(''),
+  onPick: (m) => { if (m !== state.get().mode) state.set({ mode: m }); },
+  onOpen: () => { el.recent.hidden = true; themeSplit.close(); },
 });
 // notes on, or off: the map without them, a badge for each (hover one to read it, click to keep
 // it open); remembered for the next visit
@@ -380,28 +391,14 @@ function setTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch { /* no storage */ }
   if (theme !== state.get().theme) state.set({ theme });
 }
-function showThemes(open) {
-  el.theme.hidden = !open;
-  el.themeBtn.setAttribute('aria-expanded', String(open));
-}
-el.themeBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  el.recent.hidden = true;
-  showThemes(el.theme.hidden);
+// a split button: the theme list, and fancy switched on or off beside it
+const themeSplit = createSplit(document.getElementById('theme-split'), {
+  attr: 'theme',
+  onMain: () => { const cur = effectiveTheme(), base = baseOf(cur); setTheme(isFancy(cur) ? base : base + FANCY); },
+  onPick: setTheme,
+  onOpen: () => { el.recent.hidden = true; throughSplit.close(); },
 });
-el.theme.addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-theme]');
-  if (!b) return;
-  e.stopPropagation(); // the choice stays in the narrow-screen menu, to try one after another
-  showThemes(false);
-  setTheme(b.dataset.theme);
-});
-document.addEventListener('click', (e) => { if (!el.theme.hidden && !e.target.closest('.theme-pick')) showThemes(false); });
-el.fancy.addEventListener('click', (e) => {
-  e.stopPropagation(); // stays in the narrow-screen menu, like a pick from the list
-  const cur = effectiveTheme(), base = baseOf(cur);
-  setTheme(isFancy(cur) ? base : base + FANCY);
-});
+const showThemes = (open) => { if (!open) themeSplit.close(); };
 // The page around the map follows the theme: dark chrome for dark maps.
 const luminance = (hex) => {
   const v = parseInt(String(hex).replace('#', ''), 16);
@@ -417,7 +414,11 @@ applyTheme(state.get().theme ?? DEFAULT_THEME);
 
 function updateToolbar() {
   const { mode } = state.get();
-  for (const b of el.through.querySelectorAll('button')) b.setAttribute('aria-checked', String(b.dataset.mode === mode));
+  const next = MODES[(MODES.indexOf(mode) + 1) % MODES.length];
+  el.through.dataset.mode = mode;
+  el.through.querySelector('use').setAttribute('href', `#i-through-${mode}`);
+  for (const l of el.through.querySelectorAll('.stack > span')) l.classList.toggle('on', l.dataset.m === mode);
+  el.through.title = `${THROUGH[mode].title}. Click: ${THROUGH[next].label.toLowerCase()}`;
   const theme = state.get().theme ?? effectiveTheme();
   for (const b of el.theme.querySelectorAll('button')) b.setAttribute('aria-checked', String(b.dataset.theme === theme));
   for (const r of el.theme.querySelectorAll('.row')) r.classList.toggle('on', r.dataset.base === baseOf(theme));
@@ -681,6 +682,7 @@ el.fileName.addEventListener('click', (e) => {
   e.stopPropagation();
   if (!el.recent.hidden) { el.recent.hidden = true; return; }
   showThemes(false);
+  throughSplit.close();
   renderRecent();
   el.recent.hidden = false;
 });
@@ -709,8 +711,8 @@ el.menuBtn.addEventListener('click', (e) => {
   el.recent.hidden = true;
   setMenu(!el.toolbar.classList.contains('menu-open'));
 });
-// an action closes it; through and theme leave it open, to try one after another
-el.more.addEventListener('click', (e) => { if (e.target.closest('.btn')) setMenu(false); });
+// an action closes it; through and theme (split buttons) leave it open, to try one after another
+el.more.addEventListener('click', (e) => { if (e.target.closest('.btn') && !e.target.closest('.split')) setMenu(false); });
 // pointerdown, so a drag on the map closes it too (the stage keeps its pointer events)
 document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#tb-more, #menu-btn')) setMenu(false); }, true);
 matchMedia('(max-width: 860px)').addEventListener('change', () => setMenu(false));
@@ -849,7 +851,7 @@ window.addEventListener('keydown', (e) => {
       const cur = effectiveTheme(), next = BASES[(BASES.indexOf(baseOf(cur)) + 1) % BASES.length];
       setTheme(isFancy(cur) && THEMES[next + FANCY] ? next + FANCY : next);
     },
-    Escape: () => { el.recent.hidden = true; showThemes(false); setMenu(false); highlight.clearPins(); highlight.foldNotes(); hideBanner(); },
+    Escape: () => { el.recent.hidden = true; showThemes(false); throughSplit.close(); setMenu(false); highlight.clearPins(); highlight.foldNotes(); hideBanner(); },
   };
   const fn = keys[e.key];
   if (!fn || (!shown && !['/', '?', 'Escape', 's'].includes(e.key))) return;

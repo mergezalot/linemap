@@ -58,6 +58,12 @@ async function fileMenuHas(page, act) {
 }
 // the dot beside the file name: the map follows saves
 const following = (page) => page.isVisible('#file-name .live');
+// lines through nodes: pick a mode from the split button's menu; the mode shown on it
+async function pickThrough(page, mode) {
+  await page.click('#through-split .split-arrow');
+  await page.click(`#through-menu [data-value="${mode}"]`);
+}
+const throughMode = (page) => page.evaluate(() => document.getElementById('through').dataset.mode);
 // wait for the next map: the svg element is replaced on every rerun
 async function rerun(page, action) {
   const before = await page.evaluateHandle(() => document.querySelector('#map svg'));
@@ -197,18 +203,21 @@ for (const src of EXAMPLES) {
   check(none.drawn === 0 && !none.banner, 'hide all: map without lines, no error');
   await rerun(page, () => page.click('#legend [data-act="show"]'));
 
-  // through: none, all, back to file
-  await rerun(page, () => page.click('#through [data-mode="none"]'));
+  // through: none and all from the menu, then clicks go on to the next mode: none, back to file
+  await rerun(page, () => pickThrough(page, 'none'));
   check(await page.evaluate(() => document.querySelectorAll('#map g.node.through').length === 0), 'through none: no .through nodes');
   await shot(page, `${name}-4-through-none`);
-  await rerun(page, () => page.click('#through [data-mode="all"]'));
+  await rerun(page, () => pickThrough(page, 'all'));
   const all = await page.evaluate(() => ({
     through: document.querySelectorAll('#map g.node.through').length,
     capable: document.querySelectorAll('#map g.node:is([data-shape="box"], [data-shape="queue"], [data-shape="cylinder"])').length,
   }));
   check(all.through === all.capable && all.capable > 0, `through all: ${all.through} of ${all.capable} capable nodes through`);
   await shot(page, `${name}-4-through-all`);
-  await rerun(page, () => page.click('#through [data-mode="file"]'));
+  await rerun(page, () => page.click('#through'));
+  const afterAll = await throughMode(page);
+  await rerun(page, () => page.click('#through'));
+  check(afterAll === 'none' && await throughMode(page) === 'file', `a click goes on to the next mode (all -> ${afterAll} -> ${await throughMode(page)})`);
 
   // click a node: pins its lines (no rerun, no through toggle); again: unpins
   const target = await page.evaluate(() => {
@@ -359,7 +368,7 @@ console.log('state in the hash');
   const s = await page.evaluate(() => ({
     lines: [...new Set([...document.querySelectorAll('#map svg [data-line]')].map((e) => e.dataset.line))].sort().join(''),
     through: document.querySelectorAll('#map g.node.through').length,
-    mode: document.querySelector('#through [aria-checked="true"]').dataset.mode,
+    mode: document.getElementById('through').dataset.mode,
     vb: document.querySelector('#map svg').getAttribute('viewBox').split(' ').map(Number),
   }));
   check(s.lines === 'MOPS', `hash hides R and E (drawn: ${s.lines})`);
@@ -376,7 +385,7 @@ console.log('state in the hash');
   await rerun(page, () => page.evaluate(() => { location.hash = '#src=examples/postal.dot&through=all'; }));
   const o = await page.evaluate(() => ({
     name: document.querySelector('#file-name .name').textContent,
-    mode: document.querySelector('#through [aria-checked="true"]').dataset.mode,
+    mode: document.getElementById('through').dataset.mode,
   }));
   check(o.name === 'postal.dot' && o.mode === 'all', `a #src= change opens that file with its settings (${o.name}, through ${o.mode})`);
   // a file opened by hand drops the src from the hash
@@ -620,8 +629,10 @@ console.log('phone width');
   check((await tb()).h < 50 && !(await page.isVisible('#export')) && await page.isVisible('#menu-btn'), 'toolbar is one row; the rest behind the menu button');
   await page.click('#menu-btn');
   check((await tb()).open && await page.isVisible('#export') && await page.isVisible('#theme-btn'), 'menu button opens the menu');
-  await page.click('#through [data-mode="all"]');
-  check((await tb()).open, 'a through choice leaves the menu open');
+  await pickThrough(page, 'all');
+  check((await tb()).open && await throughMode(page) === 'all', 'a through choice leaves the menu open');
+  await page.click('#through');
+  check((await tb()).open, 'and so does a click on through');
   await page.click('#theme-btn');
   check(await page.isVisible('#theme [data-theme="dark"]'), 'theme dropdown lists the themes');
   await page.click('#theme [data-theme="dark"]');
@@ -794,7 +805,7 @@ console.log('flows baked in (build --embed), under the same CSP');
   await page.waitForTimeout(400);
   const lf = await page.evaluate(() => ({
     name: document.querySelector('#file-name .name').textContent,
-    mode: document.querySelector('#through [aria-checked="true"]').dataset.mode,
+    mode: document.getElementById('through').dataset.mode,
     hash: location.hash,
   }));
   check(lf.name === 'postal.dot' && lf.mode === 'all' && lf.hash.startsWith('#src=postal.dot&through=all'), `a #src= change opens that baked-in flow with its settings (${lf.name}, ${lf.hash})`);
