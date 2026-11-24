@@ -247,7 +247,7 @@ for (const src of EXAMPLES) {
     }), [target.id, svgBefore]);
     check(now.same && now.through === target.was, `click node ${target.id}: no rerun, through unchanged`);
     check(now.pinned > 0 && now.focus, `click node ${target.id} pins its lines (${now.pinned})`);
-    check(await page.evaluate(() => { const f = document.querySelectorAll('#map .lm-found'); return f.length === 1 && f[0].getAnimations().length === 0 && !document.querySelector('#map .flash'); }), 'and outlines it, nothing flashing');
+    check(await page.evaluate(() => { const f = document.querySelectorAll('#map .lm-found'); return f.length === 1 && f[0].getAnimations().length === 0; }), 'and outlines it, nothing animated');
     await page.mouse.click(target.x, target.y);
     await page.waitForTimeout(100);
     check(await page.evaluate(() => !document.querySelector('#legend li.on') && !document.querySelector('#map .lm-found')), `click node ${target.id} again unpins, the outline goes`);
@@ -857,6 +857,7 @@ console.log('edit mode, saving to the file (linemap studio)');
   };
 
   await page.keyboard.press('e');
+  await page.waitForTimeout(300); // the source opens beside the map, which fits into what is left
   check(await page.evaluate(() => !document.getElementById('edit-bar').hidden && document.getElementById('map').classList.contains('editing')), 'E opens edit mode');
 
   // move a box: its pos changes, and nothing else in the file
@@ -1118,15 +1119,11 @@ console.log('edit mode, saving to the file (linemap studio)');
     check(read() === before, 'two undos: back to before the note');
     // typing in the source sidebar: F2 and Enter are only text there
     await click(await nodeAt('d'));
-    await page.keyboard.press('s');
-    await page.waitForTimeout(300);
     await page.focus('#source-panel textarea');
     await page.keyboard.press('F2');
     await page.waitForTimeout(200);
     check(!(await dialog()), 'F2 in the source sidebar opens no dialog');
     await page.keyboard.press('Escape');
-    await page.keyboard.press('s');
-    await page.waitForTimeout(300);
   }
 
   // one line of a bundle: click the selected edge on a lane
@@ -1625,10 +1622,10 @@ console.log('source sidebar: the DOT text beside the map, both ways');
   const label = (id) => page.evaluate((id) => [...document.querySelectorAll('#map g.node')].find((g) => g.id === id)?.textContent.trim() ?? null, id);
   const stageW = () => page.evaluate(() => document.getElementById('stage').getBoundingClientRect().width);
   const w0 = await stageW();
-  check(!(await page.isVisible('#source-panel')) && await page.isVisible('#source-btn'), 'the sidebar starts closed; Source is in the toolbar');
-  await page.keyboard.press('s');
+  check(!(await page.isVisible('#source-panel')) && !(await page.$('#source-btn')), 'no sidebar in view mode, and no Source button');
+  await page.keyboard.press('e');
   await page.waitForTimeout(300);
-  check(await page.isVisible('#source-panel') && await value() === FLOW && await page.getAttribute('#source-btn', 'aria-pressed') === 'true', 'S opens the sidebar with the file\'s text');
+  check(await page.isVisible('#source-panel') && await value() === FLOW, 'edit mode opens the sidebar with the file\'s text');
   check(await stageW() < w0 - 200, `the map makes room for it (${Math.round(w0)} -> ${Math.round(await stageW())})`);
   check(await page.evaluate(() => document.querySelector('#source-panel .src-lines').textContent.split('\n').length) === FLOW.split('\n').length, 'the gutter numbers every line');
 
@@ -1637,7 +1634,7 @@ console.log('source sidebar: the DOT text beside the map, both ways');
   await page.keyboard.press('Control+Home');
   await page.keyboard.type('// etn\n');
   await page.waitForTimeout(100);
-  check(!(await page.isVisible('#edit-bar')) && !(await page.evaluate(() => document.querySelector('.search input') === document.activeElement)), 'E, T, N and / typed in the text are only text');
+  check(await page.isVisible('#edit-bar') && !(await page.evaluate(() => document.querySelector('.search input') === document.activeElement)), 'E, T, N and / typed in the text are only text');
   await until(() => read().startsWith('// etn'), 'the typed comment saved');
   check(read() === `// etn\n${FLOW}`, 'a pause in typing saves the text to the file');
   await page.fill(TA, FLOW.replace('"Alpha"', '"Omega"'));
@@ -1657,8 +1654,6 @@ console.log('source sidebar: the DOT text beside the map, both ways');
 
   // map -> text: an edit on the map, and its undo, show in the text; one undo per pause
   await page.click('#map', { position: { x: 5, y: 5 } }); // leaves the text
-  await page.keyboard.press('e');
-  await page.waitForTimeout(300);
   await page.click('#edit-pin');
   await until(async () => /c \[pos=/.test(await value()), 'Pin all shown in the text');
   check(await until(async () => await value() === read(), 'map edit saved'), 'a map edit updates the text');
@@ -1693,24 +1688,16 @@ console.log('source sidebar: the DOT text beside the map, both ways');
     await page.keyboard.press('ArrowUp');
     await page.waitForTimeout(200);
     check(/^Drag to move/.test(await sel()) && await marks() === '5 7w 8w', `the caret on "b [...]" selects box b (${await sel()})`);
-    // view mode: the caret on an edge pins its line
-    await page.keyboard.press('Escape'); // leaves the text
-    await page.keyboard.press('e');
-    await page.waitForTimeout(300);
-    await caretOn(7);
-    check(await page.evaluate(() => document.querySelector('#map svg').classList.contains('focus') && !!document.querySelector('#legend li.on')), 'view mode: the caret on "a -> b" pins its line');
-    check(await marks() === '7', `and marks its statement (${await marks()})`);
     // typing drops the marks; nothing on the map changes until the pause commits
+    await caretOn(7);
     await page.keyboard.type(' ');
     check(await marks() === '', 'typing drops the marks');
     await page.keyboard.press('Backspace');
     await page.waitForTimeout(600);
     await page.click('#map', { position: { x: 5, y: 5 } }); // leaves the text
-    await page.keyboard.press('e');
-    await page.waitForTimeout(300);
   }
 
-  // remembered open, and its width (dragged)
+  // its width (dragged) is remembered
   const edge = await page.evaluate(() => { const r = document.querySelector('#source-panel .src-resize').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + 200 }; });
   await page.mouse.move(edge.x, edge.y);
   await page.mouse.down();
@@ -1719,9 +1706,10 @@ console.log('source sidebar: the DOT text beside the map, both ways');
   const wide = await page.evaluate(() => document.getElementById('source-panel').getBoundingClientRect().width);
   await page.reload();
   await ready(page);
+  await page.keyboard.press('e');
   await page.waitForTimeout(300);
   const again = await page.evaluate(() => document.getElementById('source-panel').getBoundingClientRect().width);
-  check(await page.isVisible('#source-panel') && Math.abs(again - wide) < 2 && wide > 500, `open and width (${Math.round(wide)}) remembered after a reload`);
+  check(await page.isVisible('#source-panel') && Math.abs(again - wide) < 2 && wide > 500, `its width (${Math.round(wide)}) remembered after a reload`);
   // find in the source: Ctrl+F in the text, Enter goes on, Esc leaves the match selected
   await page.click('#source-panel .src-text');
   await page.keyboard.press('Control+f');
@@ -1744,8 +1732,17 @@ console.log('source sidebar: the DOT text beside the map, both ways');
   await page.waitForTimeout(300);
   const went = await page.evaluate(() => { const t = document.querySelector('.src-text'); return { row: document.querySelector('.src-find').hidden, focus: document.activeElement === t, line: t.value.split('\n')[t.value.slice(0, t.selectionStart).split('\n').length - 1].trim() }; });
   check(went.row && went.focus && /^a \[label="Alpha"/.test(went.line), `Down, Enter: goes to it, the caret on its statement, typing goes on there (${went.line})`);
-  await page.click('#source-panel .src-close');
-  check(!(await page.isVisible('#source-panel')), 'Close shuts it');
+  // collapsed to a strip: the map gets the room; the strip opens it again
+  const open = await stageW();
+  await page.click('#source-panel .src-collapse');
+  await page.waitForTimeout(200);
+  check(await stageW() > open + 300 && await page.isVisible('#source-panel .src-expand') && !(await page.isVisible(TA)), `it collapses to a strip (${Math.round(open)} -> ${Math.round(await stageW())})`);
+  await page.click('#source-panel .src-expand');
+  await page.waitForTimeout(200);
+  check(Math.abs(await stageW() - open) < 2 && await page.isVisible(TA), 'and opens again');
+  await page.keyboard.press('Escape'); // leaves the text
+  await page.keyboard.press('e');
+  check(!(await page.isVisible('#source-panel')), 'leaving edit mode closes it');
   check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join('; ')}` : ''}`);
   await page.close();
   srcServer.close();

@@ -214,8 +214,6 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 #map svg.focus g.edge > path:not([data-line]) { opacity: .5; }
 #map svg.focus g.node:not(.on), #map svg.focus g.note { opacity: .45; }
 #map svg.focus g.node.on [data-line]:not(.on) { opacity: .15; }
-/* what was found: outlined, drawn once (highlight.adorn) */
-#map .lm-found { fill: none; stroke: var(--accent); stroke-width: 2.5px; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; pointer-events: none; }
 
 .busy {
   position: fixed; top: calc(var(--tb-h) + 10px); right: 12px; z-index: 15; width: 16px; height: 16px;
@@ -361,6 +359,8 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 /* edge ends and bend points move; the connect handle draws a new edge */
 #map .lm-edit .lm-edit-handle { pointer-events: all; cursor: move; }
 #map .lm-edit .lm-edit-connect, #map .lm-edit .lm-edit-connect * { cursor: crosshair; }
+/* what was found or clicked in view mode: outlined, drawn once (highlight.adorn) */
+#map .lm-found { fill: none; stroke: var(--accent); stroke-width: 2.5px; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; pointer-events: none; }
 #map .lm-edit-sel { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
 #map .lm-edit-handle:is(circle, rect), #map .lm-edit-handle circle { fill: #fff; stroke: var(--accent); stroke-width: 2px; vector-effect: non-scaling-stroke; }
 #map .lm-edit-sel.sizing { stroke-dasharray: none; stroke-width: 1px; }
@@ -417,7 +417,16 @@ body.source-open { --src-right: var(--src-w); }
 .src-head { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border-bottom: 1px solid var(--line); color: var(--muted); }
 .src-title { font-weight: 600; color: var(--ink); }
 .src-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.src-close, .src-find-btn { padding: 0 6px; }
+.src-find-btn, .src-collapse { padding: 0 6px; }
+/* collapsed: a strip at the edge, the rest hidden */
+.src-expand { display: none; }
+.source-panel.collapsed > :not(.src-expand) { display: none; }
+.source-panel.collapsed .src-expand {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; width: 100%; padding: 10px 0;
+  border: 0; background: none; color: var(--muted); font: inherit; cursor: pointer;
+}
+.source-panel.collapsed .src-expand:hover { background: var(--hover); color: var(--ink); }
+.src-expand span { writing-mode: vertical-rl; font-weight: 600; letter-spacing: .02em; }
 .src-find-btn[aria-expanded="true"] { background: var(--press); color: var(--accent); }
 /* find in the source: a row under the head; matches drawn over the text, the current one stronger */
 .src-find { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px 4px 4px 8px; border-bottom: 1px solid var(--line); }

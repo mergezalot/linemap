@@ -25,7 +25,7 @@ const $ = (id) => document.getElementById(id);
 // as element ids in the SVG and could shadow ours.
 const el = {
   toolbar: document.querySelector('.toolbar'),
-  fileName: $('file-name'), recent: $('recent'), sourceBtn: $('source-btn'), sourcePanel: $('source-panel'),
+  fileName: $('file-name'), recent: $('recent'), sourcePanel: $('source-panel'),
   through: $('through'), notes: $('notes'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
   search: $('search'), results: $('results'), export: $('export'), helpBtn: $('help-btn'),
   menuBtn: $('menu-btn'), more: $('tb-more'),
@@ -126,6 +126,8 @@ const highlight = createHighlight({
   // no hover focus or tooltips while editing
   isPanning: () => viewport.isPanning() || !!editor?.on(),
   onPinChange: (ids) => legend.setPinned(ids),
+  // (the editor outlines what is selected itself)
+  canOutline: () => !editor?.on(),
 });
 const legend = createLegend({
   el: el.legend, markColor,
@@ -175,7 +177,7 @@ const sourcePanel = createSourcePanel({
     editor.commitText(text);
     return null;
   },
-  onToggle: (open) => { el.sourceBtn.setAttribute('aria-pressed', String(open)); if (open) syncMarks({ scroll: 'always' }); },
+  onToggle: (open) => { if (open) syncMarks({ scroll: 'always' }); },
   onCaret: (offset, text) => caretTo(offset, text),
   findMap: (q) => (shown ? search.match(q, 6).map((e) => ({ ...e, color: e.color && esc(e.color), html: search.marked(e.label, q) })) : []),
   onPickMap: (e) => { select(e); caretToStatement(e, { focus: true }); },
@@ -189,8 +191,6 @@ function caretToStatement(e, { focus }) {
   const st = statements(cur.text).find((x) => x.kind === kind && x.id === e.id);
   if (st) sourcePanel.caretAt(st.start, { focus });
 }
-el.sourceBtn.setAttribute('aria-pressed', String(sourcePanel.isOpen()));
-el.sourceBtn.addEventListener('click', () => sourcePanel.toggle());
 // a press on the map leaves the text, so Del and the other keys reach the map again (and what was
 // typed is committed first)
 el.stage.addEventListener('pointerdown', () => { if (document.activeElement === sourcePanel.textarea) sourcePanel.textarea.blur(); }, true);
@@ -207,12 +207,11 @@ function statements(text) {
   }
   return stmts.list;
 }
-let viewPick = null;   // view mode: what was clicked last on the map, or put the caret on
 let caretPick = false; // the editor's selection is changing because of the caret: no scrolling
 let caretKey = null;   // what the caret was on last
 // what is selected on the map: [{ kind: 'node' | 'group' | 'line', id } | { kind: 'edge', from, to }]
 function picked() {
-  if (!editor.on()) return viewPick ? [viewPick] : [];
+  if (!editor.on()) return [];
   const s = editor.selection();
   if (!s) return [];
   if (s.kind === 'node') return [{ kind: 'node', id: s.id }];
@@ -263,46 +262,13 @@ function thingAt(offset, text) {
 const keyOf = (t) => (!t ? '' : t.kind === 'edge' ? `edge ${t.from} ${t.to}` : `${t.kind} ${t.id}`);
 // the caret was put at `offset` of the text (the map's text): select or focus what is there
 function caretTo(offset, text) {
-  if (!shown || text !== source.current()?.text) return;
+  if (!shown || !editor.on() || text !== source.current()?.text) return;
   const t = thingAt(offset, text);
   if (keyOf(t) === caretKey) return;
   caretKey = keyOf(t);
-  if (editor.on()) {
-    caretPick = true;
-    try { editor.select(t?.kind === 'line' ? null : t); } finally { caretPick = false; }
-    return;
-  }
-  viewPick = t;
-  focusThing(t);
-  syncMarks({ scroll: false });
+  caretPick = true;
+  try { editor.select(t?.kind === 'line' ? null : t); } finally { caretPick = false; }
 }
-// view mode: pin the lines of what the caret is on and outline it
-function focusThing(t) {
-  const m = shown.model;
-  const g = (sel) => [...el.map.querySelectorAll(sel)];
-  if (!t) { highlight.clearPins(); return; }
-  if (t.kind === 'line') { highlight.adorn(null); highlight.pin([t.id]); return; }
-  const edges = t.kind === 'edge' ? m.edges.filter((e) => e.from === t.from && e.to === t.to)
-    : t.kind === 'node' ? m.edges.filter((e) => e.from === t.id || e.to === t.id) : [];
-  const ids = [...new Set(edges.flatMap((e) => e.lines.map((l) => l.id)))];
-  if (ids.length) highlight.pin(ids); else highlight.clearPins();
-  const box = t.kind === 'edge' ? g('g.edge').find((x) => x.dataset.from === t.from && x.dataset.to === t.to)
-    : g(t.kind === 'group' ? 'g.group' : 'g.node, g.note').find((x) => x.id === t.id);
-  highlight.adorn(box ?? null);
-}
-// view mode: a click on the map picks what it is on (nothing: the background)
-el.map.addEventListener('click', (e) => {
-  if (editor.on() || !shown || !(e.target instanceof Element)) return;
-  const x = e.target;
-  const row = x.closest('g.legend [data-line]'), edge = x.closest('g.edge'), box = x.closest('g.node, g.note');
-  const tab = x.closest('g.group-tab'), title = tab ? tab.dataset.group : x.closest('g.group > text')?.parentNode.id;
-  viewPick = row ? { kind: 'line', id: row.getAttribute('data-line') }
-    : edge ? { kind: 'edge', from: edge.dataset.from, to: edge.dataset.to }
-    : box ? { kind: 'node', id: box.id }
-    : title ? { kind: 'group', id: title } : null;
-  caretKey = null;
-  syncMarks();
-});
 let busyTimer = 0;
 let freshNext = false; // the next run shows a different file: fit the view
 function run(meta = {}) {
@@ -365,6 +331,7 @@ function show(result, meta) {
   ]);
   updateToolbar();
   syncHash();
+  if (editNext) { editNext = false; setEditing(true); }
   window.__linemap = { ms: Math.round(result.ms), lines: result.model.lines.length, edges: result.model.edges.length }; // for tests
 }
 
@@ -461,7 +428,6 @@ function updateToolbar() {
   el.fileName.title = `${cur?.src ? `${cur.src} · ` : ''}File: new, open, recent (Ctrl+O opens)`;
   el.fileName.querySelector('.live').hidden = !source.watching();
   document.title = cur ? `${cur.name} · linemap` : 'linemap studio';
-  el.sourceBtn.hidden = !cur;
   for (const b of [el.export, el.zoomIn, el.zoomOut, el.zoomFit, el.edit]) b.disabled = !shown;
   document.body.classList.toggle('nomap', !shown);
   updateEditBar();
@@ -472,9 +438,10 @@ let toldDirty = false; // the flow shown has edits only in this page, and that w
 function setEditing(on) {
   if (on && !shown) return;
   if (on) { highlight.clearPins(); highlight.leave(); }
-  viewPick = null;
   caretKey = null;
   editor.setOn(on);
+  // the source is beside the map while editing
+  sourcePanel.setOpen(on);
   if (on && innerWidth < 860) setMenu(false);
 }
 const HINTS = {
@@ -615,7 +582,7 @@ const source = createSource({
     sourcePanel.setText(text, { fresh, title: name });
     if (edited) { run({ carry: true }); updateToolbar(); return; }
     editor.forget();
-    if (fresh) { toldDirty = false; viewPick = null; caretKey = null; }
+    if (fresh) { toldDirty = false; caretKey = null; }
     if (fresh && loadedOnce) {
       // a different file: its own settings (or the link's), fitted view, nothing pinned
       const link = src || flow != null ? linked : null;
@@ -649,7 +616,8 @@ el.fileInput.addEventListener('change', () => {
   if (f) source.loadFile(f);
   el.fileInput.value = '';
 });
-// New: a small flow to start from, with the source open beside it to write the rest
+// New: a small flow to start from, in edit mode (the source beside it, to write the rest)
+let editNext = false; // the next map opens in edit mode
 const STARTER = `digraph untitled {
   subgraph lines {
     A [label="Line A"]
@@ -660,8 +628,8 @@ const STARTER = `digraph untitled {
 }
 `;
 function newFlow() {
+  editNext = true;
   source.loadText(STARTER, 'untitled');
-  sourcePanel.setOpen(true);
 }
 function toggleFollow() {
   const on = !source.watching();
@@ -791,8 +759,7 @@ function select(entry) {
       state.set({ hidden: h });
       return;
     }
-    highlight.adorn(null);
-    highlight.pin([entry.id]);
+    if (!editor.on()) { highlight.adorn(null); highlight.pin([entry.id]); }
     zoomToLine(entry.id);
     return;
   }
@@ -808,7 +775,9 @@ function select(entry) {
     const b = g.querySelector('rect').getBBox();
     viewport.zoomTo({ x: b.x - 20, y: b.y - 20, w: b.width + 40, h: b.height + 40 });
   }
-  highlight.adorn(g);
+  // outlined; in edit mode it is selected (outlined so, its statement marked in the source)
+  if (editor.on()) editor.select({ kind: entry.kind === 'container' ? 'group' : 'node', id: entry.id });
+  else highlight.adorn(g);
 }
 
 // ---------- actions ----------
@@ -854,7 +823,6 @@ window.addEventListener('keydown', (e) => {
     ArrowUp: () => viewport.panBy(0, -pan), ArrowDown: () => viewport.panBy(0, pan),
     r: () => source.reload(),
     e: () => setEditing(!editor.on()),
-    s: () => { if (source.current()) sourcePanel.toggle(); },
     n: () => { if (hasNotes()) toggleNotes(); },
     // the next theme, fancy or not as now
     t: () => {

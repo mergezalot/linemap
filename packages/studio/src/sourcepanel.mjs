@@ -1,6 +1,6 @@
-// The source sidebar: the DOT text of the flow shown, beside the map, editable, in view and edit
-// mode. A plain textarea (no wrapping, Tab inserts two spaces, Escape leaves it for its Close
-// button) with a gutter of line numbers that scrolls with it. Keys typed in it never reach the
+// The source sidebar: the DOT text of the flow shown, beside the map, editable; open while edit
+// mode is (main.mjs opens and closes it). A plain textarea (no wrapping, Tab inserts two spaces,
+// Escape leaves it) with a gutter of line numbers that scrolls with it. Keys typed in it never reach the
 // studio's shortcuts; Ctrl+Z in it is the textarea's own undo.
 // Text -> map: a pause in typing (DELAY) commits the text (commit(text): the error, or null;
 // main.mjs checks it as for a map edit and hands it to the editor, so it is one undo step there and
@@ -25,20 +25,25 @@
 // the current match, selected. Under it, what on the map matches (findMap(q): the map search's
 // entries): Down goes into that list, Up back out; Enter or a click there goes to it on the map
 // (onPickMap(entry), which puts the caret on its statement) and closes the row.
-// Open or closed and the width (drag the panel's edge, or arrow keys on it) are remembered.
+// It collapses to a strip at the edge (the head's button; a click on the strip opens it again),
+// giving the map the room. That, and the width (drag the panel's edge, or arrow keys on it), are
+// remembered.
 // On wide screens the map makes room for it; on narrow ones (CSS) it lies over the map.
 const DELAY = 300;  // ms of no typing before the text is committed
 const LH = 18;      // line height of the text and the gutter, px (style.css)
 const PAD = 6;      // top padding of the text, px (style.css)
 const MIN_W = 240;
+const STRIP_W = 34; // collapsed, px
 const KEY = 'linemap:source';
 
 export function createSourcePanel({ panel, store, commit, onToggle, onCaret, findMap, onPickMap }) {
   const $ = (s) => panel.querySelector(s);
   const ta = $('.src-text'), lines = $('.src-lines'), band = $('.src-band'), status = $('.src-status');
-  const goto = $('.src-goto'), msg = $('.src-msg'), name = $('.src-name'), resize = $('.src-resize'), close = $('.src-close');
+  const goto = $('.src-goto'), msg = $('.src-msg'), name = $('.src-name'), resize = $('.src-resize');
   const saved = store.get(KEY) ?? {};
-  let open = saved.open === true;
+  let open = false;
+  let collapsed = saved.collapsed === true;
+  const collapseBtn = $('.src-collapse'), expand = $('.src-expand');
   let usable = false;  // a flow is open (else the panel stays away, open or not)
   let width = clampW(Number(saved.width) || 440);
   let timer = 0;       // a commit pending
@@ -60,13 +65,24 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret, fin
   let hit = -1;        // the current one
 
   function clampW(w) { return Math.round(Math.max(MIN_W, Math.min(w, Math.max(MIN_W, innerWidth * 0.8)))); }
-  const keep = () => store.set(KEY, { open, width });
+  const keep = () => store.set(KEY, { width, collapsed });
   function place() {
     document.body.classList.toggle('source-open', open && usable);
     panel.hidden = !(open && usable);
-    document.documentElement.style.setProperty('--src-w', `${width}px`);
+    panel.classList.toggle('collapsed', collapsed);
+    collapseBtn.setAttribute('aria-expanded', String(!collapsed));
+    document.documentElement.style.setProperty('--src-w', `${collapsed ? STRIP_W : width}px`);
     resize.setAttribute('aria-valuenow', String(width));
   }
+  function setCollapsed(v) {
+    collapsed = !!v;
+    if (collapsed) { flush(); closeFind({ toText: false }); }
+    place();
+    keep();
+    if (!collapsed) { gutter(); scrolled(); onToggle?.(open); }
+  }
+  collapseBtn.addEventListener('click', () => setCollapsed(true));
+  expand.addEventListener('click', () => setCollapsed(false));
   function setOpen(v) {
     open = !!v;
     if (!open) { flush(); closeFind({ toText: false }); }
@@ -248,6 +264,7 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret, fin
   }
   function openFind() {
     if (!open) setOpen(true);
+    if (collapsed) setCollapsed(false);
     findRow.hidden = false;
     findBtn.setAttribute('aria-expanded', 'true');
     // a word selected in the text is what to look for
@@ -327,14 +344,13 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret, fin
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
-      close.focus();
+      ta.blur();
     } else if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'f') {
       e.preventDefault();
       openFind();
     }
   });
   goto.addEventListener('click', () => { if (errLine) goToLine(errLine); });
-  close.addEventListener('click', () => setOpen(false));
 
   // ---------- width ----------
   resize.addEventListener('pointerdown', (e) => {
@@ -393,7 +409,6 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret, fin
       scrolled();
     },
     mark,
-    toggle: () => setOpen(!open),
     setOpen,
     isOpen: () => open,
     // commit what was typed now, if a pause is pending (before the page goes, a download, …)

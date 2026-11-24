@@ -26,6 +26,7 @@
     <symbol id="i-through-all" viewBox="0 0 16 16"><rect x="4.6" y="3.6" width="6.8" height="8.8" rx="1.4"/><path d="M1.2 8h13.6" style="stroke: var(--accent)"/></symbol>
     <symbol id="i-through-none" viewBox="0 0 16 16"><rect x="4.6" y="3.6" width="6.8" height="8.8" rx="1.4"/><path d="M1.2 8h2.2M12.6 8h2.2" style="stroke: var(--accent)"/></symbol>
     <symbol id="i-chevron-up" viewBox="0 0 16 16"><path d="m4.5 9.8 3.5-3.5 3.5 3.5"/></symbol>
+    <symbol id="i-collapse" viewBox="0 0 16 16"><path d="m4 4.5 3.5 3.5L4 11.5M8.5 4.5 12 8l-3.5 3.5"/></symbol>
     <symbol id="i-check" viewBox="0 0 16 16"><path d="m3.2 8.4 3 3 6.6-6.8"/></symbol>
     <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
     <symbol id="i-minus" viewBox="0 0 16 16"><path d="M3 8h10"/></symbol>
@@ -98,8 +99,7 @@
       <button id="notes" class="btn" aria-pressed="true" hidden><svg class="icon"><use href="#i-note"/></svg><span class="lbl">Notes</span></button>
     </div>
     <div class="tb-group edit-group">
-      <button id="edit" class="btn" aria-pressed="false" title="Edit the map: move, add and connect boxes, bend lines (E)"><svg class="icon"><use href="#i-edit"/></svg><span class="lbl">Edit</span></button>
-      <button id="source-btn" class="btn" aria-pressed="false" aria-controls="source-panel" title="The DOT source beside the map, to read and edit (S)" hidden><svg class="icon"><use href="#i-code"/></svg><span class="lbl">Source</span></button>
+      <button id="edit" class="btn" aria-pressed="false" title="Edit the map and its DOT source: move, add and connect boxes, bend lines (E)"><svg class="icon"><use href="#i-edit"/></svg><span class="lbl">Edit</span></button>
     </div>
     <div class="tb-group out-group">
       <button id="export" class="btn" title="Download the map as SVG"><svg class="icon"><use href="#i-download"/></svg><span class="lbl">SVG</span></button>
@@ -145,10 +145,12 @@
 
 <!-- the DOT text of the flow, editable (sourcepanel.mjs) -->
 <aside id="source-panel" class="panel source-panel" aria-label="DOT source" hidden>
+  <!-- collapsed: only this strip, a click opens the source again -->
+  <button class="src-expand" title="Show the source" aria-label="Show the source"><svg class="icon"><use href="#i-code"/></svg><span>Source</span></button>
   <div class="src-head">
     <svg class="icon"><use href="#i-code"/></svg><span class="src-title">Source</span><span class="src-name"></span>
     <button class="btn src-find-btn" title="Find in the source (Ctrl+F in the text)" aria-label="Find in the source" aria-expanded="false"><svg class="icon"><use href="#i-search"/></svg></button>
-    <button class="btn src-close" title="Close the source (S)" aria-label="Close the source"><svg class="icon"><use href="#i-close"/></svg></button>
+    <button class="btn src-collapse" title="Collapse the source: the map gets the room" aria-label="Collapse the source" aria-expanded="true"><svg class="icon"><use href="#i-collapse"/></svg></button>
   </div>
   <div class="src-find" role="search" hidden>
     <input class="src-find-input" type="text" placeholder="Find in source" autocomplete="off" spellcheck="false" aria-label="Find in the source">
@@ -309,7 +311,7 @@
           <dt>Undo · redo</dt><dd><kbd>Ctrl</kbd> <kbd>Z</kbd> · <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd></dd>
           <dt>Off the grid</dt><dd><kbd>Alt</kbd> while dragging</dd>
         </dl>
-        <h3>Source <kbd>S</kbd></h3>
+        <h3>Source, in edit mode</h3>
         <dl>
           <dt>Find</dt><dd><kbd>Ctrl</kbd> <kbd>F</kbd> in the text</dd>
           <dt>Leave the text</dt><dd><kbd>Esc</kbd></dd>

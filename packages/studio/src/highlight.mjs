@@ -7,7 +7,7 @@ import { esc } from './tooltip.mjs';
 
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 
-export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
+export function createHighlight({ host, tooltip, isPanning, onPinChange, canOutline = () => true }) {
   let svg = null;
   let ix = null;           // indexes of the current render, see index()
   let hover = new Set();   // lines focused by the pointer (map or legend)
@@ -106,7 +106,7 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
   function adorn(el) {
     svg?.querySelector(':scope > .lm-found')?.remove();
     adorned = null;
-    if (!el || !svg) return;
+    if (!el || !svg || !canOutline()) return;
     const b = el.getBBox();
     const m = svg.getScreenCTM()?.inverse().multiply(el.getScreenCTM() ?? svg.getScreenCTM());
     if (!m) return;
