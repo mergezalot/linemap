@@ -482,7 +482,7 @@ console.log('notes off: the map without them, a badge for each');
   await page.close();
 }
 
-console.log('errors keep the last map');
+console.log('errors: the error, no stale map');
 {
   const page = await newPage();
   await page.goto(`${base}#src=examples/webshop.dot`);
@@ -493,10 +493,14 @@ console.log('errors keep the last map');
     msg: document.querySelector('#banner .msg').textContent,
     map: document.querySelectorAll('#map svg [data-line]').length,
   }));
-  check(b.msg.includes('unknown line "Z"') && b.map > 0, `banner shows "${b.msg.split('\n')[0]}", last map kept`);
+  check(b.msg.includes('unknown line "Z"') && !/last map/.test(b.msg) && b.map === 0, `banner shows "${b.msg.split('\n')[0]}", the map is gone`);
+  check(await page.evaluate(() => document.getElementById('empty').hidden), 'no start screen: the file is still open');
   await shot(page, 'error-banner');
   await page.click('#banner .close');
   check(await page.evaluate(() => document.getElementById('banner').hidden), 'banner dismissed');
+  await pasteText(page, 'digraph fixed { subgraph lines { A } a -> b [lines=A] }');
+  await ready(page);
+  check(true, 'a text that can be drawn brings the map back');
   await page.close();
 }
 

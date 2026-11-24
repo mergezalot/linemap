@@ -302,6 +302,16 @@ function run(meta = {}) {
   pipeline.request(cur.text, state.get(), { preview: false, ...meta });
 }
 
+function clearMap() {
+  setEditing(false);
+  pendingView = viewport.getView();
+  shown = null;
+  el.map.innerHTML = '';
+  legend.hide();
+  search.index([]);
+  updateToolbar();
+}
+
 function show(result, meta) {
   // results only arrive when no newer request is waiting
   clearTimeout(busyTimer);
@@ -309,8 +319,10 @@ function show(result, meta) {
   // a map for a spot something is being dragged over that cannot be drawn: the last one stays
   if (!result.ok && meta.preview) return;
   if (!result.ok) {
-    banner('Could not draw the map', result.error + (shown ? '\n\nShowing the last map that worked.' : ''));
-    if (!shown) setEmpty(true);
+    banner('Could not draw the map', result.error);
+    // no stale map: it goes, the file stays open, and the next text that can be drawn (a save, an
+    // edit in the source) comes back at the same view
+    if (shown) clearMap(); else setEmpty(true);
     return;
   }
   if (keepBanner) keepBanner = false; else hideBanner();
