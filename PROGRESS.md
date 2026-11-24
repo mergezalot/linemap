@@ -314,9 +314,6 @@ Each is one edit and one undo; the new or kept container's members stay selected
   10 and ended at ~185k tokens; unit 11 goes to a fresh subagent #6 (a0ed38398bace1fbc).
 - examples/platform.dot: the user's uncommitted change (28 lines) vanished from the working tree
   at 16:12 during unit 10; the subagent's transcript shows no command touching it. Asked the user.
-- Open for the user: the smoke test can't run until the Playwright system deps and a font are
-  installed (`sudo pnpm exec playwright install-deps` + a font package), or the libs are unpacked
-  into a scratchpad again.
 - Units 1–12 done. Plan grew at the user's request: 12a, 13, 14, 15, 16 (decisions recorded in
   the units). Subagent #6 (a0ed38398bace1fbc) did 11 and 12 (~140k+); subagent #7 (aa14b096d53dcd99b) did
   12a and 13 (~115k+); subagent #8 (a0e5488a4a8d38267) did
@@ -330,6 +327,8 @@ Each is one edit and one undo; the new or kept container's members stay selected
   marks/selects the container block. Limits: note links lag during the live drag; no smoke check
   for the caret on a container block. Smoke checks added, not run.
 - All units (1–16) done 2026-11-22. .git/unit16-wip.patch is obsolete.
-- Open for the user: the smoke test has not run since unit 8 (needs
-  `sudo pnpm exec playwright install-deps` + a font package); examples/platform.dot change lost
-  during unit 10, cause unknown.
+- 2026-11-24: Playwright deps and fonts are installed now; `pnpm test:studio` runs natively
+  (~5 min) and passes all 396 checks. The first run found a real bug (daac3b9: a press on a box
+  kept the focus on a toolbar button, so Enter clicked it instead of editing the text) and stale
+  checks from units 9/11/16 (b4b2df7).
+- Open for the user: examples/platform.dot change lost during unit 10, cause unknown.
