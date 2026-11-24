@@ -84,5 +84,9 @@ export function createSearch({ input, list, onSelect }) {
       if (document.activeElement === input) show();
     },
     focus() { input.focus(); input.select(); },
+    // the best matches for q, as the list shows them (the source's find row lists them too)
+    match: (q, max = MAX) => find(q).slice(0, max),
+    // a label with what matches q marked, as HTML
+    marked: (label, q) => mark(label, norm(q)),
   };
 }

@@ -23,6 +23,13 @@ const svg = render(layout(parseFlow(dotText)), { theme: 'dark' });
   `lm-open` on its `g.note` shows the note beside the badge.
 - `positions(model)` gives the computed positions of unpinned nodes, ready to pin with `pos`;
   `legendPosition(model)` the legend's.
+- `editDot(text, ops)` changes DOT text (move or add a node, set an edge's `via`, add, remove or
+  reattach an edge, set a label, group nodes, remove a container with or without its contents)
+  and leaves the rest of the file as it was written. The ops are listed in `src/edit.mjs`.
+- `labelSource(text, id)` gives the label of a node, note or container as text to edit (line
+  breaks as real ones, an HTML-like label as its source), which the `label` op takes back.
+- `statementsOf(text)` lists where the statements about each node, edge, container and line are
+  in a DOT text (offsets and first and last line), for editors that relate text and map.
 
 The command line is [`@linemap/cli`](https://www.npmjs.com/package/@linemap/cli): `npx @linemap/cli export flow.dot`.
 The DOT format, themes and the studio are described in the

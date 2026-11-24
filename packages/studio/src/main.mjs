@@ -1,6 +1,12 @@
 // Boot and wiring: every module gets the elements and callbacks it needs; none reaches into
 // another's DOM. Flow: source -> pipeline (with the state's settings) -> map, legend, search.
-import { markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE } from '@linemap/core';
+// The source sidebar (sourcepanel.mjs) shows the source's text and commits what is typed in it
+// through the editor (one undo step a pause), so it saves and dirties as a map edit does.
+// Its selection and the map's follow each other (below "source <-> map"): what is selected on the
+// map (edit mode), or clicked last (view mode: a node, note, bundle or line, container title,
+// legend row), has its statements marked in the text; the caret put on a statement selects that
+// thing on the map (edit mode) or pins its lines and outlines it (view mode).
+import { statementsOf, markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE } from '@linemap/core';
 import { createState, readHash, hashWriter } from './state.mjs';
 import { createPipeline } from './pipeline.mjs';
 import { createSource, isHttp, store } from './source.mjs';
@@ -9,31 +15,65 @@ import { createTooltip, esc } from './tooltip.mjs';
 import { createHighlight } from './highlight.mjs';
 import { createLegend } from './legend.mjs';
 import { createSearch } from './search.mjs';
-import { download, positionsText, copyOrShow, askText, toaster } from './actions.mjs';
+import { createEditor } from './editor.mjs';
+import { createSourcePanel } from './sourcepanel.mjs';
+import { createSplit } from './split.mjs';
+import { download, askLabel, askLines, askNote, askConfirm, toaster } from './actions.mjs';
 
 const $ = (id) => document.getElementById(id);
 // All page elements are looked up now, before any map is inserted: ids from the DOT file end up
 // as element ids in the SVG and could shadow ours.
 const el = {
   toolbar: document.querySelector('.toolbar'),
-  fileName: $('file-name'), recent: $('recent'), open: $('open'), paste: $('paste'), reload: $('reload'), watch: $('watch'),
+  fileName: $('file-name'), recent: $('recent'), sourcePanel: $('source-panel'),
   through: $('through'), notes: $('notes'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
-  search: $('search'), results: $('results'), export: $('export'), positions: $('positions'), helpBtn: $('help-btn'),
+  search: $('search'), results: $('results'), export: $('export'), helpBtn: $('help-btn'),
   menuBtn: $('menu-btn'), more: $('tb-more'),
   banner: $('banner'), stage: $('stage'), map: $('map'), empty: $('empty'), busy: $('busy'), legend: $('legend'),
   zoomIn: $('zoom-in'), zoomOut: $('zoom-out'), zoomFit: $('zoom-fit'),
   tooltip: $('tooltip'), toast: $('toast'), drop: $('drop'), fileInput: $('file-input'),
-  pasteDialog: $('paste-dialog'), positionsDialog: $('positions-dialog'), help: $('help'),
+  help: $('help'),
   flows: $('linemap-flows'),
+  edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editDeleteAll: $('edit-delete-all'), editLines: $('edit-lines'), editText: $('edit-text'),
+  editPin: $('edit-pin'), editUnpin: $('edit-unpin'),
+  editAlign: $('edit-align'), alignMenu: $('align-menu'), editGroup: $('edit-group'), editMerge: $('edit-merge'), editSplit: $('edit-split'), editUngroup: $('edit-ungroup'), editUndo: $('edit-undo'), editRedo: $('edit-redo'),
+  editDot: $('edit-dot'), editPage: $('edit-page'),
+  labelDialog: $('label-dialog'), noteDialog: $('note-dialog'), linesDialog: $('lines-dialog'), confirmDialog: $('confirm-dialog'),
 };
 
 // The toolbar wraps on narrow screens; the stage starts below it.
 new ResizeObserver(() => document.documentElement.style.setProperty('--tb-h', `${el.toolbar.offsetHeight}px`)).observe(el.toolbar);
 
+// Labels fold away when the toolbar would not fit with them: fonts differ in width, so no fixed
+// breakpoint knows when that is. The file name gives way first, down to FILE_MIN px (or its own
+// width); squeezed below that, the labels go. Narrow screens fold the controls into a menu instead.
+const FILE_MIN = 120;
+const narrow = matchMedia('(max-width: 860px)');
+let fitQueued = false;
+function fitToolbar() {
+  fitQueued = false;
+  const tb = el.toolbar, name = el.fileName.querySelector('.name');
+  tb.classList.remove('compact');
+  if (!narrow.matches && name.clientWidth < Math.min(name.scrollWidth, FILE_MIN)) tb.classList.add('compact');
+}
+const queueFit = () => { if (!fitQueued) { fitQueued = true; requestAnimationFrame(fitToolbar); } };
+new ResizeObserver(queueFit).observe(el.toolbar);
+new MutationObserver(queueFit).observe(el.toolbar, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
+narrow.addEventListener('change', queueFit);
+
 const toast = toaster(el.toast);
 // flows baked into the page (build --embed)
 let embedded = [];
 try { embedded = JSON.parse(el.flows.textContent).filter((f) => typeof f?.text === 'string'); } catch { /* none */ }
+// A page with flows baked in can be saved again with its flows edited: the page as it came, with
+// an empty flows slot, kept before anything changes it (filled as `linemap export` fills it).
+const SLOT = '<script type="application/json" id="linemap-flows">[]</script>';
+let pageHtml = null;
+if (embedded.length) {
+  el.flows.textContent = '[]';
+  pageHtml = `<!doctype html>\n${document.documentElement.outerHTML}`;
+  if (!pageHtml.includes(SLOT)) pageHtml = null;
+}
 el.flows.remove();
 
 // ---------- state ----------
@@ -79,12 +119,15 @@ const viewport = createViewport({
     const r = el.legend.getBoundingClientRect(), st = el.stage.getBoundingClientRect();
     return { x0: r.left - st.left, y0: r.top - st.top, x1: r.right - st.left, y1: r.bottom - st.top };
   },
-  onChange: () => { highlight?.leave(); syncHash(); },
+  onChange: () => { highlight?.leave(); syncHash(); editor?.view(); closeAlign(); },
 });
 const highlight = createHighlight({
   host: el.map, tooltip,
-  isPanning: () => viewport.isPanning(),
+  // no hover focus or tooltips while editing
+  isPanning: () => viewport.isPanning() || !!editor?.on(),
   onPinChange: (ids) => legend.setPinned(ids),
+  // (the editor outlines what is selected itself)
+  canOutline: () => !editor?.on(),
 });
 const legend = createLegend({
   el: el.legend, markColor,
@@ -100,9 +143,132 @@ const legend = createLegend({
   onHideAll: () => state.set({ hidden: new Set(shown.base.lines.map((l) => l.id)) }),
   onHover: (ids) => highlight.hoverLines(ids),
 });
-const search = createSearch({ input: el.search, list: el.results, onSelect: select });
+// a pick from the toolbar's search also brings its statement into view in the source, if open
+const search = createSearch({ input: el.search, list: el.results, onSelect: (e) => { select(e); caretToStatement(e, { focus: false }); } });
+const editor = createEditor({
+  host: el.map,
+  getText: () => source.current()?.text ?? '',
+  commit: (text) => source.edit(text),
+  // a drag draws the map as it would be; the source keeps its text until the drop
+  preview: (text) => pipeline.request(text, state.get(), { carry: true, preview: true }),
+  check: (text) => pipeline.check(text, state.get()),
+  cancelPreview: () => run({ carry: true }),
+  toast: (msg) => toast(msg),
+  askLabel: (opts) => askLabel(el.labelDialog, opts),
+  askLines: (lines, checked, title, opts) => askLines(el.linesDialog, lines, checked, title, opts),
+  askNote: (title, opts) => askNote(el.noteDialog, title, opts),
+  askConfirm: (opts) => askConfirm(el.confirmDialog, opts),
+  openAlign: (anchor) => toggleAlign(anchor),
+  // (a selection made on the map: the caret on the same statement as before selects it again)
+  onChange: () => { updateEditBar(); if (!caretPick) caretKey = null; syncMarks({ scroll: !caretPick }); },
+});
 
+// the DOT text beside the map: what is typed is checked as a map edit is, then committed by the
+// editor (one undo step); the error otherwise, and nothing changes
+const sourcePanel = createSourcePanel({
+  panel: el.sourcePanel,
+  store,
+  commit(text) {
+    const cur = source.current();
+    if (!cur) return null;
+    if (text === cur.text) return null;
+    const err = pipeline.check(text, state.get());
+    if (err) return err;
+    editor.commitText(text);
+    return null;
+  },
+  onToggle: (open) => { if (open) syncMarks({ scroll: 'always' }); },
+  onCaret: (offset, text) => caretTo(offset, text),
+  findMap: (q) => (shown ? search.match(q, 6).map((e) => ({ ...e, color: e.color && esc(e.color), html: search.marked(e.label, q) })) : []),
+  onPickMap: (e) => { select(e); caretToStatement(e, { focus: true }); },
+});
+// the caret on the statement that declares a search entry (node, note, container or line), so
+// typing goes on there; focus: into the text (else only scrolled to, for the next time it is used)
+function caretToStatement(e, { focus }) {
+  const cur = source.current();
+  if (!cur || !sourcePanel.isOpen()) return;
+  const kind = e.kind === 'container' ? 'group' : e.kind === 'note' ? 'node' : e.kind;
+  const st = statements(cur.text).find((x) => x.kind === kind && x.id === e.id);
+  if (st) sourcePanel.caretAt(st.start, { focus });
+}
+// a press on the map leaves the text, so Del and the other keys reach the map again (and what was
+// typed is committed first)
+el.stage.addEventListener('pointerdown', () => { if (document.activeElement === sourcePanel.textarea) sourcePanel.textarea.blur(); }, true);
 const pipeline = createPipeline({ onResult: show });
+
+// ---------- source <-> map ----------
+// what each statement of a text is about (core's statementsOf), for the last text asked
+let stmts = { text: null, list: [] };
+function statements(text) {
+  if (stmts.text !== text) {
+    let list = [];
+    try { list = statementsOf(text); } catch { /* not readable: nothing to mark */ }
+    stmts = { text, list };
+  }
+  return stmts.list;
+}
+let caretPick = false; // the editor's selection is changing because of the caret: no scrolling
+let caretKey = null;   // what the caret was on last
+// what is selected on the map: [{ kind: 'node' | 'group' | 'line', id } | { kind: 'edge', from, to }]
+function picked() {
+  if (!editor.on()) return [];
+  const s = editor.selection();
+  if (!s) return [];
+  if (s.kind === 'node') return [{ kind: 'node', id: s.id }];
+  if (s.kind === 'group') return [{ kind: 'group', id: s.id }];
+  if (s.kind === 'nodes') return s.ids.map((id) => ({ kind: 'node', id }));
+  return [{ kind: 'edge', from: s.from, to: s.to }];
+}
+// the lines to mark: the statements of each thing (strong), the edge statements naming a node or
+// container (weak)
+function rangesFor(things, list) {
+  const out = [];
+  for (const st of list) {
+    let hit = 0;
+    for (const t of things) {
+      if (t.kind === 'edge') { if (st.kind === 'edge' && st.pairs.some(([a, b]) => a === t.from && b === t.to)) hit = 2; }
+      else if (st.kind === t.kind && st.id === t.id) hit = 2;
+      else if (st.kind === 'edge' && st.ids.includes(t.id)) hit = Math.max(hit, 1);
+    }
+    if (hit) out.push({ line: st.line, endLine: st.endLine, weak: hit === 1 });
+  }
+  return out;
+}
+function syncMarks({ scroll = true } = {}) {
+  if (!shown || !sourcePanel.isOpen()) return; // (no map yet: the source may not exist yet either)
+  const cur = source.current();
+  const things = cur ? picked() : [];
+  // (scrolled to only when it is something else than marked before, or asked to (the panel opened))
+  const key = things.map(keyOf).join();
+  sourcePanel.mark(things.length ? rangesFor(things, statements(cur.text)) : [], { scroll: scroll && (key !== markedKey || scroll === 'always') });
+  markedKey = key;
+}
+let markedKey = '';
+// what the statement at `offset` is about: the smallest statement on the caret's line (one the caret
+// is in, if several), a container's block when nothing smaller is there; null: none
+function thingAt(offset, text) {
+  const line = text.slice(0, offset).split('\n').length;
+  const inside = (st) => offset >= st.start && offset <= st.end;
+  const size = (st) => st.endLine - st.line;
+  const st = statements(text).filter((x) => x.line <= line && line <= x.endLine)
+    .sort((a, b) => size(a) - size(b) || inside(b) - inside(a) || (a.kind === 'group') - (b.kind === 'group'))[0];
+  if (!st) return null;
+  if (st.kind !== 'edge') return { kind: st.kind, id: st.id };
+  // an edge statement: the first edge it makes that is on the map
+  const on = (a, b) => shown?.model.edges.some((e) => e.from === a && e.to === b);
+  const [from, to] = st.pairs.find(([a, b]) => on(a, b)) ?? st.pairs[0];
+  return { kind: 'edge', from, to };
+}
+const keyOf = (t) => (!t ? '' : t.kind === 'edge' ? `edge ${t.from} ${t.to}` : `${t.kind} ${t.id}`);
+// the caret was put at `offset` of the text (the map's text): select or focus what is there
+function caretTo(offset, text) {
+  if (!shown || !editor.on() || text !== source.current()?.text) return;
+  const t = thingAt(offset, text);
+  if (keyOf(t) === caretKey) return;
+  caretKey = keyOf(t);
+  caretPick = true;
+  try { editor.select(t?.kind === 'line' ? null : t); } finally { caretPick = false; }
+}
 let busyTimer = 0;
 let freshNext = false; // the next run shows a different file: fit the view
 function run(meta = {}) {
@@ -111,16 +277,30 @@ function run(meta = {}) {
   if (freshNext) { meta = { ...meta, fresh: true }; freshNext = false; }
   clearTimeout(busyTimer);
   busyTimer = setTimeout(() => { el.busy.hidden = false; }, 150);
-  pipeline.request(cur.text, state.get(), meta);
+  pipeline.request(cur.text, state.get(), { preview: false, ...meta });
+}
+
+function clearMap() {
+  setEditing(false);
+  pendingView = viewport.getView();
+  shown = null;
+  el.map.innerHTML = '';
+  legend.hide();
+  search.index([]);
+  updateToolbar();
 }
 
 function show(result, meta) {
   // results only arrive when no newer request is waiting
   clearTimeout(busyTimer);
   el.busy.hidden = true;
+  // a map for a spot something is being dragged over that cannot be drawn: the last one stays
+  if (!result.ok && meta.preview) return;
   if (!result.ok) {
-    banner('Could not draw the map', result.error + (shown ? '\n\nShowing the last map that worked.' : ''));
-    if (!shown) setEmpty(true);
+    banner('Could not draw the map', result.error);
+    // no stale map: it goes, the file stays open, and the next text that can be drawn (a save, an
+    // edit in the source) comes back at the same view
+    if (shown) clearMap(); else setEmpty(true);
     return;
   }
   if (keepBanner) keepBanner = false; else hideBanner();
@@ -140,6 +320,8 @@ function show(result, meta) {
   viewport.setContent(svg, { x, y, w, h }, { keep });
   if (pendingView) { viewport.setView(pendingView); pendingView = null; }
   highlight.index(svg, result.model);
+  editor.index(svg, result.model);
+  syncMarks({ scroll: false });
   if (pendingPin) { highlight.pin([pendingPin]); zoomToLine(pendingPin); pendingPin = null; }
 
   search.index([
@@ -149,15 +331,26 @@ function show(result, meta) {
   ]);
   updateToolbar();
   syncHash();
+  if (editNext) { editNext = false; setEditing(true); }
   window.__linemap = { ms: Math.round(result.ms), lines: result.model.lines.length, edges: result.model.edges.length }; // for tests
 }
 
 // ---------- settings ----------
 state.onChange(() => { run(); updateToolbar(); syncHash(); });
 
-el.through.addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-mode]');
-  if (b && b.dataset.mode !== state.get().mode) state.set({ mode: b.dataset.mode });
+// lines through nodes: a split button, a click goes on to the next mode, the arrow lists them
+const THROUGH = {
+  file: { label: 'As in file', title: 'Lines through nodes: as in the file', desc: 'Each node as its file says' },
+  all: { label: 'Through all', title: 'Lines through nodes: through every box, queue and cylinder', desc: 'Lines run through every box, queue and cylinder' },
+  none: { label: 'Through none', title: 'Lines through nodes: none, lines end at every node', desc: 'Lines end at every node' },
+};
+const MODES = Object.keys(THROUGH);
+el.through.querySelector('.stack').innerHTML = MODES.map((m) => `<span data-m="${m}">${THROUGH[m].label}</span>`).join('');
+const throughSplit = createSplit(document.getElementById('through-split'), {
+  onMain: () => state.set({ mode: MODES[(MODES.indexOf(state.get().mode) + 1) % MODES.length] }),
+  renderMenu: () => MODES.map((m) => `<button class="item" role="menuitemradio" aria-checked="${m === state.get().mode}" data-value="${m}"><svg class="icon"><use href="#i-through-${m}"/></svg><span class="txt"><span class="nm">${THROUGH[m].label}</span><span class="desc">${THROUGH[m].desc}</span></span><svg class="icon check"><use href="#i-check"/></svg></button>`).join(''),
+  onPick: (m) => { if (m !== state.get().mode) state.set({ mode: m }); },
+  onOpen: () => { el.recent.hidden = true; themeSplit.close(); },
 });
 // notes on, or off: the map without them, a badge for each (hover one to read it, click to keep
 // it open); remembered for the next visit
@@ -189,28 +382,14 @@ function setTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch { /* no storage */ }
   if (theme !== state.get().theme) state.set({ theme });
 }
-function showThemes(open) {
-  el.theme.hidden = !open;
-  el.themeBtn.setAttribute('aria-expanded', String(open));
-}
-el.themeBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  el.recent.hidden = true;
-  showThemes(el.theme.hidden);
+// a split button: the theme list, and fancy switched on or off beside it
+const themeSplit = createSplit(document.getElementById('theme-split'), {
+  attr: 'theme',
+  onMain: () => { const cur = effectiveTheme(), base = baseOf(cur); setTheme(isFancy(cur) ? base : base + FANCY); },
+  onPick: setTheme,
+  onOpen: () => { el.recent.hidden = true; throughSplit.close(); },
 });
-el.theme.addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-theme]');
-  if (!b) return;
-  e.stopPropagation(); // the choice stays in the narrow-screen menu, to try one after another
-  showThemes(false);
-  setTheme(b.dataset.theme);
-});
-document.addEventListener('click', (e) => { if (!el.theme.hidden && !e.target.closest('.theme-pick')) showThemes(false); });
-el.fancy.addEventListener('click', (e) => {
-  e.stopPropagation(); // stays in the narrow-screen menu, like a pick from the list
-  const cur = effectiveTheme(), base = baseOf(cur);
-  setTheme(isFancy(cur) ? base : base + FANCY);
-});
+const showThemes = (open) => { if (!open) themeSplit.close(); };
 // The page around the map follows the theme: dark chrome for dark maps.
 const luminance = (hex) => {
   const v = parseInt(String(hex).replace('#', ''), 16);
@@ -226,7 +405,11 @@ applyTheme(state.get().theme ?? DEFAULT_THEME);
 
 function updateToolbar() {
   const { mode } = state.get();
-  for (const b of el.through.querySelectorAll('button')) b.setAttribute('aria-checked', String(b.dataset.mode === mode));
+  const next = MODES[(MODES.indexOf(mode) + 1) % MODES.length];
+  el.through.dataset.mode = mode;
+  el.through.querySelector('use').setAttribute('href', `#i-through-${mode}`);
+  for (const l of el.through.querySelectorAll('.stack > span')) l.classList.toggle('on', l.dataset.m === mode);
+  el.through.title = `${THROUGH[mode].title}. Click: ${THROUGH[next].label.toLowerCase()}`;
   const theme = state.get().theme ?? effectiveTheme();
   for (const b of el.theme.querySelectorAll('button')) b.setAttribute('aria-checked', String(b.dataset.theme === theme));
   for (const r of el.theme.querySelectorAll('.row')) r.classList.toggle('on', r.dataset.base === baseOf(theme));
@@ -242,17 +425,157 @@ function updateToolbar() {
   el.notes.title = notes ? 'Notes: shown. Click to draw the map without them, with a badge for each (N)' : 'Notes: off, a badge for each; hover one to read it, click to keep it open. Click to show them all (N)';
   const cur = source.current();
   el.fileName.querySelector('.name').textContent = cur?.name ?? 'No file';
-  el.fileName.title = cur?.src ? `${cur.src} · recent files` : 'Recent files';
+  el.fileName.title = `${cur?.src ? `${cur.src} · ` : ''}File: new, open, recent (Ctrl+O opens)`;
+  el.fileName.querySelector('.live').hidden = !source.watching();
   document.title = cur ? `${cur.name} · linemap` : 'linemap studio';
-  el.watch.hidden = !source.canWatch();
-  el.watch.setAttribute('aria-pressed', String(source.watching()));
-  for (const b of [el.export, el.positions, el.reload, el.zoomIn, el.zoomOut, el.zoomFit]) b.disabled = !shown;
+  for (const b of [el.export, el.zoomIn, el.zoomOut, el.zoomFit, el.edit]) b.disabled = !shown;
   document.body.classList.toggle('nomap', !shown);
+  updateEditBar();
 }
+
+// ---------- edit mode ----------
+let toldDirty = false; // the flow shown has edits only in this page, and that was said
+function setEditing(on) {
+  if (on && !shown) return;
+  if (on) { highlight.clearPins(); highlight.leave(); }
+  caretKey = null;
+  editor.setOn(on);
+  // the source is beside the map while editing
+  sourcePanel.setOpen(on);
+  if (on && innerWidth < 860) setMenu(false);
+}
+const HINTS = {
+  none: 'Drag a box to move it · drag a line to bend it · double-click the map for a new box · click a container to select it · Shift+drag the background to select several · drag the background to pan',
+  group: 'Drag it to move all in it · click again for its boxes · F2 or a double-click on its title renames it · drag the + onto a box to connect · Del removes it, its boxes stay',
+  nodes: 'Drag one to move them all · click one again to resize them all · Align… lines them up · Shift+click adds or removes a box · Del removes them',
+  nodesSize: 'Drag a handle: every box takes that size, each around its centre · click one to move them again · Del removes them',
+  node: 'Drag to move · click again to resize · double-click or F2 edits its text · drag the + onto another box to connect them · Del removes the box and its edges',
+  size: 'Drag a handle to resize · click again to move · Del removes the box and its edges',
+  edge: 'Drag an end onto another box to reattach · click again for the line under the pointer · Lines… picks its lines · Del removes the edge',
+  line: 'drag an end onto another box to move only this line · Del takes it off this edge · click again for the whole bundle',
+  via: 'Drag to move the bend · double-click or Del removes it',
+  adding: 'Click where the new box goes · Esc cancels',
+};
+function updateEditBar() {
+  const on = editor.on();
+  el.edit.setAttribute('aria-pressed', String(on));
+  el.editBar.hidden = el.editHint.hidden = !on;
+  if (!on) return;
+  const sel = editor.selection();
+  el.editUndo.disabled = !editor.canUndo();
+  el.editRedo.disabled = !editor.canRedo();
+  el.editDelete.disabled = !sel;
+  el.editDeleteAll.hidden = sel?.kind !== 'group';
+  el.editLines.hidden = !(sel?.kind === 'edge' || sel?.kind === 'via');
+  el.editText.hidden = !editor.textTarget();
+  // the container actions, where they apply to the boxes selected
+  const acts = editor.containerActions();
+  for (const [act, b] of [['group', el.editGroup], ['merge', el.editMerge], ['split', el.editSplit], ['ungroup', el.editUngroup]]) b.hidden = !acts.includes(act);
+  el.editAlign.hidden = !editor.arrangeable();
+  if (el.editAlign.hidden) closeAlign();
+  el.editAdd.setAttribute('aria-pressed', String(editor.adding()));
+  const mode = sel?.mode === 'size' ? (sel.kind === 'nodes' ? 'nodesSize' : 'size') : sel?.line ? 'line' : sel?.kind ?? 'none';
+  el.editHint.textContent = (mode === 'line' ? `Line ${editor.lineLabel(sel.line)}: ` : sel?.kind === 'nodes' ? `${sel.ids.length} boxes: ` : sel?.kind === 'group' ? `${editor.groupLabel(sel.id)}: ` : '') + HINTS[editor.adding() ? 'adding' : mode];
+  const cur = source.current();
+  el.editPage.hidden = !(pageHtml && cur?.flow !== null && cur?.flow !== undefined);
+  // edits that cannot be saved to a file stay in this page: said once per flow, at the first one
+  // (a file linemap studio serves is saved at once; a failed save says so itself)
+  if (source.dirty() && !toldDirty) {
+    toldDirty = true;
+    toast('Edits stay in this page: download the .dot (above the source) to keep them');
+  }
+}
+el.edit.addEventListener('click', () => setEditing(!editor.on()));
+el.editAdd.addEventListener('click', () => editor.startAdding());
+el.editDelete.addEventListener('click', () => editor.remove());
+el.editDeleteAll.addEventListener('click', () => editor.removeDeep());
+el.editLines.addEventListener('click', () => editor.editLines());
+el.editText.addEventListener('click', () => editor.editText());
+el.editPin.addEventListener('click', () => editor.pinAll());
+el.editUnpin.addEventListener('click', () => editor.unpinAll());
+for (const act of ['group', 'merge', 'split', 'ungroup']) el[`edit${act[0].toUpperCase()}${act.slice(1)}`].addEventListener('click', () => editor.containerAction(act));
+// Align / distribute: a menu by its button (the edit bar's, or the one in the selection's toolbar
+// on the map); Escape, a click elsewhere, a change of the view or a choice closes it. Arrow keys,
+// Home and End move between its items.
+let alignFrom = null; // the button it was opened from
+function closeAlign({ focus = false } = {}) {
+  if (el.alignMenu.hidden) return;
+  el.alignMenu.hidden = true;
+  el.editAlign.setAttribute('aria-expanded', 'false');
+  if (focus && alignFrom === el.editAlign) el.editAlign.focus();
+  alignFrom = null;
+}
+function toggleAlign(anchor) {
+  if (!el.alignMenu.hidden) {
+    // open from the same button (the toolbar's is drawn anew every time): it closes
+    const same = (anchor === el.editAlign) === (alignFrom === el.editAlign);
+    closeAlign();
+    if (same) return;
+  }
+  const n = editor.arrangeable();
+  if (!n || !anchor) return;
+  for (const b of el.alignMenu.querySelectorAll('[data-how$="space"]')) b.disabled = n < 3;
+  alignFrom = anchor;
+  el.alignMenu.hidden = false;
+  el.editAlign.setAttribute('aria-expanded', String(anchor === el.editAlign));
+  // below the button, else above it; within the window sideways
+  const r = anchor.getBoundingClientRect(), m = el.alignMenu.getBoundingClientRect();
+  const top = r.bottom + 6 + m.height <= innerHeight - 4 ? r.bottom + 6 : Math.max(4, r.top - 6 - m.height);
+  el.alignMenu.style.left = `${Math.max(4, Math.min(r.left, innerWidth - 4 - m.width))}px`;
+  el.alignMenu.style.top = `${top}px`;
+  el.alignMenu.querySelector('.item:not(:disabled)')?.focus();
+}
+el.editAlign.addEventListener('click', () => toggleAlign(el.editAlign));
+el.alignMenu.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-how]');
+  if (!b || b.disabled) return;
+  closeAlign({ focus: true });
+  editor.align(b.dataset.how);
+});
+el.alignMenu.addEventListener('keydown', (e) => {
+  const items = [...el.alignMenu.querySelectorAll('.item:not(:disabled)')];
+  const i = items.indexOf(document.activeElement);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: items.length - 1 }[e.key];
+  if (to !== undefined) items[(to + items.length) % items.length]?.focus();
+  else if (e.key === 'Escape' || e.key === 'Tab') closeAlign({ focus: e.key === 'Escape' });
+  else return;
+  if (e.key !== 'Tab') e.preventDefault();
+  e.stopPropagation(); // Escape keeps the selection
+});
+// a press elsewhere closes it (its own button toggles it on the click that follows)
+document.addEventListener('pointerdown', (e) => {
+  if (el.alignMenu.hidden || el.alignMenu.contains(e.target) || e.target.closest?.('#edit-align, [data-act="align"]')) return;
+  closeAlign();
+}, true);
+el.editUndo.addEventListener('click', () => editor.undo());
+el.editRedo.addEventListener('click', () => editor.redo());
+const dotName = () => `${baseName()}.dot`;
+el.editDot.addEventListener('click', () => {
+  const cur = source.current();
+  if (!cur) return;
+  download(dotName(), cur.text, 'text/vnd.graphviz');
+  source.markClean();
+  updateEditBar();
+});
+el.editPage.addEventListener('click', () => {
+  if (!pageHtml) return;
+  const json = JSON.stringify(source.embedded().map(({ name, text }) => ({ name, text }))).replace(/</g, '\\u003c');
+  const name = decodeURIComponent(location.pathname.split('/').pop() || '') || 'linemap.html';
+  download(/\.html?$/i.test(name) ? name : `${name}.html`, pageHtml.replace(SLOT, () => SLOT.replace('[]', json)), 'text/html');
+  source.markClean();
+  updateEditBar();
+});
+for (const b of document.querySelectorAll('dialog [data-close]')) b.addEventListener('click', () => b.closest('dialog').close('cancel'));
+// edits that are only in this page
+window.addEventListener('beforeunload', (e) => { sourcePanel.flush(); if (source.dirty() || sourcePanel.pending()) { e.preventDefault(); e.returnValue = ''; } });
 
 // ---------- source ----------
 const source = createSource({
-  onText({ src, flow, fresh }) {
+  onText({ text, name, src, flow, fresh, edited }) {
+    sourcePanel.setText(text, { fresh, title: name });
+    if (edited) { run({ carry: true }); updateToolbar(); return; }
+    editor.forget();
+    if (fresh) { toldDirty = false; caretKey = null; }
     if (fresh && loadedOnce) {
       // a different file: its own settings (or the link's), fitted view, nothing pinned
       const link = src || flow != null ? linked : null;
@@ -270,30 +593,44 @@ const source = createSource({
   },
   onError: (title, msg) => { banner(title, msg); if (!shown) setEmpty(true); },
   onWatch: () => updateToolbar(),
+  onSave(st, message) {
+    if (st === 'error') toast(`Could not save: ${message}`);
+    if (st === 'conflict') toast('The file changed on disk, so the last edit was not saved; showing the file as it is now');
+    updateEditBar();
+  },
   embedded,
 });
 
 source.bindDrop(el.drop);
 source.bindPaste();
-el.open.addEventListener('click', () => el.fileInput.click());
+const openFile = () => el.fileInput.click();
 el.fileInput.addEventListener('change', () => {
   const f = el.fileInput.files[0];
   if (f) source.loadFile(f);
   el.fileInput.value = '';
 });
-async function pasteDialog() {
-  const text = await askText(el.pasteDialog);
-  if (text) source.loadText(text);
+// New: a small flow to start from, in edit mode (the source beside it, to write the rest)
+let editNext = false; // the next map opens in edit mode
+const STARTER = `digraph untitled {
+  subgraph lines {
+    A [label="Line A"]
+  }
+  start [label="Start"]
+  end   [label="End"]
+  start -> end [lines=A]
 }
-el.paste.addEventListener('click', pasteDialog);
-el.reload.addEventListener('click', () => source.reload());
-el.watch.addEventListener('click', () => {
+`;
+function newFlow() {
+  editNext = true;
+  source.loadText(STARTER, 'untitled');
+}
+function toggleFollow() {
   const on = !source.watching();
   source.setWatch(on, { remember: true });
-  toast(on ? 'Watching the file: the map follows every save' : 'Stopped watching');
-});
+  toast(on ? 'Following saves: the map redraws when the file changes' : 'Not following saves');
+}
 
-// recent files menu
+// the file menu, under the file name: new, open, follow saves, the baked-in flows, recent files
 const ago = (t) => {
   const s = (Date.now() - t) / 1000;
   return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : `${Math.round(s / 86400)} d ago`;
@@ -305,7 +642,11 @@ function renderRecent() {
   const list = source.recent();
   const flows = source.embedded();
   const cur = source.current();
-  el.recent.innerHTML = (flows.length > 1
+  const ic = (id) => `<svg class="icon"><use href="#i-${id}"/></svg>`;
+  el.recent.innerHTML = `<button class="item" role="menuitem" data-act="new">${ic('new')}<span class="nm">New</span></button>` +
+    `<button class="item" role="menuitem" data-act="open">${ic('open')}<span class="nm">Open…</span><kbd>Ctrl+O</kbd></button>` +
+    (source.canWatch() ? `<button class="item" role="menuitemcheckbox" aria-checked="${source.watching()}" data-act="follow">${ic('eye')}<span class="nm">Follow saves</span><svg class="icon check"><use href="#i-check"/></svg></button>` : '') +
+    '<div class="hint">or paste or drop DOT text anywhere</div><hr>' + (flows.length > 1
     ? `<div class="head">In this file</div>` + flows.map((f, i) => `<button class="item" role="menuitem" data-flow="${i}"${cur && !cur.src && cur.name === f.name && cur.text === f.text ? ' aria-current="true"' : ''}><span class="nm">${esc(f.name)}</span></button>`).join('') + '<hr>'
     : '') + `<div class="head">Recent</div>` + (list.length
     ? list.map((r, i) => `<button class="item" role="menuitem" data-i="${i}"><span class="nm">${esc(r.name)}</span><span class="when">${ago(r.time)}</span></button>`).join('') +
@@ -316,6 +657,7 @@ el.fileName.addEventListener('click', (e) => {
   e.stopPropagation();
   if (!el.recent.hidden) { el.recent.hidden = true; return; }
   showThemes(false);
+  throughSplit.close();
   renderRecent();
   el.recent.hidden = false;
 });
@@ -324,6 +666,9 @@ el.recent.addEventListener('click', (e) => {
   if (!b) return;
   el.recent.hidden = true;
   if (b.dataset.act === 'clear') { source.clearRecent(); renderEmpty(); return; }
+  if (b.dataset.act === 'new') { newFlow(); return; }
+  if (b.dataset.act === 'open') { openFile(); return; }
+  if (b.dataset.act === 'follow') { toggleFollow(); return; }
   if (b.dataset.flow !== undefined) { source.loadEmbedded(Number(b.dataset.flow)); return; }
   const r = source.recent()[Number(b.dataset.i)];
   if (r) openRecent(r);
@@ -341,8 +686,8 @@ el.menuBtn.addEventListener('click', (e) => {
   el.recent.hidden = true;
   setMenu(!el.toolbar.classList.contains('menu-open'));
 });
-// an action closes it; through and theme leave it open, to try one after another
-el.more.addEventListener('click', (e) => { if (e.target.closest('.btn')) setMenu(false); });
+// an action closes it; through and theme (split buttons) leave it open, to try one after another
+el.more.addEventListener('click', (e) => { if (e.target.closest('.btn') && !e.target.closest('.split')) setMenu(false); });
 // pointerdown, so a drag on the map closes it too (the stage keeps its pointer events)
 document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#tb-more, #menu-btn')) setMenu(false); }, true);
 matchMedia('(max-width: 860px)').addEventListener('change', () => setMenu(false));
@@ -377,8 +722,8 @@ function setEmpty(on) {
 el.empty.addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
-  if (b.dataset.act === 'open') el.fileInput.click();
-  else if (b.dataset.act === 'paste') pasteDialog();
+  if (b.dataset.act === 'open') openFile();
+  else if (b.dataset.act === 'new') newFlow();
   else if (b.dataset.flow !== undefined) source.loadEmbedded(Number(b.dataset.flow));
   else if (b.dataset.i !== undefined) { const r = source.recent()[Number(b.dataset.i)]; if (r) openRecent(r); }
 });
@@ -407,7 +752,7 @@ function select(entry) {
       state.set({ hidden: h });
       return;
     }
-    highlight.pin([entry.id]);
+    if (!editor.on()) { highlight.adorn(null); highlight.pin([entry.id]); }
     zoomToLine(entry.id);
     return;
   }
@@ -423,7 +768,9 @@ function select(entry) {
     const b = g.querySelector('rect').getBBox();
     viewport.zoomTo({ x: b.x - 20, y: b.y - 20, w: b.width + 40, h: b.height + 40 });
   }
-  setTimeout(() => highlight.flash(g), 200);
+  // outlined; in edit mode it is selected (outlined so, its statement marked in the source)
+  if (editor.on()) editor.select({ kind: entry.kind === 'container' ? 'group' : 'node', id: entry.id });
+  else highlight.adorn(g);
 }
 
 // ---------- actions ----------
@@ -432,14 +779,9 @@ el.export.addEventListener('click', () => {
   if (!shown) return;
   download(`${baseName()}.svg`, pipeline.exportSvg(shown.model, shown.theme));
 });
-el.positions.addEventListener('click', async () => {
-  if (!shown) return;
-  const list = pipeline.positions(shown.model);
-  if (!list.length) { toast('Every node and note is pinned already'); return; }
-  if (await copyOrShow(positionsText(list), el.positionsDialog)) toast(`Copied ${list.length} position${list.length === 1 ? '' : 's'}`);
-});
 const openHelp = () => { if (!el.help.open) el.help.showModal(); };
 el.helpBtn.addEventListener('click', openHelp);
+document.getElementById('brand').addEventListener('click', openHelp);
 el.zoomIn.addEventListener('click', () => viewport.zoomIn());
 el.zoomOut.addEventListener('click', () => viewport.zoomOut());
 el.zoomFit.addEventListener('click', () => viewport.fit());
@@ -449,6 +791,19 @@ window.addEventListener('keydown', (e) => {
   if (document.querySelector('dialog[open]')) return;
   const typing = e.target.closest?.('input, textarea, [contenteditable]');
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && shown) { e.preventDefault(); search.focus(); return; }
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'o') { e.preventDefault(); openFile(); return; }
+  if (editor.on() && !typing) {
+    const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+    const act = mod && k === 'z' ? (e.shiftKey ? editor.redo : editor.undo) : mod && k === 'y' ? editor.redo
+      : !mod && !e.altKey && (e.key === 'Delete' || e.key === 'Backspace') ? editor.remove
+        : !mod && !e.altKey && k === 'p' && editor.togglePin() ? () => {}
+          : !mod && !e.altKey && k === 'l' && (editor.selection()?.kind === 'edge' || editor.selection()?.kind === 'via') ? editor.editLines
+            // F2, or Enter (not on a button, link or menu, where it means a click): the text of the box,
+            // note or container selected
+            : !mod && !e.altKey && !e.shiftKey && (e.key === 'F2' || (e.key === 'Enter' && !e.target.closest?.('button, a[href], select, summary, [role="button"], [role="menuitem"], [role="option"]'))) && editor.textTarget() ? editor.editText
+        : e.key === 'Escape' && editor.escape() ? () => {} : null;
+    if (act) { e.preventDefault(); act(); return; }
+  }
   if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
   const pan = e.shiftKey ? 400 : 120;
   const keys = {
@@ -460,16 +815,17 @@ window.addEventListener('keydown', (e) => {
     ArrowLeft: () => viewport.panBy(-pan, 0), ArrowRight: () => viewport.panBy(pan, 0),
     ArrowUp: () => viewport.panBy(0, -pan), ArrowDown: () => viewport.panBy(0, pan),
     r: () => source.reload(),
+    e: () => setEditing(!editor.on()),
     n: () => { if (hasNotes()) toggleNotes(); },
     // the next theme, fancy or not as now
     t: () => {
       const cur = effectiveTheme(), next = BASES[(BASES.indexOf(baseOf(cur)) + 1) % BASES.length];
       setTheme(isFancy(cur) && THEMES[next + FANCY] ? next + FANCY : next);
     },
-    Escape: () => { el.recent.hidden = true; showThemes(false); setMenu(false); highlight.clearPins(); highlight.foldNotes(); hideBanner(); },
+    Escape: () => { el.recent.hidden = true; showThemes(false); throughSplit.close(); setMenu(false); highlight.clearPins(); highlight.foldNotes(); hideBanner(); },
   };
   const fn = keys[e.key];
-  if (!fn || (!shown && !['/', '?', 'Escape'].includes(e.key))) return;
+  if (!fn || (!shown && !['/', '?', 'Escape', 's'].includes(e.key))) return;
   e.preventDefault();
   fn();
 });
@@ -499,7 +855,6 @@ function openEmbedded() {
 }
 if (initial.src) {
   openSrc(initial.src).then((ok) => {
-    if (ok) source.restoreWatch();
     if (ok || !embedded.length) return;
     keepBanner = embedded.length === 1; // the baked-in flow is drawn under the error, which stays
     openEmbedded();

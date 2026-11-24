@@ -6,9 +6,11 @@ import { route } from './src/route.mjs';
 import { bundle, markColor } from './src/bundle.mjs';
 import { inside } from './src/inside.mjs';
 import { render, frame, legendCentre } from './src/render.mjs';
+import { editDot, labelSource } from './src/edit.mjs';
+import { statementsOf } from './src/dot.mjs';
 import { THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE, themeCss, paintLines } from './src/theme.mjs';
 
-export { parseFlow, crowding, render, canThrough, LEGEND_ANCHORS, STYLE, markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE, themeCss, paintLines };
+export { editDot, labelSource, statementsOf, parseFlow, crowding, render, canThrough, LEGEND_ANCHORS, STYLE, markColor, THEMES, THEME_NAMES, DEFAULT_THEME, PALETTE, themeCss, paintLines };
 
 // Every stage between parsing and rendering, in order. Mutates and returns the model.
 // Route, bundle and inside do not move items, so `crowding` gives the same answer after this.

@@ -6,25 +6,42 @@
 // boxes may take their room; each note is then drawn as a badge in its node. The theme only
 // paints: a change of theme alone renders the last model again. The legend is an HTML panel, so
 // `legendpos` is ignored: nothing keeps clear of it, and the exported SVG puts the legend outside
-// the map. Errors come back as results, never thrown.
+// the map. An edit (meta.carry) keeps every box where the last map had it: the new text's first run
+// gets the last map's positions as `fixed`, so only what the edit moved or added moves.
+// Errors come back as results, never thrown; each names its line as "DOT line N" where it can.
 import { parseFlow, layout, render, positions, paintLines, THEMES, DEFAULT_THEME } from '@linemap/core';
 
+// the message of an error; the DOT parser's syntax errors carry their place only as a location
+export function errorText(err) {
+  const at = err?.name === 'DotSyntaxError' ? (err.cause?.location ?? err.location)?.start : null;
+  const msg = err?.message ?? String(err);
+  return at ? `DOT line ${at.line}, column ${at.column}: ${msg}` : msg;
+}
+
 export function createPipeline({ onResult }) {
-  let bases = null; // { text, show, hide }: { model, fixed } of the first run of the current text, per notes setting
+  let bases = null; // { text, carry, show, hide }: { model, fixed } of the first run of the current text, per notes setting
   let last = null; // { key, model } of the last run, for a change of theme alone
   let running = false;
   let pending = null;
 
-  async function runOnce(text, settings) {
+  // The first run of a text, per notes setting (carry: from the last map's positions).
+  function baseFor(text, noteMode, carry) {
+    if (bases?.text !== text) {
+      const prev = carry ? last?.base.model : null;
+      bases = { text, carry: prev ? new Map([...prev.items.values()].map((n) => [n.id, { x: n.x, y: n.y }])) : null };
+    }
+    if (!bases[noteMode]) {
+      const model = layout(parseFlow(text), { notes: noteMode, legend: false, fixed: bases.carry ?? undefined });
+      bases[noteMode] = { model, fixed: new Map(positions(model).map(({ id, x, y }) => [id, { x, y }])) };
+    }
+    return bases[noteMode];
+  }
+
+  async function runOnce(text, settings, carry) {
     const t0 = performance.now();
     const { hidden, mode, theme, notes } = settings;
     const noteMode = notes ? 'show' : 'hide';
-    if (bases?.text !== text) bases = { text };
-    if (!bases[noteMode]) {
-      const model = layout(parseFlow(text), { notes: noteMode, legend: false });
-      bases[noteMode] = { model, fixed: new Map(positions(model).map(({ id, x, y }) => [id, { x, y }])) };
-    }
-    const base = bases[noteMode];
+    const base = baseFor(text, noteMode, carry);
     const known = new Set(base.model.lines.map((l) => l.id));
     const hiddenLines = new Set([...hidden].filter((id) => known.has(id)));
     const key = JSON.stringify([mode, [...hiddenLines].sort()]);
@@ -43,7 +60,7 @@ export function createPipeline({ onResult }) {
   // (with `meta` flags of the skipped ones kept, e.g. `fresh`).
   async function request(text, settings, meta = {}) {
     if (running) {
-      pending = { text, settings, meta: { ...pending?.meta, ...meta, fresh: !!(pending?.meta.fresh || meta.fresh) } };
+      pending = { text, settings, meta: { ...pending?.meta, ...meta, fresh: !!(pending?.meta.fresh || meta.fresh), carry: !!(pending?.meta.carry || meta.carry) } };
       return;
     }
     running = true;
@@ -51,15 +68,15 @@ export function createPipeline({ onResult }) {
     while (job) {
       let result;
       try {
-        result = await runOnce(job.text, job.settings);
+        result = await runOnce(job.text, job.settings, !!job.meta.carry);
       } catch (err) {
-        result = { ok: false, error: err?.message ?? String(err) };
+        result = { ok: false, error: errorText(err) };
       }
       const next = pending;
       pending = null;
       // a result is only shown when no newer request is waiting
       if (!next) onResult(result, job.meta);
-      else next.meta = { ...job.meta, ...next.meta, fresh: !!(job.meta.fresh || next.meta.fresh) };
+      else next.meta = { ...job.meta, ...next.meta, fresh: !!(job.meta.fresh || next.meta.fresh), carry: !!(job.meta.carry || next.meta.carry) };
       job = next;
     }
     running = false;
@@ -67,10 +84,14 @@ export function createPipeline({ onResult }) {
 
   return {
     request,
+    // Lays out an edited text now (as a run with meta.carry would), so an edit can be refused
+    // before it is kept: the error, or null. The run that follows reuses the layout.
+    check(text, settings) {
+      try { baseFor(text, settings.notes ? 'show' : 'hide', true); return null; } catch (err) { return errorText(err); }
+    },
     busy: () => running,
     // export with the legend: a second render of the model on screen, so it shows what the studio
     // shows (hidden lines, through, theme, and notes off as `--notes hide`), but no badges
     exportSvg: (model, theme) => render(model, { legend: true, theme }),
-    positions: (model) => positions(model),
   };
 }

@@ -1,16 +1,21 @@
 // Where the DOT text comes from: flows baked into the page (build --embed), a #src= URL, file
 // picker, drag-and-drop, paste. Remembers the last file and a short recent list in localStorage
 // (not the baked-in flows: several embeds of one site share it), and can watch a #src URL.
-// Watch only works for a file the studio fetches over http (#src=, e.g. under `linemap studio`);
-// a file opened, dropped or pasted cannot be watched. Switching Watch keeps the URL's state in
-// localStorage, which only a page load reads (restoreWatch): reloading the page, in any tab of
-// this browser, keeps watching a URL that was watched. Opening another file in the page does
-// not look it up. A list, not one value, so tabs watching different files each get theirs back.
+// Following saves (watching) only works for a file the studio fetches over http (#src=); a file
+// opened, dropped or pasted cannot be followed. It is on by default for a file `linemap studio`
+// serves (one it can save), off for other servers (it polls). Switching it keeps the URL's choice
+// in localStorage, read when a URL is loaded. Lists, not one value, so tabs on different files
+// each get theirs back.
+// Edits (edit mode) replace the text in place: a file the server can save (`linemap studio`, which
+// sends `x-linemap-save: put`) is written back at once, with the ETag it was read with, so a file
+// changed on disk meanwhile is never overwritten; anything else keeps the edits in the page (and
+// the recent list) until they are downloaded or copied (`dirty`).
 
 const LAST = 'linemap:last';
 const RECENT = 'linemap:recent';
 const MAX_RECENT = 8;
-const WATCHED = 'linemap:watched';
+const WATCHED = 'linemap:watched';     // switched on by hand
+const UNWATCHED = 'linemap:unwatched'; // switched off by hand
 const MAX_WATCHED = 20;
 const WATCH_MS = 1000;
 
@@ -24,28 +29,40 @@ export const isHttp = () => /^https?:$/.test(location.protocol);
 const baseName = (s) => decodeURIComponent(String(s).split(/[?#]/)[0].split('/').pop() || s);
 const looksLikeDot = (t) => /^\s*(\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*|#[^\n]*\n\s*)*(strict\s+)?(di)?graph\b/i.test(t);
 
-// onText({ text, name, src, flow, fresh }): fresh = a different file (fit the view, reset
-// settings); otherwise a reload of the same one. onError(title, message).
-// embedded: [{ name, text }] baked into the page; flow is the index of the one shown, if any.
-export function createSource({ onText, onError, onWatch, embedded = [] }) {
-  let current = null; // { text, name, src, flow }
+// onText({ text, name, src, flow, fresh, edited }): fresh = a different file (fit the view, reset
+// settings); edited = an edit made here; otherwise a reload of the same one. onError(title, message).
+// onSave(state, message): 'saving', 'saved', 'conflict' (the file changed on disk; it is loaded
+// again) or 'error'. embedded: [{ name, text }] baked into the page; flow is the index of the one
+// shown, if any.
+export function createSource({ onText, onError, onWatch, onSave, embedded = [] }) {
+  let current = null; // { text, name, src, flow, etag, save, dirty }
   let watchTimer = 0;
   let polling = false;
+  let saving = false, saveAgain = false;
+  let saves = 0; // counts saves begun and ended, so a poll that overlapped one is ignored
 
-  function emit(text, name, src, fresh, { keep = true, flow = null } = {}) {
+  function emit(text, name, src, fresh, { keep = true, flow = null, etag = null, save = null } = {}) {
     const changed = !current || current.text !== text || current.name !== name;
-    current = { text, name, src, flow };
+    current = { text, name, src, flow, etag, save, dirty: false };
     if (changed && keep) remember(text, name, src);
     onText({ text, name, src, flow, fresh });
   }
 
-  // URLs with Watch on, most recent first, as absolute URLs (the same file under ./x and x).
+  // URLs switched on or off by hand, most recent first, as absolute URLs (the same file under ./x and x).
   const watchKey = (src) => { try { return new URL(src, location.href).href; } catch { return String(src); } };
-  const watched = () => (store.get(WATCHED) ?? []).filter((s) => typeof s === 'string');
+  const listed = (k) => (store.get(k) ?? []).filter((s) => typeof s === 'string');
   function rememberWatch(src, on) {
     const key = watchKey(src);
-    const rest = watched().filter((s) => s !== key);
-    store.set(WATCHED, (on ? [key, ...rest] : rest).slice(0, MAX_WATCHED));
+    for (const [k, has] of [[WATCHED, on], [UNWATCHED, !on]]) {
+      const rest = listed(k).filter((s) => s !== key);
+      store.set(k, (has ? [key, ...rest] : rest).slice(0, MAX_WATCHED));
+    }
+  }
+  // whether the current file follows saves when loaded: as switched last, or by default
+  function followByDefault() {
+    if (!current?.src || !isHttp()) return false;
+    const key = watchKey(current.src);
+    return listed(WATCHED).includes(key) || (current.save === 'put' && !listed(UNWATCHED).includes(key));
   }
 
   function remember(text, name, src) {
@@ -58,12 +75,15 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
   async function fetchText(src) {
     const res = await fetch(src, { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status} ${res.statusText || ''}`.trim());
-    return res.text();
+    const save = res.headers.get('x-linemap-save') === 'put' && res.headers.get('etag') ? 'put' : null;
+    return { text: await res.text(), etag: res.headers.get('etag'), save };
   }
 
   async function loadUrl(src, { fresh = true } = {}) {
     try {
-      emit(await fetchText(src), baseName(src), src, fresh);
+      const { text, etag, save } = await fetchText(src);
+      emit(text, baseName(src), src, fresh, { etag, save });
+      setWatch(followByDefault());
       return true;
     } catch (err) {
       const hint = location.protocol === 'file:'
@@ -108,11 +128,13 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
     watchTimer = 0;
     if (on) {
       watchTimer = setInterval(async () => {
-        if (polling) return;
+        if (polling || saving) return;
         polling = true;
+        const at = saves;
         try {
-          const text = await fetchText(current.src);
-          if (text !== current.text) emit(text, current.name, current.src, false);
+          const got = await fetchText(current.src);
+          // (a save meanwhile: what was read may be the text before it)
+          if (got.text !== current.text && at === saves && !saving) emit(got.text, current.name, current.src, false, got);
         } catch { /* mid-save or server gone: try again next time */ }
         polling = false;
       }, WATCH_MS);
@@ -125,14 +147,53 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
     if (current.src && isHttp()) {
       const src = current.src;
       try {
-        const text = await fetchText(src);
-        emit(text, current.name, src, false);
+        const got = await fetchText(src);
+        emit(got.text, current.name, src, false, got);
       } catch (err) {
         onError(`Could not reload ${src}`, err.message);
       }
     } else {
       onText({ ...current, fresh: false });
     }
+  }
+
+  // An edit made here: the new text of the current file, drawn at once and saved where it can be.
+  function edit(text) {
+    if (!current || text === current.text) return;
+    current = { ...current, text, dirty: !current.save };
+    remember(text, current.name, current.src);
+    // a baked-in flow keeps its edits while the page is open, also when another one is picked
+    if (current.flow !== null && current.flow !== undefined) embedded[current.flow] = { name: current.name, text };
+    onText({ ...current, fresh: false, edited: true });
+    if (current.save) save();
+  }
+
+  // One PUT at a time; edits made meanwhile go in the next one, as one.
+  async function save() {
+    if (saving) { saveAgain = true; return; }
+    saving = true;
+    saves++;
+    onSave?.('saving');
+    let state = 'saved', message = '';
+    try {
+      do {
+        saveAgain = false;
+        const { src, text, etag } = current;
+        const res = await fetch(src, { method: 'PUT', headers: { 'if-match': etag ?? '', 'content-type': 'text/plain; charset=utf-8' }, body: text });
+        if (res.status === 412) { state = 'conflict'; break; }
+        if (!res.ok) throw new Error(`${res.status} ${(await res.text()).trim() || res.statusText}`);
+        if (current.src === src) current.etag = res.headers.get('etag');
+      } while (saveAgain && current.save);
+    } catch (err) {
+      state = 'error';
+      message = err.message;
+      if (current) current.dirty = true;
+    }
+    saves++;
+    saving = false;
+    onSave?.(state, message);
+    // changed on disk since it was read: show the file as it is now
+    if (state === 'conflict') reload();
   }
 
   // Drag-and-drop anywhere; `dropEl` is the overlay shown while dragging.
@@ -164,10 +225,14 @@ export function createSource({ onText, onError, onWatch, embedded = [] }) {
   }
 
   return {
-    loadUrl, loadFile, loadText, loadEmbedded, flowNamed, reload,
+    loadUrl, loadFile, loadText, loadEmbedded, flowNamed, reload, edit,
+    // edits only in this page (not saved to a file)
+    dirty: () => !!current?.dirty,
+    markClean: () => { if (current) current.dirty = false; },
+    canSave: () => current?.save === 'put',
     embedded: () => embedded, setWatch, bindDrop, bindPaste,
-    // on page load only: watch the file just loaded if it was watched when the page was left
-    restoreWatch: () => { if (current?.src && watched().includes(watchKey(current.src))) setWatch(true); },
+    // the last file, reopened from storage on a page load: follow it if it was followed
+    restoreWatch: () => { if (current?.src && listed(WATCHED).includes(watchKey(current.src))) setWatch(true); },
     current: () => current,
     watching: () => !!watchTimer,
     canWatch: () => !!(current?.src && isHttp()),

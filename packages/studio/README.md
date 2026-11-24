@@ -1,7 +1,7 @@
 # @linemap/studio
 
 The [linemap](https://github.com/mergezalot/linemap) studio as one self-contained HTML file: open a
-DOT flow, explore it as a transit map, hide and solo lines, switch themes, hide notes behind badges, save the SVG. Everything
+DOT flow, explore it as a transit map, hide and solo lines, switch themes, hide notes behind badges, read and edit the DOT text in a sidebar beside the map (its selection and the map's follow each other), edit the map (move, resize, add and connect boxes, add notes (with bold, italic, underlined, struck-out or coloured text), edit the text of a box, note or container (double-click, F2 or Enter), bend lines, change the lines of an edge, align and distribute several boxes, group boxes into containers, merge, split and ungroup containers, select a container to move everything in it, connect it, or delete it alone or with all it holds), save the SVG. Everything
 runs in the browser; the file loads nothing from anywhere else, so it works offline, from `file://`
 and inside embeds such as Notion.
 
@@ -13,7 +13,7 @@ Most people want the command line, which uses this package:
 npx @linemap/cli export flow.dot -o flow.html        # the studio with the flow baked in
 npx @linemap/cli export a.dot b.dot -o flows.html    # several, picked on the start screen
 npx @linemap/cli export                              # the empty studio: linemap.html
-npx @linemap/cli studio                              # serve the DOT files here, with Watch
+npx @linemap/cli studio                              # serve the DOT files here; the map follows saves
 ```
 
 From code:

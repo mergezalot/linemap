@@ -1,6 +1,7 @@
 // Turns a flow (DOT text) into the in-memory model used by every later stage. No I/O here:
 // the caller reads the file, so the same code runs in the browser.
 import { readDot } from './dot.mjs';
+import { RICH_LABEL, isStyled } from './rich.mjs';
 import { autoColor, THEMES } from './theme.mjs';
 
 export const STYLE = {
@@ -98,6 +99,7 @@ function styleProps(attrs, what) {
 
 // Rough text width; good enough for sizing notes without a font engine.
 export const textWidth = (s, size) => s.length * size * 0.56;
+const BOLD_WIDER = 1.08; // bold text runs this much wider
 
 // Size of an edge label's pill.
 export const edgeLabelSize = (label) => {
@@ -186,11 +188,15 @@ export function parseFlow(text) {
       x: at?.[0], y: at?.[1], // centre
     };
     if (shape === 'note') {
-      const rows = item.label.split('\n');
+      // an HTML-like label with styles (rich.mjs): runs of styled text, else plain rows
+      const rich = n.attrs[RICH_LABEL];
+      item.rich = rich && rich.text === n.attrs.label && isStyled(rich.rows) ? rich.rows : null;
+      const rows = item.rich ? item.rich.map((r) => r.reduce((w, t) => w + textWidth(t.text, style.fontSize) * (t.b ? BOLD_WIDER : 1), 0))
+        : item.label.split('\n').map((r) => textWidth(r, style.fontSize));
       const pad = STYLE.notePad;
       item.kind = 'note';
       item.attach = null;
-      item.w = own.width ?? Math.ceil(Math.max(...rows.map((r) => textWidth(r, style.fontSize)))) + 2 * pad;
+      item.w = own.width ?? Math.ceil(Math.max(...rows)) + 2 * pad;
       item.h = own.height ?? rows.length * style.lineHeight + 2 * pad;
       notes.push(item);
     } else {
@@ -219,6 +225,7 @@ export function parseFlow(text) {
   // `lines` attribute. The same pair of nodes may appear in several edge statements: their lines
   // are merged into one edge, and their labels must agree. Edge order = first appearance.
   const edgeById = new Map();
+  const firstLine = new Map(); // edge id -> DOT line of its first statement, for errors
   for (const x of dot.edges) {
     const id = `${x.from}->${x.to}`;
     check('edge', id, x.attrs);
@@ -238,9 +245,12 @@ export function parseFlow(text) {
       note.attach = target.id;
       continue;
     }
+    // a statement may leave the lines to another one of the same edge (e.g. one that only sets `via`)
     const lineIds = (x.attrs.lines ?? '').split(/[\s,]+/).filter(Boolean);
-    if (!lineIds.length) throw new Error(`DOT line ${x.line}: edge ${id} has no lines; set lines="..." on it or with edge [lines="..."]`);
-    if (!edgeById.has(id)) edgeById.set(id, { id, from: x.from, to: x.to, lines: [], label: null, via: [] });
+    if (!edgeById.has(id)) {
+      edgeById.set(id, { id, from: x.from, to: x.to, lines: [], label: null, via: [] });
+      firstLine.set(id, x.line);
+    }
     const e = edgeById.get(id);
     for (const lid of lineIds) {
       const l = lineById.get(lid);
@@ -253,6 +263,9 @@ export function parseFlow(text) {
       e.label = label;
     }
     if (x.attrs.via) e.via = x.attrs.via.trim().split(/\s+/).map((p) => point(p, `edge ${id}: via`));
+  }
+  for (const e of edgeById.values()) {
+    if (!e.lines.length) throw new Error(`DOT line ${firstLine.get(e.id)}: edge ${e.id} has no lines; set lines="..." on it or with edge [lines="..."]`);
   }
   // Lane order inside a bundle follows the order of the line declarations.
   for (const e of edgeById.values()) e.lines.sort((a, b) => a.index - b.index);

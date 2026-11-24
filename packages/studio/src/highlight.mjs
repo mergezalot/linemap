@@ -1,4 +1,4 @@
-// Hover and click on the map: focus lines (dim the rest), pin them (click a line or a node), open
+// Hover and click on the map: focus lines (dim the rest), pin them (click a line, a bundle or a node), open
 // node links (ctrl- or cmd-click), tooltips for lines, nodes, notes, bundles and container
 // titles. With notes off each note is a badge in its node: hovering it shows the text, a click
 // keeps the note open beside the badge, a click on the badge or the open note folds it again. Indexes are built once per render; pointer events are delegated to the map host and only
@@ -7,7 +7,7 @@ import { esc } from './tooltip.mjs';
 
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 
-export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
+export function createHighlight({ host, tooltip, isPanning, onPinChange, canOutline = () => true }) {
   let svg = null;
   let ix = null;           // indexes of the current render, see index()
   let hover = new Set();   // lines focused by the pointer (map or legend)
@@ -99,6 +99,29 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
     paint();
   }
 
+  // What was found (search, the source's caret) or clicked (a node) is outlined: one rectangle over
+  // the map, drawn once and left as it is (no animation, nothing repainted), until the next one,
+  // the pins are cleared, or the map is drawn again. null: none.
+  let adorned = null; // the element outlined
+  function adorn(el) {
+    svg?.querySelector(':scope > .lm-found')?.remove();
+    adorned = null;
+    if (!el || !svg || !canOutline()) return;
+    const b = el.getBBox();
+    const m = svg.getScreenCTM()?.inverse().multiply(el.getScreenCTM() ?? svg.getScreenCTM());
+    if (!m) return;
+    const pts = [[b.x, b.y], [b.x + b.width, b.y + b.height]].map(([x, y]) => new DOMPoint(x, y).matrixTransform(m));
+    const pad = 8;
+    const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    r.setAttribute('class', 'lm-found');
+    r.setAttribute('x', String(Math.min(pts[0].x, pts[1].x) - pad));
+    r.setAttribute('y', String(Math.min(pts[0].y, pts[1].y) - pad));
+    r.setAttribute('width', String(Math.abs(pts[1].x - pts[0].x) + 2 * pad));
+    r.setAttribute('height', String(Math.abs(pts[1].y - pts[0].y) + 2 * pad));
+    r.setAttribute('rx', '10');
+    svg.append(r);
+    adorned = el;
+  }
   function setPinned(next) {
     pinned = next;
     paint();
@@ -260,15 +283,14 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
       const id = lineEl.getAttribute('data-line');
       const next = new Set(e.shiftKey ? pinned : []);
       if (pinned.has(id) && (e.shiftKey || pinned.size === 1)) next.delete(id); else next.add(id);
+      adorn(null);
       setPinned(next);
       // the hint in the tooltip changed (pin / unpin)
       if (last.key?.startsWith('line ')) { last.html = lineTip(id, lineEl); tooltip.show(last.html, e.clientX, e.clientY); }
       return;
     }
-    const node = e.target.closest('g.node');
-    if (node) {
-      const ids = nodeLines(node.id);
-      if (!ids.length) return;
+    // a bundle's edge (its casing, beside the lines) or a node pins all of their lines, or unpins them
+    const toggleAll = (ids) => {
       const all = ids.every((id) => pinned.has(id));
       let next;
       if (e.shiftKey) {
@@ -276,10 +298,25 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
         for (const id of ids) all ? next.delete(id) : next.add(id);
       } else next = all && pinned.size === ids.length ? new Set() : new Set(ids);
       setPinned(next);
+    };
+    const edge = e.target.closest('g.edge');
+    if (edge) {
+      const ids = (edge.getAttribute('data-lines') ?? '').split(' ').filter(Boolean);
+      adorn(null);
+      if (ids.length) toggleAll(ids);
+      return;
+    }
+    const node = e.target.closest('g.node');
+    if (node) {
+      const ids = nodeLines(node.id);
+      const was = adorned === node;
+      if (ids.length) toggleAll(ids);
+      // outlined while its lines are pinned (without lines: until it is clicked again)
+      adorn((ids.length ? ids.some((id) => pinned.has(id)) : !was) ? node : null);
       if (last.key === `node ${node.id}`) { last.html = nodeTip(node); tooltip.show(last.html, e.clientX, e.clientY); }
       return;
     }
-    if (!e.target.closest('g.edge, g.note') && pinned.size) setPinned(new Set());
+    if (!e.target.closest('g.edge, g.note')) { adorn(null); if (pinned.size) setPinned(new Set()); }
   });
 
   return {
@@ -287,7 +324,7 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
     // legend hover
     hoverLines: (ids) => { if (!last.key) setHover(ids); },
     pin: (ids) => setPinned(new Set(ids.filter((id) => ix?.byLine.has(id)))),
-    clearPins: () => { if (pinned.size) setPinned(new Set()); },
+    clearPins: () => { adorn(null); if (pinned.size) setPinned(new Set()); },
     // folds every note kept open
     foldNotes: () => { for (const id of [...opened]) toggleNote(id); },
     openNotes: () => [...opened],
@@ -304,12 +341,6 @@ export function createHighlight({ host, tooltip, isPanning, onPinChange }) {
       }
       return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
     },
-    flash(el) {
-      if (!el) return;
-      el.classList.remove('flash');
-      void el.getBoundingClientRect(); // restart the animation
-      el.classList.add('flash');
-      el.addEventListener('animationend', () => el.classList.remove('flash'), { once: true });
-    },
+    adorn,
   };
 }

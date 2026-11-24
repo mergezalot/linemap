@@ -80,11 +80,19 @@ export function msagl(req) {
   const router = new RectilinearEdgeRouter([...shapes.values()], req.padding, 0);
   // MSAGL keeps parallel segments 2 * edgeSeparatian apart (sic)
   router.edgeSeparatian = req.spacing / 2;
-  for (const g of edges) router.AddEdgeGeometryToRoute(g);
+  // ends on one point (two boxes pinned on top of each other, a `via` point on a port): the router
+  // would take it for a self-loop and draw a curve round the shape, so it is not routed; its path
+  // is that point, twice
+  const same = (g) => {
+    const [a, b] = [g.sourcePort.Location, g.targetPort.Location];
+    return Math.round(a.x) === Math.round(b.x) && Math.round(a.y) === Math.round(b.y);
+  };
+  for (const g of edges) if (!same(g)) router.AddEdgeGeometryToRoute(g);
   router.run();
 
   return edges.map((g, i) => ({
-    path: g.curve ? Array.from(g.curve, (p) => ({ x: p.x, y: p.y })) : [],
+    path: same(g) ? [g.sourcePort.Location, g.targetPort.Location].map((p) => ({ x: p.x, y: p.y }))
+      : g.curve ? Array.from(g.curve, (p) => ({ x: p.x, y: p.y })) : [],
     pins: [pinOf.get(req.conns[i].from), pinOf.get(req.conns[i].to)],
   }));
 }

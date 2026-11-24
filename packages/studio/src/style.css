@@ -13,6 +13,8 @@
   --shadow: 0 1px 2px rgba(20, 30, 45, .06), 0 4px 16px rgba(20, 30, 45, .08);
   --shadow-lg: 0 2px 6px rgba(20, 30, 45, .08), 0 12px 40px rgba(20, 30, 45, .16);
   --tb-h: 44px;
+  --src-w: 440px;     /* the source sidebar's width (sourcepanel.mjs) */
+  --src-right: 0px;   /* the room it takes from the map: its width when open on a wide screen */
   --map-bg: #ffffff;
   --sheet-edge: #d9dde2;
   --tb-bg: rgba(255, 255, 255, .96);
@@ -48,6 +50,8 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .btn[aria-pressed="true"] { background: var(--press); color: var(--accent); }
 .btn.primary { background: var(--accent); color: #fff; }
 .btn.primary:hover { background: #2858b2; }
+.btn.primary.danger { background: var(--danger); }
+.btn.primary.danger:hover { background: #8f1e18; }
 .btn:disabled { opacity: .4; cursor: default; background: transparent; }
 .icon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .icon.small { width: 14px; height: 14px; color: var(--faint); }
@@ -67,7 +71,9 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .tb-sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; }
 .tb-label { color: var(--muted); margin: 0 6px 0 2px; }
 .spacer { flex: 1; }
-.brand { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; letter-spacing: -.01em; margin: 0 6px 0 2px; color: var(--ink); }
+.brand { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-weight: 650; letter-spacing: -.01em; margin: 0 6px 0 2px; padding: 4px 6px; border: 0; border-radius: 6px; background: none; color: var(--ink); cursor: pointer; }
+.brand:hover { background: var(--hover); }
+.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .brand .logo { width: 22px; height: 22px; }
 .file { position: relative; }
 /* wide screens: the menu's box is transparent and its controls sit in the toolbar, the output
@@ -80,7 +86,8 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .menu-btn { display: none; order: 5; }
 .lbl.in-menu { display: none; }
 .file-name { font-weight: 550; }
-.file-name .name { overflow: hidden; text-overflow: ellipsis; }
+.file-name .name { overflow: hidden; text-overflow: ellipsis; min-width: 0; } /* min-width: or it never shrinks */
+.brand, .file-name .icon { flex: none; }
 
 .seg { display: inline-flex; padding: 2px; border-radius: 7px; background: var(--seg-bg); }
 .seg button {
@@ -119,6 +126,15 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .menu .head { padding: 6px 8px 4px; color: var(--faint); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
 .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .menu .empty-note { padding: 8px; color: var(--muted); }
+.menu .item:disabled { opacity: .45; cursor: default; background: none; }
+.menu .item > .icon { flex: none; color: var(--muted); }
+.menu .item kbd { margin-left: auto; color: var(--faint); font: 11px/1 inherit; }
+.menu .item .check { margin-left: auto; width: 14px; height: 14px; flex: none; color: var(--accent); visibility: hidden; }
+.menu .item[aria-checked="true"] .check { visibility: visible; }
+.menu .hint { padding: 6px 8px 4px; color: var(--faint); font-size: 12px; }
+/* beside the file name: the map follows saves to the file */
+.file-name .live { width: 7px; height: 7px; flex: none; border-radius: 50%; background: #1f9d55; box-shadow: 0 0 0 3px rgba(31, 157, 85, .18); }
+.align-menu { position: fixed; top: 0; left: 0; min-width: 220px; }
 .results { right: 0; width: 320px; max-height: 60vh; overflow-y: auto; }
 .results .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .results mark { background: #fff0b3; color: inherit; border-radius: 2px; }
@@ -129,7 +145,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 
 /* ---------- banner ---------- */
 .banner {
-  position: fixed; top: calc(var(--tb-h) + 10px); left: 50%; transform: translateX(-50%); z-index: 25;
+  position: fixed; top: calc(var(--tb-h) + 10px); left: calc(50% - var(--src-right) / 2); transform: translateX(-50%); z-index: 25;
   display: flex; align-items: flex-start; gap: 8px; max-width: min(760px, calc(100vw - 24px));
   padding: 10px 6px 10px 14px; border-radius: var(--radius);
   background: #fff; border: 1px solid #f1c6c2; border-left: 4px solid var(--danger); box-shadow: var(--shadow-lg);
@@ -139,8 +155,11 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .banner .close { height: 26px; padding: 0 5px; color: var(--muted); }
 
 /* ---------- stage and map ---------- */
-#stage { position: fixed; inset: var(--tb-h) 0 0 0; touch-action: none; cursor: grab; outline: none; }
-#stage.panning { cursor: grabbing; }
+/* Cursors (the scheme is in editor.mjs's header): the background grabs (a drag pans), grabbing only
+   while a pan runs; what a click selects or pins shows the pointer; what a drag moves shows move */
+#stage { position: fixed; inset: var(--tb-h) var(--src-right) 0 0; touch-action: none; cursor: grab; outline: none; }
+/* while any pan runs, the cursor grabs (over everything, in every mode) */
+#stage.panning, #stage.panning #map, #stage.panning #map * { cursor: grabbing !important; }
 #map, #map > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #map > svg { overflow: hidden; user-select: none; -webkit-user-select: none; }
 /* the map's own background: a quiet edge so it reads as a sheet on the stage */
@@ -148,6 +167,25 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 #map > svg { transition: background-color .2s; }
 
 /* theme buttons: a small swatch of the theme, then its name */
+/* split button: the main part and its arrow read as one control, split by a line on hover */
+.split { position: relative; display: inline-flex; align-items: center; }
+/* (either part may come first; a hidden one leaves the other whole) */
+.split > .btn { border-radius: 0; }
+.split > .btn:first-child, .split > .btn[hidden] + .btn { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+.split > .btn:last-of-type, .split > .btn:has(+ .btn[hidden]) { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+.split .split-main:first-child { padding-right: 7px; }
+.split .split-arrow:first-child { padding-right: 7px; }
+.split .split-main:first-child + .split-arrow { padding: 0 5px; }
+.split:hover > .btn, .split > .split-arrow[aria-expanded="true"] { background: var(--hover); }
+.split > .btn + .btn { box-shadow: inset 1px 0 0 transparent; }
+.split:hover > .btn + .btn:not([hidden]), .split:has(> .split-arrow[aria-expanded="true"]) > .btn + .btn { box-shadow: inset 1px 0 0 var(--line); }
+.split > .btn:active, .split > .split-arrow[aria-expanded="true"] { background: var(--press); }
+/* labels stacked in one cell, only the current one seen: the button is as wide as the longest */
+.stack { display: inline-grid; }
+.stack > span { grid-area: 1 / 1; visibility: hidden; text-align: left; }
+.stack > span.on { visibility: visible; }
+.menu .item .txt { display: flex; flex-direction: column; min-width: 0; }
+.menu .item .desc { color: var(--muted); font-size: 12px; }
 .theme-pick { position: relative; }
 .theme-btn .cur { display: inline-flex; align-items: center; gap: 7px; }
 .theme-menu { min-width: 180px; }
@@ -159,7 +197,6 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .theme-menu .row.on > .item:first-child { background: var(--press); }
 .theme-menu .row.on .nm { font-weight: 600; }
 .theme-menu .item.fancy[aria-checked="true"] { background: var(--press); color: #d99a00; }
-.theme-bar { display: flex; align-items: center; gap: 2px; }
 .fancy-btn { padding: 0 7px; color: var(--faint); }
 .fancy-btn:hover { color: inherit; }
 .fancy-btn[aria-pressed="true"] { color: #d99a00; }
@@ -172,13 +209,11 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .tsw i:first-child { top: 3px; }
 .tsw i:last-child { top: 7px; }
 #map [data-line], #map g.node, #map g.note, #map g.group > text, #map g.group-tab { transition: opacity .14s ease; }
-#map [data-line], #map g.node, #map g.note a, #map g.note.lm-note-folded, #map g.group > text, #map g.group-tab { cursor: pointer; }
+#map [data-line], #map g.edge, #map g.edge *, #map g.node, #map g.note a, #map g.note.lm-note-folded, #map g.group > text, #map g.group-tab { cursor: pointer; }
 #map svg.focus [data-line]:not(.on) { opacity: .12; }
 #map svg.focus g.edge > path:not([data-line]) { opacity: .5; }
 #map svg.focus g.node:not(.on), #map svg.focus g.note { opacity: .45; }
 #map svg.focus g.node.on [data-line]:not(.on) { opacity: .15; }
-#map .flash { animation: flash 1.1s ease-out 1; }
-@keyframes flash { 0%, 30% { opacity: .25; } 15%, 45% { opacity: 1; } 60% { opacity: .4; } 100% { opacity: 1; } }
 
 .busy {
   position: fixed; top: calc(var(--tb-h) + 10px); right: 12px; z-index: 15; width: 16px; height: 16px;
@@ -211,7 +246,7 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 
 /* ---------- floating panels ---------- */
 .panel { position: fixed; z-index: 10; background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
-.zoom { right: 14px; bottom: 14px; display: flex; flex-direction: column; padding: 3px; }
+.zoom { right: calc(14px + var(--src-right)); bottom: 14px; display: flex; flex-direction: column; padding: 3px; }
 .zoom .btn { width: 32px; height: 32px; padding: 0; justify-content: center; }
 /* touch screens zoom with a pinch; only fit stays */
 @media (hover: none) and (pointer: coarse) {
@@ -287,13 +322,18 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
   width: 100%; resize: vertical; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: #fafbfc;
   font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; outline: none;
 }
+.dialog textarea.prose { font: 14px/1.5 system-ui, sans-serif; }
 .dialog textarea:focus { border-color: #b9c8e6; box-shadow: 0 0 0 3px rgba(47, 100, 200, .12); background: #fff; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .dialog-actions .btn { height: 32px; padding: 0 14px; }
-.help table { border-collapse: collapse; width: 100%; }
-.help th { text-align: left; font-weight: 500; color: var(--muted); padding: 7px 16px 7px 0; white-space: nowrap; vertical-align: top; }
-.help td { padding: 7px 0; }
-.help tr + tr > * { border-top: 1px solid var(--line); }
+.dialog.help { width: min(760px, calc(100vw - 32px)); }
+.help .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 32px; }
+.help h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); }
+.help dl + h3 { margin-top: 16px; }
+.help dl { display: grid; grid-template-columns: 8.5em 1fr; gap: 5px 14px; margin: 0; align-items: baseline; }
+.help dt { color: var(--muted); white-space: nowrap; }
+.help dd { margin: 0; }
+@media (max-width: 640px) { .help .keys { grid-template-columns: 1fr; gap: 16px; } }
 .help .hint { margin: 14px 0 0; }
 .help .about { display: flex; align-items: center; gap: 14px; margin: 2px 0 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
 .help .about-logo { width: 48px; height: 48px; flex: none; }
@@ -303,21 +343,146 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
 .help .about-tag a:hover { color: var(--ink); text-decoration-color: currentColor; }
 .help .copyright { margin-top: 6px; }
 
+/* ---------- edit mode ---------- */
+#map.editing g.node, #map.editing g.node *, #map.editing g.note:not(.lm-note-folded), #map.editing g.note:not(.lm-note-folded) * { cursor: move; }
+/* an edge (bundle or line) is selected by a click: the pointer, as in view mode (a drag on it bends it) */
+#map.editing g.edge, #map.editing g.edge * { cursor: pointer; }
+/* a container is selected by a click (a drag on it pans); once selected, a drag on it (or on one in
+   it) moves all it holds (editor.mjs marks them .lm-edit-on) */
+#map.editing g.group, #map.editing g.group *, #map.editing g.group-tab, #map.editing g.group-tab * { cursor: pointer; }
+#map.editing g.group.lm-edit-on, #map.editing g.group.lm-edit-on *, #map.editing g.group-tab.lm-edit-on, #map.editing g.group-tab.lm-edit-on * { cursor: move; }
+#map.editing.adding, #map.editing.adding * { cursor: copy !important; }
+#map.editing.adding .lm-edit-tool, #map.editing.adding .lm-edit-tool * { cursor: pointer !important; }
+/* while something is dragged it keeps the cursor of what was pressed (editor.mjs sets --drag-cursor) */
+#map.dragging, #map.dragging * { cursor: var(--drag-cursor, move) !important; }
+#map .lm-edit { pointer-events: none; }
+/* edge ends and bend points move; the connect handle draws a new edge */
+#map .lm-edit .lm-edit-handle { pointer-events: all; cursor: move; }
+#map .lm-edit .lm-edit-connect, #map .lm-edit .lm-edit-connect * { cursor: crosshair; }
+/* what was found or clicked in view mode: outlined, drawn once (highlight.adorn) */
+#map .lm-found { fill: none; stroke: var(--accent); stroke-width: 2.5px; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; pointer-events: none; }
+#map .lm-edit-sel { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
+#map .lm-edit-handle:is(circle, rect), #map .lm-edit-handle circle { fill: #fff; stroke: var(--accent); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+#map .lm-edit-sel.sizing { stroke-dasharray: none; stroke-width: 1px; }
+#map .lm-edit-size { fill: #fff; }
+#map .lm-edit .lm-edit-size-nw, #map .lm-edit .lm-edit-size-se { cursor: nwse-resize; }
+#map .lm-edit .lm-edit-size-ne, #map .lm-edit .lm-edit-size-sw { cursor: nesw-resize; }
+#map .lm-edit .lm-edit-size-n, #map .lm-edit .lm-edit-size-s { cursor: ns-resize; }
+#map .lm-edit .lm-edit-size-e, #map .lm-edit .lm-edit-size-w { cursor: ew-resize; }
+#map .lm-edit-lane { stroke-opacity: .35; }
+#map .lm-edit-dim { opacity: .25; }
+#map .lm-edit-via { fill: #fff; }
+#map .lm-edit-via.on { fill: var(--accent); }
+#map .lm-edit .lm-edit-pin { cursor: pointer; }
+#map .lm-edit-pin use { fill: none; stroke: var(--accent); stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+#map .lm-edit-pin:hover circle { fill: var(--accent); fill-opacity: .15; }
+#map .lm-edit-plus { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+#map .lm-edit-route { fill: none; stroke: var(--accent); stroke-opacity: .2; stroke-linejoin: round; stroke-linecap: round; }
+#map .lm-edit-standin { fill: none; stroke: var(--accent); stroke-width: 3px; stroke-dasharray: 8 5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+/* the adorner: a toolbar above (or below) the selection, in map units sized to stay the same on screen */
+#map .lm-edit-adorner > rect { fill: var(--panel, #fff); stroke: var(--line, #d0d5dd); stroke-width: 1px; vector-effect: non-scaling-stroke; filter: drop-shadow(0 1px 2px rgba(0,0,0,.18)); }
+#map .lm-edit-tool { pointer-events: all; cursor: pointer; color: var(--ink, #222); }
+#map .lm-edit-tool > rect { fill: transparent; }
+#map .lm-edit-tool:hover > rect { fill: var(--hover, rgba(0,0,0,.07)); }
+#map .lm-edit-tool.on { color: var(--accent); }
+#map .lm-edit-tool.on > rect { fill: var(--accent); fill-opacity: .12; }
+#map .lm-edit-tool use { fill: none; stroke: currentColor; stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+#map .lm-edit-box { fill: var(--accent); fill-opacity: .08; stroke: var(--accent); stroke-width: 1px; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+#map .lm-edit-ghost { fill: none; stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; }
+.edit-bar {
+  top: calc(var(--tb-h) + 10px); left: calc(50% - var(--src-right) / 2); transform: translateX(-50%); max-width: calc(100vw - 24px);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; padding: 4px;
+}
+.edit-bar .btn.primary { padding: 0 12px; margin-left: 4px; }
+/* there for screen readers, not seen */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.dialog.small { width: min(380px, calc(100vw - 32px)); }
+.dialog .field {
+  width: 100%; height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--field); color: inherit; outline: none;
+}
+.dialog .field:focus { border-color: #b9c8e6; box-shadow: 0 0 0 3px rgba(47, 100, 200, .12); }
+.dialog .lines { display: flex; flex-direction: column; gap: 2px; max-height: 50vh; overflow-y: auto; }
+.dialog .line-row { display: flex; align-items: center; gap: 10px; padding: 5px 6px; border-radius: 5px; cursor: pointer; }
+.dialog .line-row:hover { background: var(--hover); }
+.dialog .line-row .sw { width: 26px; height: 8px; border-radius: 4px; flex: none; }
+
+/* ---------- source sidebar ---------- */
+body.source-open { --src-right: var(--src-w); }
+.source-panel {
+  top: var(--tb-h); right: 0; bottom: 0; width: var(--src-w); max-width: 100vw; border-radius: 0;
+  display: flex; flex-direction: column; border-left: 1px solid var(--line);
+}
+.src-head { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border-bottom: 1px solid var(--line); color: var(--muted); }
+.src-title { font-weight: 600; color: var(--ink); }
+.src-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src-find-btn, .src-collapse { padding: 0 6px; }
+.src-dl { padding: 0 6px; gap: 4px; font-size: 12px; }
+/* collapsed: a strip at the edge, the rest hidden */
+.src-expand { display: none; }
+.source-panel.collapsed > :not(.src-expand) { display: none; }
+.source-panel.collapsed .src-expand {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; width: 100%; padding: 10px 0;
+  border: 0; background: none; color: var(--muted); font: inherit; cursor: pointer;
+}
+.source-panel.collapsed .src-expand:hover { background: var(--hover); color: var(--ink); }
+.src-expand span { writing-mode: vertical-rl; font-weight: 600; letter-spacing: .02em; }
+.src-find-btn[aria-expanded="true"] { background: var(--press); color: var(--accent); }
+/* find in the source: a row under the head; matches drawn over the text, the current one stronger */
+.src-find { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px 4px 4px 8px; border-bottom: 1px solid var(--line); }
+.src-find-input { flex: 1; min-width: 0; height: 26px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--ink); font: inherit; outline: none; }
+.src-find-input:focus { border-color: var(--accent); }
+.src-find-count { min-width: 6ch; padding: 0 6px; color: var(--muted); font-size: 12px; text-align: right; white-space: nowrap; }
+.src-find-count.none { color: var(--danger); }
+.src-find .btn { padding: 0 5px; height: 26px; }
+.src-find-map { flex-basis: 100%; margin: 4px 0 0; padding: 0; list-style: none; }
+.src-find-map li { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 5px; cursor: pointer; }
+.src-find-map li:hover, .src-find-map li[aria-selected="true"] { background: var(--hover); }
+.src-find-map li[aria-selected="true"] { box-shadow: inset 2px 0 0 var(--accent); }
+.src-find-map .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src-find-map .kind { color: var(--faint); font-size: 12px; }
+.src-find-map .swatch { width: 14px; height: 4px; border-radius: 2px; flex: none; }
+.src-find-map mark { background: none; color: inherit; font-weight: 650; }
+.src-found { position: absolute; top: 0; bottom: 0; right: 0; overflow: hidden; pointer-events: none; }
+.src-hit { position: absolute; height: 18px; border-radius: 2px; background: #f5b400; opacity: .3; }
+.src-hit.on { opacity: .75; box-shadow: 0 0 0 1px #c98f00; }
+.src-body { position: relative; flex: 1; min-height: 0; display: flex; overflow: hidden; background: var(--field); }
+.src-gutter {
+  flex: none; overflow: hidden; padding: 6px 1ch 6px 0; text-align: right; color: var(--faint); user-select: none;
+  border-right: 1px solid var(--line); font: 12px/18px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.src-lines { white-space: pre; }
+.src-text {
+  flex: 1; min-width: 0; margin: 0; padding: 6px 8px; border: 0; outline: none; resize: none; background: transparent;
+  font: 12px/18px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; overflow: auto; tab-size: 2;
+  position: relative; z-index: 1; /* over the marks, the error band and the matches (it has no background) */
+}
+.src-text:read-only { color: var(--muted); }
+.src-band { position: absolute; left: 0; right: 0; height: 18px; background: var(--danger); opacity: .12; pointer-events: none; }
+/* the statements of what is selected on the map (sourcepanel.mjs mark()); weak: they only mention it */
+.src-marks { position: absolute; left: 0; right: 0; top: 0; height: 0; pointer-events: none; }
+.src-mark { position: absolute; left: 0; right: 0; background: var(--accent); opacity: .14; box-shadow: inset 3px 0 0 var(--accent); }
+.src-mark.weak { opacity: .07; box-shadow: none; }
+.src-status { display: flex; align-items: flex-start; gap: 6px; padding: 6px 8px; border-top: 1px solid var(--line); color: var(--danger); max-height: 30%; overflow: auto; }
+.src-msg { white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding-top: 2px; }
+.src-goto { flex: none; height: 22px; padding: 0 6px; color: var(--danger); text-decoration: underline; }
+.src-resize { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: ew-resize; touch-action: none; outline: none; }
+.src-resize:hover, .src-resize:focus-visible, .source-panel.resizing .src-resize { background: var(--accent); opacity: .35; }
+.source-panel.resizing { user-select: none; }
+
 /* before the first map: only the ways to load one */
-body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .search, body.nomap #export, body.nomap #positions, body.nomap .tb-sep, body.nomap .zoom { display: none; }
+body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .edit-group, body.nomap .search, body.nomap #export, body.nomap .tb-sep, body.nomap .zoom { display: none; }
 
 /* ---------- narrow screens ---------- */
-/* Labels go before the toolbar would wrap (width measured with a short file name; a longer one
-   is cut short with an ellipsis instead). */
+/* Labels go before the toolbar would wrap: main.mjs sets .compact when the file name would be
+   squeezed too far (a long one is cut short with an ellipsis first). */
 .toolbar { flex-wrap: nowrap; }
 .brand-group, .file { min-width: 0; }
 .file-name { max-width: min(32ch, 100%); }
-@media (max-width: 1200px) {
-  .btn .lbl, .tb-label, .brand-name { display: none; }
-  .search input { width: 150px; }
-}
+.toolbar.compact .btn .lbl, .toolbar.compact .tb-label, .toolbar.compact .brand-name { display: none; }
+.toolbar.compact .search input { width: 150px; }
 /* narrow screens: one row (file, search, menu button); the rest folds into a menu under it */
 @media (max-width: 860px) {
+  .btn .lbl, .tb-label, .brand-name { display: none; } /* the menu shows its own again, below */
   .search { flex: 1 1 80px; min-width: 80px; max-width: 320px; margin-left: auto; }
   .search input { width: 100%; }
   .spacer { display: none; }
@@ -336,17 +501,27 @@ body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, bod
   .tb-more .btn { height: 36px; padding: 0 10px; gap: 10px; }
   .tb-more .btn .lbl, .tb-more .tb-label { display: inline; }
   .tb-more .tb-sep { width: auto; height: 1px; margin: 4px 0; }
-  .tb-more .through-group, .tb-more .theme-group { padding: 6px 10px 8px; gap: 6px; }
+  .tb-more .theme-group { padding: 6px 10px 8px; gap: 6px; }
   .tb-more .tb-label { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); }
   .tb-more .seg { display: flex; }
   /* the theme list opens in place, inside the menu */
   .tb-more .theme-btn { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--field); }
   .tb-more .fancy-btn { border: 1px solid var(--line); }
   .tb-more .theme-btn .icon.small { margin-left: auto; }
+  .tb-more .split { display: flex; flex-wrap: wrap; }
+  .tb-more #through-split .split-main { flex: 1; }
+  .tb-more > .tb-sep:first-child { display: none; } /* (it parts the file name from the rest on wide screens) */
+  .tb-more .through-menu, .tb-more .theme-menu { flex-basis: 100%; }
+  .tb-more .through-menu { position: static; margin-top: 4px; min-width: 0; max-width: none; box-shadow: none; }
   .tb-more .theme-menu { position: static; margin-top: 4px; min-width: 0; max-width: none; box-shadow: none; }
   .tb-more .seg button { flex: 1; height: 30px; justify-content: center; }
   .tb-more .out-group { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 4px; }
   body.nomap .tb-more .out-group { border-top: 0; margin-top: 0; padding-top: 0; }
+}
+/* narrow screens: the source lies over the map */
+@media (max-width: 860px) {
+  body.source-open { --src-right: 0px; }
+  .source-panel { box-shadow: var(--shadow-lg); }
 }
 @media (max-width: 560px) {
   .search kbd { display: none; }

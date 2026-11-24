@@ -97,6 +97,10 @@ digraph example {
 - Units follow Graphviz (inches, points) except `pos`, which is px with y down.
 - Colours are hex, `#rgb` or `#rrggbb`; named colours like `red` are errors.
 - `URL`/`href` must be `http://`, `https://`, `mailto:` or relative.
+- A note's label may be HTML-like, as in Graphviz: `label=<Mind the <b>gap</b><br/>and the
+  <font color="#c62828">step</font>>`. Supported: `<b>`, `<i>`, `<u>`, `<s>`, `<br/>`,
+  `<font color="#…">`; any other tag (tables, images, …) is an error naming it. Elsewhere an
+  HTML-like label shows as plain text.
 - `dot -Tsvg flow.dot` still gives a Graphviz preview of the structure.
 
 ## Themes
@@ -119,7 +123,7 @@ npx @linemap/cli export flow.dot -o map.svg [--positions] [--legend show|hide]
 npx @linemap/cli export flow.dot -o flow.html         # the studio with the flow baked in
 npx @linemap/cli export a.dot b.dot -o flows.html     # several, picked on the start screen
 npx @linemap/cli export                               # the empty studio: linemap.html
-npx @linemap/cli studio [dir] [--port 8000] [--open]  # serve the DOT files under dir, with Watch
+npx @linemap/cli studio [dir] [--port 8000] [--open]  # serve the DOT files under dir; the map follows saves
 ```
 
 `export` writes what the output's extension says: `.svg` is the static map, `.html` is the
@@ -172,12 +176,20 @@ pnpm studio                     # serves http://localhost:8000/studio.html#src=e
 pnpm export a.dot b.dot -o flows.html   # bakes flows into the page, e.g. for Notion
 ```
 
-Open a file with the toolbar, by dropping it on the page, by pasting DOT text, or with `#src=` in the address, also in a page with flows baked in; there, a flow you pick is kept in the address too (`#src=flow.dot`), so a reload or a shared link shows it.
-**Watch** redraws on every save (for a file the studio serves, as under `linemap studio`). The legend hides and solos lines; the toolbar switches lines
+Open a file from the menu under its name (or `Ctrl+O`), by dropping it on the page, by pasting DOT text, or with `#src=` in the address, also in a page with flows baked in; there, a flow you pick is kept in the address too (`#src=flow.dot`), so a reload or a shared link shows it.
+A file the studio serves (as under `linemap studio`) is redrawn on every save; switch that off with Follow saves in the file menu. The legend hides and solos lines; the toolbar switches lines
 through nodes and the theme without moving any box. **Notes** off (or `N`) draws the map
 without the notes, like `--notes hide`, and puts a badge for each in its node: hover it to read
 the note, click it to keep the note open beside it, click again (or press `Esc`) to close it.
-The studio remembers notes on or off for your next visit. The SVG download is the map as shown:
+The studio remembers notes on or off for your next visit. **Edit** (or `E`) changes the map in
+place: drag boxes, bend lines, add, connect, reattach and delete boxes and edges, then undo with
+`Ctrl Z`. Click a selected box again to resize it, a selected edge again to work on the one line
+you clicked instead of the whole bundle. Shift+click, Shift+drag or a click on a container
+selects several boxes, to move together, align or distribute evenly (Align), or to group them in a new container, merge their
+containers, split them off into a new one, or ungroup a container. A note's text may use `<b>`,
+`<i>`, `<u>`, `<s>` and `<font color>`. In edit mode the DOT text is beside the map: type in it and the map follows after a short pause (each pause one undo step, saved like a
+map edit); a text that cannot be drawn keeps the last map and marks the line in error. Under `linemap studio` each edit is saved to the DOT file, changing only the lines it
+must; elsewhere download the edited DOT file (above the source), or the page with it baked in. The SVG download is the map as shown:
 hidden lines, through, theme and notes left out. The address keeps these settings and the view,
 so a link reopens the same map (a `notes=` in it wins over the remembered one). Press `?` for keys.
 
@@ -210,7 +222,6 @@ Limits:
 - Text widths are estimated (0.56 × font size per character), not measured.
 - Routing is orthogonal only.
 - Lines go through boxes, queues and cylinders only, not diamonds.
-- The studio does not edit yet; positions go back into the DOT file by hand.
 
 ## License
 

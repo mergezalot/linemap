@@ -131,13 +131,19 @@ function throughNode(n, ctx) {
   return out.join('');
 }
 
-// Note text: one tspan per row, left-aligned.
+// A styled run of a rich note label: a tspan with its styles, the text escaped.
+function run(t) {
+  const deco = [t.u && 'underline', t.s && 'line-through'].filter(Boolean).join(' ');
+  const a = `${t.b ? ' font-weight="700"' : ''}${t.i ? ' font-style="italic"' : ''}${deco ? ` text-decoration="${deco}"` : ''}${t.color ? ` fill="${attr(t.color)}"` : ''}`;
+  return a ? `<tspan${a}>${esc(t.text)}</tspan>` : esc(t.text);
+}
+// Note text: one tspan per row, left-aligned; a rich label's runs as tspans in it.
 function note(n, ctx = FLAT) {
   const x0 = n.x - n.w / 2, y0 = n.y - n.h / 2;
   const s = n.style;
-  const rows = n.label.split('\n').map((row, i) => {
+  const rows = (n.rich ?? n.label.split('\n')).map((row, i) => {
     const y = y0 + STYLE.notePad + s.lineHeight * (i + 0.5);
-    return `<tspan x="${f(x0 + STYLE.notePad)}" y="${f(y)}">${esc(row)}</tspan>`;
+    return `<tspan x="${f(x0 + STYLE.notePad)}" y="${f(y)}">${n.rich ? row.map(run).join('') : esc(row)}</tspan>`;
   });
   const t = font({ ...s, italic: false }, 'lm-note-text');
   return `<rect x="${f(x0)}" y="${f(y0)}" width="${n.w}" height="${n.h}" rx="${ctx.radius.note}" class="lm-note-box"${inline({ fill: s.fill, stroke: s.stroke })}${ctx.fx.filter('small')}/>` +

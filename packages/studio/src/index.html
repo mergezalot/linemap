@@ -13,11 +13,21 @@
   <defs>
     <symbol id="i-open" viewBox="0 0 16 16"><path d="M1.8 4.2c0-.7.5-1.2 1.2-1.2h3l1.4 1.6h5.6c.7 0 1.2.5 1.2 1.2v6.4c0 .7-.5 1.2-1.2 1.2H3c-.7 0-1.2-.5-1.2-1.2z"/></symbol>
     <symbol id="i-paste" viewBox="0 0 16 16"><rect x="3" y="2.8" width="10" height="11.4" rx="1.4"/><path d="M6 2.8V2h4v.8M5.8 7h4.4M5.8 9.8h4.4"/></symbol>
-    <symbol id="i-reload" viewBox="0 0 16 16"><path d="M13.2 8a5.2 5.2 0 1 1-1.6-3.8M13.2 2.2v2.6h-2.6"/></symbol>
+    <symbol id="i-new" viewBox="0 0 16 16"><path d="M9.2 1.8H4.2c-.7 0-1.2.5-1.2 1.2v10c0 .7.5 1.2 1.2 1.2h7.6c.7 0 1.2-.5 1.2-1.2V5.6zM9.2 1.8v3.8H13M8 7.6v4.2M5.9 9.7h4.2"/></symbol>
     <symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.5 8S4 3.6 8 3.6 14.5 8 14.5 8 12 12.4 8 12.4 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></symbol>
     <symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2.2v8M4.8 7.2 8 10.4l3.2-3.2M2.6 13.6h10.8"/></symbol>
     <symbol id="i-pin" viewBox="0 0 16 16"><path d="M8 14.2s4.6-4.3 4.6-7.6a4.6 4.6 0 0 0-9.2 0c0 3.3 4.6 7.6 4.6 7.6z"/><circle cx="8" cy="6.6" r="1.6"/></symbol>
+    <symbol id="i-unpin" viewBox="0 0 16 16"><path d="M8 14.2s4.6-4.3 4.6-7.6a4.6 4.6 0 0 0-9.2 0c0 3.3 4.6 7.6 4.6 7.6z"/><circle cx="8" cy="6.6" r="1.6"/><path d="m2.4 2.4 11.2 11.2"/></symbol>
+    <symbol id="i-resize" viewBox="0 0 16 16"><path d="M9.4 2.6h4v4M13.4 2.6 9 7M6.6 13.4h-4v-4M2.6 13.4 7 9"/></symbol>
     <symbol id="i-help" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.3a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.4"/><circle cx="8" cy="11.4" r=".4"/></symbol>
+    <!-- lines through nodes: as in the file (a page the line runs across), all (through the box),
+         none (the line ends at the box); the line in the accent colour -->
+    <symbol id="i-through-file" viewBox="0 0 16 16"><path d="M4.4 1.8h4.8l2.6 2.6v9.8H4.4z"/><path d="M1.2 9.4h13.6" style="stroke: var(--accent)"/></symbol>
+    <symbol id="i-through-all" viewBox="0 0 16 16"><rect x="4.6" y="3.6" width="6.8" height="8.8" rx="1.4"/><path d="M1.2 8h13.6" style="stroke: var(--accent)"/></symbol>
+    <symbol id="i-through-none" viewBox="0 0 16 16"><rect x="4.6" y="3.6" width="6.8" height="8.8" rx="1.4"/><path d="M1.2 8h2.2M12.6 8h2.2" style="stroke: var(--accent)"/></symbol>
+    <symbol id="i-chevron-up" viewBox="0 0 16 16"><path d="m4.5 9.8 3.5-3.5 3.5 3.5"/></symbol>
+    <symbol id="i-collapse" viewBox="0 0 16 16"><path d="m4 4.5 3.5 3.5L4 11.5M8.5 4.5 12 8l-3.5 3.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="m3.2 8.4 3 3 6.6-6.8"/></symbol>
     <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
     <symbol id="i-minus" viewBox="0 0 16 16"><path d="M3 8h10"/></symbol>
     <symbol id="i-fit" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></symbol>
@@ -26,16 +36,37 @@
     <symbol id="i-menu" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></symbol>
     <symbol id="i-sparkles" viewBox="0 0 16 16"><path d="M6.5 4.6c.4 3 1.4 4 4.4 4.4-3 .4-4 1.4-4.4 4.4-.4-3-1.4-4-4.4-4.4 3-.4 4-1.4 4.4-4.4zM12.4 1.6c.2 1.2.6 1.6 1.8 1.8-1.2.2-1.6.6-1.8 1.8-.2-1.2-.6-1.6-1.8-1.8 1.2-.2 1.6-.6 1.8-1.8z"/></symbol>
     <symbol id="i-note" viewBox="0 0 16 16"><path d="M3.2 2.6h6.6l3 3v7.8H3.2zM9.8 2.6v3h3M5.6 8.2h4.8M5.6 10.8h3.2"/></symbol>
+    <symbol id="i-note-add" viewBox="0 0 16 16"><path d="M8.6 13.4H2.6V2.6h6.2l2.8 2.8v2.4M8.8 2.6v2.8h2.8M4.8 7.2h4M4.8 9.6h2.4M12.2 9.6v4.8M9.8 12h4.8"/></symbol>
     <symbol id="i-close" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 16 16"><path d="M10.6 2.8 13.2 5.4 5.6 13 2.6 13.4 3 10.4zM9.2 4.2l2.6 2.6"/></symbol>
+    <symbol id="i-text-edit" viewBox="0 0 16 16"><path d="M2 2.6h7.4M5.7 2.6v9.2M8.8 13.6l.4-2.2 3.9-3.9 1.8 1.8-3.9 3.9z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.8 4.4h10.4M6.4 4.4V2.8h3.2v1.6M4.2 4.4l.7 8.8h6.2l.7-8.8M6.8 7v4M9.2 7v4"/></symbol>
+    <symbol id="i-trash-all" viewBox="0 0 16 16"><rect x="1.6" y="1.6" width="12.8" height="12.8" rx="1.6" stroke-dasharray="2 1.6"/><path d="M4.8 5.6h6.4M7 5.6v-1h2v1M5.6 5.6l.5 5.8h3.8l.5-5.8"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 16 16"><path d="M5.6 3.4 2.6 6.4l3 3M2.8 6.4h6.6a3.6 3.6 0 0 1 0 7.2H6.8"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 16 16"><path d="m10.4 3.4 3 3-3 3M13.2 6.4H6.6a3.6 3.6 0 0 0 0 7.2h2.6"/></symbol>
+    <symbol id="i-group" viewBox="0 0 16 16"><rect x="1.6" y="1.6" width="12.8" height="12.8" rx="1.6" stroke-dasharray="2 1.6"/><rect x="4" y="4.4" width="4" height="3.2" rx=".6"/><rect x="8" y="8.4" width="4" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-merge" viewBox="0 0 16 16"><rect x="1.4" y="2" width="5" height="5" rx="1"/><rect x="9.6" y="2" width="5" height="5" rx="1"/><path d="M3.9 7v1.6L8 11.6l4.1-3V7M8 11.6v2.8"/></symbol>
+    <symbol id="i-split" viewBox="0 0 16 16"><rect x="1.4" y="1.6" width="7.4" height="12.8" rx="1.2"/><rect x="3.4" y="6.4" width="3.4" height="3.2" rx=".6"/><path d="M9.4 8h4.6M12 6l2 2-2 2"/></symbol>
+    <symbol id="i-ungroup" viewBox="0 0 16 16"><path d="M1.6 5V1.6H5M11 1.6h3.4V5M14.4 11v3.4H11M5 14.4H1.6V11"/><rect x="4" y="4.4" width="4" height="3.2" rx=".6"/><rect x="8" y="8.4" width="4" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-align-left" viewBox="0 0 16 16"><path d="M2.4 1.8v12.4"/><rect x="4.6" y="3.6" width="8.6" height="3.2" rx=".6"/><rect x="4.6" y="9.2" width="5.4" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-align-center" viewBox="0 0 16 16"><path d="M8 1.8v1.8M8 6.8v2.4M8 12.4v1.8"/><rect x="3.4" y="3.6" width="9.2" height="3.2" rx=".6"/><rect x="5.2" y="9.2" width="5.6" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-align-right" viewBox="0 0 16 16"><path d="M13.6 1.8v12.4"/><rect x="2.8" y="3.6" width="8.6" height="3.2" rx=".6"/><rect x="6" y="9.2" width="5.4" height="3.2" rx=".6"/></symbol>
+    <symbol id="i-align-top" viewBox="0 0 16 16"><path d="M1.8 2.4h12.4"/><rect x="3.6" y="4.6" width="3.2" height="8.6" rx=".6"/><rect x="9.2" y="4.6" width="3.2" height="5.4" rx=".6"/></symbol>
+    <symbol id="i-align-middle" viewBox="0 0 16 16"><path d="M1.8 8h1.8M6.8 8h2.4M12.4 8h1.8"/><rect x="3.6" y="3.4" width="3.2" height="9.2" rx=".6"/><rect x="9.2" y="5.2" width="3.2" height="5.6" rx=".6"/></symbol>
+    <symbol id="i-align-bottom" viewBox="0 0 16 16"><path d="M1.8 13.6h12.4"/><rect x="3.6" y="2.8" width="3.2" height="8.6" rx=".6"/><rect x="9.2" y="6" width="3.2" height="5.4" rx=".6"/></symbol>
+    <symbol id="i-space-h" viewBox="0 0 16 16"><path d="M1.8 2v12M14.2 2v12"/><rect x="5.6" y="4.4" width="4.8" height="7.2" rx=".6"/></symbol>
+    <symbol id="i-space-v" viewBox="0 0 16 16"><path d="M2 1.8h12M2 14.2h12"/><rect x="4.4" y="5.6" width="7.2" height="4.8" rx=".6"/></symbol>
+    <symbol id="i-code" viewBox="0 0 16 16"><path d="M5.4 4.2 1.8 8l3.6 3.8M10.6 4.2 14.2 8l-3.6 3.8M9 2.8 7 13.2"/></symbol>
+    <symbol id="i-node" viewBox="0 0 16 16"><rect x="1.8" y="3.8" width="9.4" height="7" rx="1.6"/><path d="M13 9.6v4.8M10.6 12h4.8"/></symbol>
   </defs>
 </svg>
 
 <header class="toolbar">
   <div class="tb-group brand-group">
-    <span class="brand"><img class="logo" src="/*@LOGO@*/" alt=""><span class="brand-name">linemap</span></span>
+    <button id="brand" class="brand" title="About linemap, keys and gestures (?)"><img class="logo" src="/*@LOGO@*/" alt=""><span class="brand-name">linemap</span></button>
     <div class="file">
-      <button id="file-name" class="btn file-name" title="Recent files" aria-haspopup="menu">
-        <span class="name">No file</span><svg class="icon small"><use href="#i-chevron"/></svg>
+      <button id="file-name" class="btn file-name" title="File: new, open, recent (Ctrl+O opens)" aria-haspopup="menu">
+        <span class="name">No file</span><span class="live" title="Following saves: the map redraws when the file changes" hidden></span><svg class="icon small"><use href="#i-chevron"/></svg>
       </button>
       <div id="recent" class="popover menu" role="menu" hidden></div>
     </div>
@@ -43,39 +74,35 @@
   <!-- the controls that fold into the menu button on narrow screens; on wide ones the box is
        transparent (display: contents) and they sit in the toolbar -->
   <div id="tb-more" class="tb-more">
-    <div class="tb-group file-group">
-      <button id="open" class="btn" title="Open a DOT file"><svg class="icon"><use href="#i-open"/></svg><span class="lbl">Open</span></button>
-      <button id="paste" class="btn" title="Paste DOT text"><svg class="icon"><use href="#i-paste"/></svg><span class="lbl">Paste</span></button>
-      <button id="reload" class="btn" title="Reload (R)"><svg class="icon"><use href="#i-reload"/></svg><span class="lbl in-menu">Reload</span></button>
-      <button id="watch" class="btn" title="Watch the file: redraw when it is saved (kept when you reload the page)" aria-pressed="false" hidden><svg class="icon"><use href="#i-eye"/></svg><span class="lbl">Watch</span></button>
-    </div>
     <div class="tb-sep"></div>
     <div class="tb-group through-group">
-      <span class="tb-label">Through</span>
-      <div class="seg" id="through" role="radiogroup" aria-label="Lines through nodes">
-        <button data-mode="file" role="radio" title="As in the file">File</button>
-        <button data-mode="all" role="radio" title="Lines through every box, queue and cylinder">All</button>
-        <button data-mode="none" role="radio" title="Lines end at every node">None</button>
+      <!-- a split button: a click goes on to the next mode (file, all, none), the arrow lists them;
+           main.mjs sets the icon, label and title for the mode -->
+      <div class="split" id="through-split">
+        <button id="through" class="btn split-main" data-mode="file"><svg class="icon"><use href="#i-through-file"/></svg><span class="lbl"><span class="stack"></span></span></button>
+        <button class="btn split-arrow" aria-haspopup="menu" aria-expanded="false" aria-label="Lines through nodes: choose" title="Lines through nodes: choose"><svg class="icon small"><use href="#i-chevron"/></svg></button>
+        <div id="through-menu" class="popover menu through-menu" role="menu" aria-label="Lines through nodes" hidden></div>
       </div>
     </div>
     <div class="tb-group theme-group">
-      <span class="tb-label">Theme</span>
-      <div class="theme-pick">
-        <div class="theme-bar">
-          <button id="theme-btn" class="btn theme-btn" title="Theme (T: next)" aria-haspopup="menu" aria-expanded="false">
-            <span class="cur"></span><svg class="icon small"><use href="#i-chevron"/></svg>
-          </button>
-          <button id="fancy" class="btn fancy-btn" aria-pressed="false" hidden><svg class="icon sparkles"><use href="#i-sparkles"/></svg></button>
-        </div>
+      <!-- a split button: the list of themes, and fancy (shadows, glows, moving arrows) switched
+           on or off beside it, for themes that have a fancy variant -->
+      <div class="theme-pick split" id="theme-split">
+        <button id="theme-btn" class="btn theme-btn split-arrow" title="Theme (T: next)" aria-haspopup="menu" aria-expanded="false">
+          <span class="cur"></span><svg class="icon small"><use href="#i-chevron"/></svg>
+        </button>
+        <button id="fancy" class="btn fancy-btn split-main" aria-pressed="false" hidden><svg class="icon sparkles"><use href="#i-sparkles"/></svg></button>
         <div id="theme" class="popover menu theme-menu" role="menu" aria-label="Theme" hidden></div>
       </div>
     </div>
     <div class="tb-group notes-group">
       <button id="notes" class="btn" aria-pressed="true" hidden><svg class="icon"><use href="#i-note"/></svg><span class="lbl">Notes</span></button>
     </div>
+    <div class="tb-group edit-group">
+      <button id="edit" class="btn" aria-pressed="false" title="Edit the map and its DOT source: move, add and connect boxes, bend lines (E)"><svg class="icon"><use href="#i-edit"/></svg><span class="lbl">Edit</span></button>
+    </div>
     <div class="tb-group out-group">
       <button id="export" class="btn" title="Download the map as SVG"><svg class="icon"><use href="#i-download"/></svg><span class="lbl">SVG</span></button>
-      <button id="positions" class="btn" title="Copy computed positions (pos=&quot;x,y&quot;) for unpinned items"><svg class="icon"><use href="#i-pin"/></svg><span class="lbl">Positions</span></button>
       <button id="help-btn" class="btn" title="Keys and gestures (?)"><svg class="icon"><use href="#i-help"/></svg><span class="lbl in-menu">Help</span></button>
     </div>
   </div>
@@ -102,10 +129,10 @@
     <div class="flows" hidden><h2>In this file</h2><div class="links"></div></div>
     <div class="empty-actions">
       <button class="btn primary" data-act="open"><svg class="icon"><use href="#i-open"/></svg>Open file</button>
-      <button class="btn" data-act="paste"><svg class="icon"><use href="#i-paste"/></svg>Paste text</button>
+      <button class="btn" data-act="new"><svg class="icon"><use href="#i-new"/></svg>New flow</button>
     </div>
     <ul class="ways">
-      <li>or drop a <code>.dot</code> file anywhere on this page</li>
+      <li>or drop a <code>.dot</code> file, or paste DOT text, anywhere on this page</li>
       <li>or add <code>#src=path/to/flow.dot</code> to the address (served over http)</li>
     </ul>
     <div class="examples" hidden><h2>Examples</h2><div class="links"></div></div>
@@ -115,6 +142,68 @@
 </main>
 
 <aside id="legend" class="panel legend" hidden></aside>
+
+<!-- the DOT text of the flow, editable (sourcepanel.mjs) -->
+<aside id="source-panel" class="panel source-panel" aria-label="DOT source" hidden>
+  <!-- collapsed: only this strip, a click opens the source again -->
+  <button class="src-expand" title="Show the source" aria-label="Show the source"><svg class="icon"><use href="#i-code"/></svg><span>Source</span></button>
+  <div class="src-head">
+    <svg class="icon"><use href="#i-code"/></svg><span class="src-title">Source</span><span class="src-name"></span>
+    <button id="edit-dot" class="btn src-dl" title="Download the DOT file with the edits"><svg class="icon"><use href="#i-download"/></svg><span>.dot</span></button>
+    <button id="edit-page" class="btn src-dl" title="Download this page with the edited flows in it" hidden><svg class="icon"><use href="#i-download"/></svg><span class="lbl">Page</span></button>
+    <button class="btn src-find-btn" title="Find in the source (Ctrl+F in the text)" aria-label="Find in the source" aria-expanded="false"><svg class="icon"><use href="#i-search"/></svg></button>
+    <button class="btn src-collapse" title="Collapse the source: the map gets the room" aria-label="Collapse the source" aria-expanded="true"><svg class="icon"><use href="#i-collapse"/></svg></button>
+  </div>
+  <div class="src-find" role="search" hidden>
+    <input class="src-find-input" type="text" placeholder="Find in source" autocomplete="off" spellcheck="false" aria-label="Find in the source">
+    <span class="src-find-count" aria-live="polite"></span>
+    <button class="btn src-find-prev" title="Previous (Shift+Enter)" aria-label="Previous match"><svg class="icon"><use href="#i-chevron-up"/></svg></button>
+    <button class="btn src-find-next" title="Next (Enter)" aria-label="Next match"><svg class="icon"><use href="#i-chevron"/></svg></button>
+    <button class="btn src-find-close" title="Close (Esc)" aria-label="Close find"><svg class="icon"><use href="#i-close"/></svg></button>
+    <!-- what on the map matches: Down goes into the list, Enter or a click goes there -->
+    <ul class="src-find-map" role="listbox" aria-label="On the map" hidden></ul>
+  </div>
+  <div class="src-body">
+    <div class="src-band" hidden></div>
+    <div class="src-gutter" aria-hidden="true"><div class="src-lines"></div></div>
+    <textarea class="src-text" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="DOT source of the flow"></textarea>
+  </div>
+  <div class="src-status" role="status" hidden><button class="btn src-goto" title="Put the caret on that line"></button><span class="src-msg"></span></div>
+  <div class="src-resize" role="separator" aria-orientation="vertical" aria-label="Width of the source (arrow keys)" tabindex="0"></div>
+</aside>
+
+<div id="edit-bar" class="panel edit-bar" role="toolbar" aria-label="Edit" hidden>
+  <button id="edit-add" class="btn" aria-pressed="false" title="Add a node: click where it goes (or double-click the map)"><svg class="icon"><use href="#i-node"/></svg><span class="lbl">Node</span></button>
+  <button id="edit-text" class="btn" title="Edit the text of the box, note or container selected (F2, Enter or double-click)" hidden><svg class="icon"><use href="#i-text-edit"/></svg><span class="lbl">Text…</span></button>
+  <button id="edit-lines" class="btn" title="Pick the lines the selected edge carries (L)" hidden><svg class="icon"><use href="#i-menu"/></svg><span class="lbl">Lines…</span></button>
+  <button id="edit-align" class="btn" aria-haspopup="menu" aria-expanded="false" aria-controls="align-menu" title="Align or distribute the boxes selected" hidden><svg class="icon"><use href="#i-align-left"/></svg><span class="lbl">Align</span><svg class="icon small"><use href="#i-chevron"/></svg></button>
+  <button id="edit-group" class="btn" title="Group: a new container around the boxes selected" hidden><svg class="icon"><use href="#i-group"/></svg><span class="lbl">Group</span></button>
+  <button id="edit-merge" class="btn" title="Merge the containers of the boxes selected into the one clicked first" hidden><svg class="icon"><use href="#i-merge"/></svg><span class="lbl">Merge</span></button>
+  <button id="edit-split" class="btn" title="Split: the boxes selected leave their container for a new one beside it" hidden><svg class="icon"><use href="#i-split"/></svg><span class="lbl">Split</span></button>
+  <button id="edit-ungroup" class="btn" title="Ungroup: the container goes, its boxes stay" hidden><svg class="icon"><use href="#i-ungroup"/></svg><span class="lbl">Ungroup</span></button>
+  <button id="edit-delete" class="btn" title="Delete the selection (Del); a container: only it, its boxes stay"><svg class="icon"><use href="#i-trash"/></svg></button>
+  <button id="edit-delete-all" class="btn" title="Delete the container with everything in it…" hidden><svg class="icon"><use href="#i-trash-all"/></svg></button>
+  <button id="edit-pin" class="btn" title="Pin every node and note where it is now"><svg class="icon"><use href="#i-pin"/></svg><span class="lbl">Pin all</span></button>
+  <button id="edit-unpin" class="btn" title="Unpin every node and note: the layout places them"><svg class="icon"><use href="#i-unpin"/></svg><span class="lbl">Unpin all</span></button>
+  <div class="tb-sep"></div>
+  <button id="edit-undo" class="btn" title="Undo (Ctrl+Z)"><svg class="icon"><use href="#i-undo"/></svg></button>
+  <button id="edit-redo" class="btn" title="Redo (Ctrl+Shift+Z)"><svg class="icon"><use href="#i-redo"/></svg></button>
+</div>
+<!-- what can be done with what is selected: for screen readers (the help has it for everyone) -->
+<div id="edit-hint" class="sr-only" role="status" hidden></div>
+<!-- Align / distribute, opened from the edit bar or a multi-selection's toolbar (put by its button) -->
+<div id="align-menu" class="popover menu align-menu" role="menu" aria-label="Align or distribute" hidden>
+  <button class="item" role="menuitem" data-how="left"><svg class="icon"><use href="#i-align-left"/></svg><span class="nm">Align left sides</span></button>
+  <button class="item" role="menuitem" data-how="center"><svg class="icon"><use href="#i-align-center"/></svg><span class="nm">Align centres</span></button>
+  <button class="item" role="menuitem" data-how="right"><svg class="icon"><use href="#i-align-right"/></svg><span class="nm">Align right sides</span></button>
+  <hr>
+  <button class="item" role="menuitem" data-how="top"><svg class="icon"><use href="#i-align-top"/></svg><span class="nm">Align tops</span></button>
+  <button class="item" role="menuitem" data-how="middle"><svg class="icon"><use href="#i-align-middle"/></svg><span class="nm">Align middles</span></button>
+  <button class="item" role="menuitem" data-how="bottom"><svg class="icon"><use href="#i-align-bottom"/></svg><span class="nm">Align bottoms</span></button>
+  <hr>
+  <button class="item" role="menuitem" data-how="hspace" title="Equal gaps from left to right; the outermost two stay (three or more boxes)"><svg class="icon"><use href="#i-space-h"/></svg><span class="nm">Distribute horizontally</span></button>
+  <button class="item" role="menuitem" data-how="vspace" title="Equal gaps from top to bottom; the outermost two stay (three or more boxes)"><svg class="icon"><use href="#i-space-v"/></svg><span class="nm">Distribute vertically</span></button>
+</div>
 
 <div class="panel zoom" role="group" aria-label="Zoom">
   <button id="zoom-in" class="btn" title="Zoom in (+)"><svg class="icon"><use href="#i-plus"/></svg></button>
@@ -127,46 +216,104 @@
 <div id="drop" class="drop" hidden><div>Drop a DOT file to open it</div></div>
 <input id="file-input" type="file" accept=".dot,.gv,.txt,text/plain,text/vnd.graphviz" hidden>
 
-<dialog id="paste-dialog" class="dialog">
+
+<dialog id="label-dialog" class="dialog small">
   <form method="dialog">
-    <h2>Paste DOT text</h2>
-    <textarea name="text" rows="14" spellcheck="false" placeholder="digraph flow { ... }"></textarea>
+    <h2>New node</h2>
+    <p class="hint" hidden></p>
+    <input name="label" class="field" type="text" placeholder="Label" autocomplete="off" spellcheck="false" aria-label="Label">
     <div class="dialog-actions">
-      <button class="btn" value="cancel" formnovalidate>Cancel</button>
-      <button class="btn primary" value="ok">Show map</button>
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button class="btn primary" value="ok">Add</button>
     </div>
   </form>
 </dialog>
 
-<dialog id="positions-dialog" class="dialog">
+<dialog id="note-dialog" class="dialog">
   <form method="dialog">
-    <h2>Positions</h2>
-    <p class="hint">Computed positions of unpinned nodes and notes; paste into the DOT file to pin them.</p>
-    <textarea name="text" rows="14" readonly spellcheck="false"></textarea>
-    <div class="dialog-actions"><button class="btn primary" value="ok">Close</button></div>
+    <h2>New note</h2>
+    <p class="hint"></p>
+    <textarea name="text" class="prose" rows="6" spellcheck="true" placeholder="Text of the note" aria-label="Text of the note"></textarea>
+    <p class="hint rich-hint">Rich text: &lt;b&gt;bold&lt;/b&gt;, &lt;i&gt;, &lt;u&gt;, &lt;s&gt;, &lt;font color="#c62828"&gt;…&lt;/font&gt;</p>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button class="btn primary" value="ok" title="Ctrl+Enter">Add note</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="lines-dialog" class="dialog small">
+  <form method="dialog">
+    <h2>Lines on the new edge</h2>
+    <p class="hint"></p>
+    <div class="lines"></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button class="btn primary" value="ok">Connect</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="confirm-dialog" class="dialog small">
+  <form method="dialog">
+    <h2>Delete?</h2>
+    <p class="hint"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button class="btn primary danger" value="ok">Delete</button>
+    </div>
   </form>
 </dialog>
 
 <dialog id="help" class="dialog help">
   <form method="dialog">
     <div class="about"><img class="about-logo" src="/*@LOGO@*/" alt=""><div><div class="about-name">linemap</div><div class="about-tag">Flowcharts as metro maps · <a href="https://github.com/mergezalot/linemap" target="_blank" rel="noopener">github.com/mergezalot/linemap</a></div></div></div>
-    <h2>Keys and gestures</h2>
-    <table>
-      <tr><th>Zoom</th><td>wheel, pinch, <kbd>+</kbd> <kbd>-</kbd>, double-click</td></tr>
-      <tr><th>Fit</th><td><kbd>0</kbd></td></tr>
-      <tr><th>Pan</th><td>drag, arrow keys</td></tr>
-      <tr><th>Highlight a line</th><td>hover it, or its legend row</td></tr>
-      <tr><th>Pin a line</th><td>click it; <kbd>Shift</kbd>-click adds; <kbd>Esc</kbd> clears</td></tr>
-      <tr><th>Pin a node's lines</th><td>click the node; <kbd>Shift</kbd>-click adds</td></tr>
-      <tr><th>Open a node's link</th><td><kbd>Ctrl</kbd>-click (<kbd>⌘</kbd>-click on a Mac)</td></tr>
-      <tr><th>Hide a line</th><td>click its legend row; <kbd>Alt</kbd>/<kbd>Shift</kbd>-click: only this line</td></tr>
-      <tr><th>Search</th><td><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>F</kbd></td></tr>
-      <tr><th>Next theme</th><td><kbd>T</kbd></td></tr>
-      <tr><th>Notes on / off</th><td><kbd>N</kbd>; off draws the map without them and puts a badge for each in its node: hover it to read the note, click it to keep the note open, click again to close it. Remembered for your next visit</td></tr>
-      <tr><th>Reload</th><td><kbd>R</kbd></td></tr>
-      <tr><th>Open / paste</th><td>drop a file, or paste DOT text anywhere</td></tr>
-    </table>
-    <p class="hint">The address keeps hidden lines, through settings, the theme, notes off and the view, so a link shows the same map.</p>
+    <!-- a cheat sheet: what each key or gesture does, in a few words; in edit mode the bar under
+         the edit bar says what can be done with what is selected -->
+    <div class="keys">
+      <section>
+        <h3>Map</h3>
+        <dl>
+          <dt>Zoom</dt><dd><kbd>Ctrl</kbd>+wheel · pinch · <kbd>+</kbd> <kbd>-</kbd></dd>
+          <dt>Fit</dt><dd><kbd>0</kbd></dd>
+          <dt>Pan</dt><dd>drag · wheel · arrow keys</dd>
+          <dt>Pin lines</dt><dd>click a line or node · <kbd>Shift</kbd> adds · <kbd>Esc</kbd> clears</dd>
+          <dt>Hide a line</dt><dd>click its legend row · <kbd>Shift</kbd>: only it</dd>
+          <dt>Open a link</dt><dd><kbd>Ctrl</kbd>-click a node</dd>
+          <dt>Search</dt><dd><kbd>/</kbd> · <kbd>Ctrl</kbd> <kbd>F</kbd></dd>
+          <dt>Next theme</dt><dd><kbd>T</kbd></dd>
+          <dt>Notes on / off</dt><dd><kbd>N</kbd></dd>
+          <dt>Reload</dt><dd><kbd>R</kbd></dd>
+          <dt>Open a file</dt><dd><kbd>Ctrl</kbd> <kbd>O</kbd> · drop · paste</dd>
+        </dl>
+        <h3>Source, in edit mode</h3>
+        <dl>
+          <dt>Find</dt><dd><kbd>Ctrl</kbd> <kbd>F</kbd> in the text</dd>
+          <dt>Leave the text</dt><dd><kbd>Esc</kbd></dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Edit <kbd>E</kbd></h3>
+        <dl>
+          <dt>Move · bend</dt><dd>drag a box · a line</dd>
+          <dt>Resize</dt><dd>click a selected box again, drag a handle</dd>
+          <dt>New box</dt><dd>double-click the map</dd>
+          <dt>Connect</dt><dd>drag a box's <b>+</b> onto another</dd>
+          <dt>Reattach</dt><dd>drag a selected edge's end onto a box</dd>
+          <dt>One line</dt><dd>click a selected edge again</dd>
+          <dt>Remove a bend</dt><dd>double-click it</dd>
+          <dt>Edit text</dt><dd>double-click · <kbd>F2</kbd></dd>
+          <dt>Container</dt><dd>click: select · again: its boxes · drag: all in it</dd>
+          <dt>Select several</dt><dd><kbd>Shift</kbd>+drag · <kbd>Shift</kbd>-click</dd>
+          <dt>Same size</dt><dd>click one of several selected again</dd>
+          <dt>Pin · unpin</dt><dd><kbd>P</kbd></dd>
+          <dt>Lines of an edge</dt><dd><kbd>L</kbd></dd>
+          <dt>Remove</dt><dd><kbd>Del</kbd></dd>
+          <dt>Undo · redo</dt><dd><kbd>Ctrl</kbd> <kbd>Z</kbd> · <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Z</kbd></dd>
+          <dt>Off the grid</dt><dd><kbd>Alt</kbd> while dragging</dd>
+        </dl>
+      </section>
+    </div>
     <p class="hint licenses">linemap is free software under the Mozilla Public License 2.0. It includes MSAGL (MIT, Microsoft). The license texts are in this page's source.</p>
     <p class="hint copyright">© 2026 Michael Karlen</p>
     <div class="dialog-actions"><button class="btn primary" value="ok">Close</button></div>
