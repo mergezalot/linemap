@@ -102,7 +102,6 @@
     </div>
     <div class="tb-group out-group">
       <button id="export" class="btn" title="Download the map as SVG"><svg class="icon"><use href="#i-download"/></svg><span class="lbl">SVG</span></button>
-      <button id="positions" class="btn" title="Copy computed positions (pos=&quot;x,y&quot;) for unpinned items"><svg class="icon"><use href="#i-pin"/></svg><span class="lbl">Positions</span></button>
       <button id="help-btn" class="btn" title="Keys and gestures (?)"><svg class="icon"><use href="#i-help"/></svg><span class="lbl in-menu">Help</span></button>
     </div>
   </div>
@@ -175,11 +174,9 @@
   <button id="edit-undo" class="btn" title="Undo (Ctrl+Z)"><svg class="icon"><use href="#i-undo"/></svg></button>
   <button id="edit-redo" class="btn" title="Redo (Ctrl+Shift+Z)"><svg class="icon"><use href="#i-redo"/></svg></button>
   <div class="tb-sep"></div>
-  <span id="edit-status" class="edit-status" role="status"></span>
   <button id="edit-dot" class="btn" title="Download the DOT file with the edits"><svg class="icon"><use href="#i-download"/></svg><span class="lbl">.dot</span></button>
   <button id="edit-copy" class="btn" title="Copy the DOT text"><svg class="icon"><use href="#i-paste"/></svg><span class="lbl">Copy</span></button>
   <button id="edit-page" class="btn" title="Download this page with the edited flows in it" hidden><svg class="icon"><use href="#i-download"/></svg><span class="lbl">Page</span></button>
-  <button id="edit-done" class="btn primary" title="Leave edit mode (E)">Done</button>
 </div>
 <div id="edit-hint" class="edit-hint" hidden></div>
 <!-- Align / distribute, opened from the edit bar or a multi-selection's toolbar (put by its button) -->
@@ -207,15 +204,6 @@
 <div id="drop" class="drop" hidden><div>Drop a DOT file to open it</div></div>
 <input id="file-input" type="file" accept=".dot,.gv,.txt,text/plain,text/vnd.graphviz" hidden>
 
-
-<dialog id="positions-dialog" class="dialog">
-  <form method="dialog">
-    <h2>Positions</h2>
-    <p class="hint">Computed positions of unpinned nodes and notes; paste into the DOT file to pin them.</p>
-    <textarea name="text" rows="14" readonly spellcheck="false"></textarea>
-    <div class="dialog-actions"><button class="btn primary" value="ok">Close</button></div>
-  </form>
-</dialog>
 
 <dialog id="label-dialog" class="dialog small">
   <form method="dialog">

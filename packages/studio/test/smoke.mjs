@@ -339,21 +339,10 @@ for (const src of EXAMPLES) {
   await page.waitForTimeout(400);
   check(await viewBox(page) !== vb0, 'Enter zooms to the result');
 
-  // export and positions
+  // export
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#export')]);
   const svgText = fs.readFileSync(await dl.path(), 'utf8');
   check(dl.suggestedFilename() === `${name}.svg` && svgText.startsWith('<svg') && svgText.includes('class="legend"'), `SVG export ${dl.suggestedFilename()} with legend`);
-  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.click('#positions');
-  await page.waitForTimeout(200);
-  const pos = await page.evaluate(async () => ({
-    clip: await navigator.clipboard.readText().catch(() => ''),
-    dialog: document.getElementById('positions-dialog').open ? document.querySelector('#positions-dialog textarea').value : '',
-    toast: document.getElementById('toast').hidden ? '' : document.getElementById('toast').textContent,
-  }));
-  const text = pos.clip || pos.dialog;
-  check(/pos="/.test(text) || /pinned already/.test(pos.toast), `positions copied (${text.split('\n').length} lines; ${pos.toast || 'dialog'})`);
-  if (pos.dialog) await page.keyboard.press('Escape');
 
   check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
   await page.close();
@@ -862,11 +851,9 @@ console.log('edit mode, saving to the file (linemap studio)');
     for (let i = 1; i <= 8; i++) { await page.mouse.move(a.x + (b.x - a.x) * i / 8, a.y + (b.y - a.y) * i / 8); await page.waitForTimeout(30); }
     await page.mouse.up();
   };
-  const status = () => page.textContent('#edit-status');
 
   await page.keyboard.press('e');
   check(await page.evaluate(() => !document.getElementById('edit-bar').hidden && document.getElementById('map').classList.contains('editing')), 'E opens edit mode');
-  check(/save to t\.dot/.test(await status()), `says where edits go ("${await status()}")`);
 
   // move a box: its pos changes, and nothing else in the file
   let before = read();
@@ -874,7 +861,6 @@ console.log('edit mode, saving to the file (linemap studio)');
   await drag(b0, { x: b1.x, y: b0.y });
   let text = await changed(before, 'moving b');
   check(text === FLOW.replace('pos="700,0"', 'pos="800,0"'), `dragging b pins it where it was dropped (${/b \[[^\]]*\]/.exec(text)?.[0]})`);
-  await until(async () => /Saved to t\.dot/.test(await status()), 'saved status');
   await shot(page, 'edit-1-moved');
 
   // while the pointer moves the map is not laid out again: stand-ins; once it rests, a preview
@@ -1758,7 +1744,7 @@ console.log('edit mode, flows baked in: kept in the page, downloaded');
     await page.mouse.up();
   });
   await page.waitForTimeout(300);
-  check(/Only in this page/.test(await page.textContent('#edit-status')) && await page.isVisible('#edit-page'), `edits of a baked-in flow stay in the page ("${await page.textContent('#edit-status')}")`);
+  check(/stay in this page/.test(await page.textContent('#toast')) && await page.isVisible('#edit-page'), `edits of a baked-in flow stay in the page, and it says so ("${await page.textContent('#toast')}")`);
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#edit-dot')]);
   const dot = fs.readFileSync(await dl.path(), 'utf8');
   check(dl.suggestedFilename() === 'webshop.dot' && /web +\[label="Web shop", pos="\d+,\d+"\]/.test(dot) && dot !== fs.readFileSync(path.join(repo, 'examples', 'webshop.dot'), 'utf8'), `.dot downloads the edited flow (${dl.suggestedFilename()})`);

@@ -18,7 +18,7 @@ import { createSearch } from './search.mjs';
 import { createEditor } from './editor.mjs';
 import { createSourcePanel } from './sourcepanel.mjs';
 import { createSplit } from './split.mjs';
-import { download, positionsText, copyOrShow, askLabel, askLines, askNote, askConfirm, toaster } from './actions.mjs';
+import { download, copyOrShow, askLabel, askLines, askNote, askConfirm, toaster } from './actions.mjs';
 
 const $ = (id) => document.getElementById(id);
 // All page elements are looked up now, before any map is inserted: ids from the DOT file end up
@@ -27,17 +27,17 @@ const el = {
   toolbar: document.querySelector('.toolbar'),
   fileName: $('file-name'), recent: $('recent'), sourceBtn: $('source-btn'), sourcePanel: $('source-panel'),
   through: $('through'), notes: $('notes'), theme: $('theme'), themeBtn: $('theme-btn'), fancy: $('fancy'),
-  search: $('search'), results: $('results'), export: $('export'), positions: $('positions'), helpBtn: $('help-btn'),
+  search: $('search'), results: $('results'), export: $('export'), helpBtn: $('help-btn'),
   menuBtn: $('menu-btn'), more: $('tb-more'),
   banner: $('banner'), stage: $('stage'), map: $('map'), empty: $('empty'), busy: $('busy'), legend: $('legend'),
   zoomIn: $('zoom-in'), zoomOut: $('zoom-out'), zoomFit: $('zoom-fit'),
   tooltip: $('tooltip'), toast: $('toast'), drop: $('drop'), fileInput: $('file-input'),
-  positionsDialog: $('positions-dialog'), help: $('help'),
+  help: $('help'),
   flows: $('linemap-flows'),
   edit: $('edit'), editBar: $('edit-bar'), editHint: $('edit-hint'), editAdd: $('edit-add'), editDelete: $('edit-delete'), editDeleteAll: $('edit-delete-all'), editLines: $('edit-lines'), editText: $('edit-text'),
   editPin: $('edit-pin'), editUnpin: $('edit-unpin'),
-  editAlign: $('edit-align'), alignMenu: $('align-menu'), editGroup: $('edit-group'), editMerge: $('edit-merge'), editSplit: $('edit-split'), editUngroup: $('edit-ungroup'), editUndo: $('edit-undo'), editRedo: $('edit-redo'), editStatus: $('edit-status'),
-  editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'), editDone: $('edit-done'),
+  editAlign: $('edit-align'), alignMenu: $('align-menu'), editGroup: $('edit-group'), editMerge: $('edit-merge'), editSplit: $('edit-split'), editUngroup: $('edit-ungroup'), editUndo: $('edit-undo'), editRedo: $('edit-redo'),
+  editDot: $('edit-dot'), editCopy: $('edit-copy'), editPage: $('edit-page'),
   labelDialog: $('label-dialog'), noteDialog: $('note-dialog'), linesDialog: $('lines-dialog'), textDialog: $('text-dialog'), confirmDialog: $('confirm-dialog'),
 };
 
@@ -450,13 +450,13 @@ function updateToolbar() {
   el.fileName.querySelector('.live').hidden = !source.watching();
   document.title = cur ? `${cur.name} · linemap` : 'linemap studio';
   el.sourceBtn.hidden = !cur;
-  for (const b of [el.export, el.positions, el.zoomIn, el.zoomOut, el.zoomFit, el.edit]) b.disabled = !shown;
+  for (const b of [el.export, el.zoomIn, el.zoomOut, el.zoomFit, el.edit]) b.disabled = !shown;
   document.body.classList.toggle('nomap', !shown);
   updateEditBar();
 }
 
 // ---------- edit mode ----------
-let saveState = { state: null, message: '' }; // of the last save to the server
+let toldDirty = false; // the flow shown has edits only in this page, and that was said
 function setEditing(on) {
   if (on && !shown) return;
   if (on) { highlight.clearPins(); highlight.leave(); }
@@ -499,23 +499,14 @@ function updateEditBar() {
   el.editHint.textContent = (mode === 'line' ? `Line ${editor.lineLabel(sel.line)}: ` : sel?.kind === 'nodes' ? `${sel.ids.length} boxes: ` : sel?.kind === 'group' ? `${editor.groupLabel(sel.id)}: ` : '') + HINTS[editor.adding() ? 'adding' : mode];
   const cur = source.current();
   el.editPage.hidden = !(pageHtml && cur?.flow !== null && cur?.flow !== undefined);
-  // where the edits go: the file (served by linemap studio), or only this page
-  let status = '', error = false;
-  if (source.canSave()) {
-    const { state: st, message } = saveState;
-    status = st === 'saving' ? 'Saving…' : st === 'error' ? 'Not saved' : st === 'saved' ? `Saved to ${cur.name}` : `Edits save to ${cur.name}`;
-    error = st === 'error';
-    el.editStatus.title = error ? message : '';
-  } else {
-    status = source.dirty() ? 'Only in this page: download or copy it' : '';
-    el.editStatus.title = 'Edits here stay in this page (and in Recent) until you download or copy the DOT text';
+  // edits that cannot be saved to a file stay in this page: said once per flow, at the first one
+  // (a file linemap studio serves is saved at once; a failed save says so itself)
+  if (source.dirty() && !toldDirty) {
+    toldDirty = true;
+    toast('Edits stay in this page: download the .dot or copy it to keep them');
   }
-  el.editStatus.textContent = status;
-  el.editStatus.classList.toggle('error', error);
-  el.editStatus.hidden = !status;
 }
 el.edit.addEventListener('click', () => setEditing(!editor.on()));
-el.editDone.addEventListener('click', () => setEditing(false));
 el.editAdd.addEventListener('click', () => editor.startAdding());
 el.editDelete.addEventListener('click', () => editor.remove());
 el.editDeleteAll.addEventListener('click', () => editor.removeDeep());
@@ -612,7 +603,7 @@ const source = createSource({
     sourcePanel.setText(text, { fresh, title: name });
     if (edited) { run({ carry: true }); updateToolbar(); return; }
     editor.forget();
-    if (fresh) { saveState = { state: null, message: '' }; viewPick = null; caretKey = null; }
+    if (fresh) { toldDirty = false; viewPick = null; caretKey = null; }
     if (fresh && loadedOnce) {
       // a different file: its own settings (or the link's), fitted view, nothing pinned
       const link = src || flow != null ? linked : null;
@@ -631,7 +622,6 @@ const source = createSource({
   onError: (title, msg) => { banner(title, msg); if (!shown) setEmpty(true); },
   onWatch: () => updateToolbar(),
   onSave(st, message) {
-    saveState = { state: st, message };
     if (st === 'error') toast(`Could not save: ${message}`);
     if (st === 'conflict') toast('The file changed on disk, so the last edit was not saved; showing the file as it is now');
     updateEditBar();
@@ -813,12 +803,6 @@ const baseName = () => (source.current()?.name ?? 'linemap').replace(/\.(dot|gv|
 el.export.addEventListener('click', () => {
   if (!shown) return;
   download(`${baseName()}.svg`, pipeline.exportSvg(shown.model, shown.theme));
-});
-el.positions.addEventListener('click', async () => {
-  if (!shown) return;
-  const list = pipeline.positions(shown.model);
-  if (!list.length) { toast('Every node and note is pinned already'); return; }
-  if (await copyOrShow(positionsText(list), el.positionsDialog)) toast(`Copied ${list.length} position${list.length === 1 ? '' : 's'}`);
 });
 const openHelp = () => { if (!el.help.open) el.help.showModal(); };
 el.helpBtn.addEventListener('click', openHelp);

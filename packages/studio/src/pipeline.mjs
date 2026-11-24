@@ -93,6 +93,5 @@ export function createPipeline({ onResult }) {
     // export with the legend: a second render of the model on screen, so it shows what the studio
     // shows (hidden lines, through, theme, and notes off as `--notes hide`), but no badges
     exportSvg: (model, theme) => render(model, { legend: true, theme }),
-    positions: (model) => positions(model),
   };
 }

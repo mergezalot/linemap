@@ -1,4 +1,4 @@
-// One-shot actions: download the SVG, copy positions, small dialogs.
+// One-shot actions: download the SVG, copy text, small dialogs.
 
 export function download(name, text, type = 'image/svg+xml') {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -8,9 +8,6 @@ export function download(name, text, type = 'image/svg+xml') {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-
-// `positions(model)` as the CLI prints it with --positions, ready to paste into the DOT file.
-export const positionsText = (list) => list.map(({ id, x, y }) => `${/^[A-Za-z_][\w]*$/.test(id) ? id : JSON.stringify(id)} [pos="${x},${y}"]`).join('\n');
 
 // Clipboard first; where that is not allowed (file://, permissions), show the text in a dialog.
 export async function copyOrShow(text, dialog) {

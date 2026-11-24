@@ -388,8 +388,6 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; back
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; padding: 4px;
 }
 .edit-bar .btn.primary { padding: 0 12px; margin-left: 4px; }
-.edit-status { color: var(--muted); padding: 0 8px; white-space: nowrap; }
-.edit-status.error { color: var(--danger); }
 .edit-hint {
   position: fixed; top: calc(var(--tb-h) + 58px); left: calc(50% - var(--src-right) / 2); transform: translateX(-50%); z-index: 9; pointer-events: none;
   max-width: calc(100vw - 24px); padding: 3px 10px; border-radius: 12px; background: var(--tb-bg); color: var(--muted); font-size: 12px; text-align: center;
@@ -438,7 +436,7 @@ body.source-open { --src-right: var(--src-w); }
 .source-panel.resizing { user-select: none; }
 
 /* before the first map: only the ways to load one */
-body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .edit-group, body.nomap .search, body.nomap #export, body.nomap #positions, body.nomap .tb-sep, body.nomap .zoom { display: none; }
+body.nomap .through-group, body.nomap .theme-group, body.nomap .notes-group, body.nomap .edit-group, body.nomap .search, body.nomap #export, body.nomap .tb-sep, body.nomap .zoom { display: none; }
 
 /* ---------- narrow screens ---------- */
 /* Labels go before the toolbar would wrap: main.mjs sets .compact when the file name would be
