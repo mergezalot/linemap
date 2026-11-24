@@ -1,4 +1,4 @@
-// The linemap pipeline, drawn by linemap itself (see README.md).
+// The linemap pipeline, drawn by linemap itself (see DEVELOPMENT.md).
 // Build: pnpm linemap docs/pipeline.dot docs/pipeline.svg
 digraph pipeline {
   subgraph lines {
