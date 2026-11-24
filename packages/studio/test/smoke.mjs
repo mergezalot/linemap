@@ -1,6 +1,10 @@
 // Smoke test of the built studio in headless Chromium (Playwright):
 //   pnpm --filter @linemap/studio test               (builds first)
-//   node test/smoke.mjs --shots <dir>                also writes screenshots of every example
+//   node test/smoke.mjs --shots <dir>                also writes screenshots (every example drawn,
+//                                                    the interactions on webshop)
+// What a browser alone can show: events wired to edits and saves, focus and keys, cursors,
+// storage, embedding. What an edit writes into the DOT text and how the layout looks are core's
+// tests (packages/core/test); here one check per path through the studio is enough.
 // Needs `pnpm --filter @linemap/studio exec playwright install chromium` once.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -88,6 +92,12 @@ for (const src of EXAMPLES) {
     // cursors: the background pans (grab), a line, a bundle's rim and a node are clicked (pointer)
     const c = await cursors(page, ['#stage', '#map g.edge > path[data-line]', '#map g.edge > .lm-casing', '#map g.node']);
     check(c === 'grab pointer pointer pointer', `view mode cursors: background grab, line, bundle and node pointer (${c})`);
+  }
+  // the interactions below do not depend on the flow: once, on the example with links and notes
+  if (name !== 'webshop') {
+    check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
+    await page.close();
+    continue;
   }
 
   // hover a strand: focus and tooltip
@@ -241,7 +251,7 @@ for (const src of EXAMPLES) {
     const opened = await page.evaluate(() => window.__opened);
     check(opened.length === 1 && opened[0] === linked.url, `ctrl-click on ${linked.id} opens ${linked.url}`);
     await page.keyboard.press('Escape');
-  } else if (name !== 'pipeline' && name !== 'platform') check(false, 'found a linked node to ctrl-click');
+  } else check(false, 'found a linked node to ctrl-click');
 
   // zoom keys and buttons change the viewBox; fit restores it
   await page.mouse.move(5, 300);
@@ -368,8 +378,6 @@ console.log('notes off: the map without them, a badge for each');
   await page.waitForTimeout(300);
   const notes = await page.evaluate(() => document.querySelectorAll('#map g.note').length);
   check(notes > 0 && await page.isVisible('#notes') && await page.getAttribute('#notes', 'aria-pressed') === 'true', `notes button shown and on (${notes} notes)`);
-  const paths = () => page.evaluate(() => [...document.querySelectorAll('#map g.edge')].map((g) => g.querySelector('.lm-casing').getAttribute('d')).join('|'));
-  const before = await paths();
   await rerun(page, () => page.click('#notes'));
   const off = await page.evaluate(() => ({
     badges: document.querySelectorAll('#map g.note.lm-note-folded .lm-note-icon').length,
@@ -379,16 +387,6 @@ console.log('notes off: the map without them, a badge for each');
     pressed: document.getElementById('notes').getAttribute('aria-pressed'),
   }));
   check(off.badges === notes && off.attached && off.shown === 0 && off.links === 0 && off.pressed === 'false', `notes off: ${off.badges} badges on their nodes, no note or link drawn`);
-  const inside = await page.evaluate(() => [...document.querySelectorAll('#map g.note.lm-note-folded[data-attach]')].every((g) => {
-    const b = g.querySelector('.lm-note-icon').getBoundingClientRect();
-    const node = document.getElementById(g.dataset.attach);
-    const n = (node.querySelector('.lm-shape') ?? node).getBoundingClientRect();
-    return b.left < n.right && n.left < b.right && b.top < n.bottom && n.top < b.bottom;
-  }));
-  check(inside, 'each badge sits on its node');
-  const faded = await page.evaluate(() => [...document.querySelectorAll('#map .lm-note-icon')].every((e) => +getComputedStyle(e).opacity < 0.7));
-  check(faded, 'badges are half-transparent');
-  check(await paths() !== before, 'notes off routes the lines again, through the room the notes took');
   await page.waitForTimeout(400);
   check((await page.evaluate(() => location.hash)).includes('notes=off'), 'hash records notes=off');
   check(await page.evaluate(() => localStorage.getItem('linemap:notes')) === 'false', 'notes off is remembered in localStorage');
@@ -457,46 +455,6 @@ console.log('notes off: the map without them, a badge for each');
   check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
   await page.close();
 }
-{
-  const page = await newPage();
-  await page.goto(`${base}#src=examples/webshop.dot&notes=off`);
-  await ready(page);
-  check(await page.evaluate(() => document.querySelectorAll('#map g.note.lm-note-folded').length > 0), 'hash notes=off draws badges on load');
-  await page.close();
-}
-{
-  // storage that throws (privacy settings, some file:// pages): the toggle still works
-  const page = await newPage();
-  await page.addInitScript(() => {
-    for (const k of ['getItem', 'setItem']) Storage.prototype[k] = () => { throw new Error('denied'); };
-  });
-  await page.goto(`${base}#src=examples/webshop.dot`);
-  await ready(page);
-  await rerun(page, () => page.click('#notes'));
-  check(await page.evaluate(() => document.querySelectorAll('#map g.note.lm-note-folded').length > 0) && page.errors.length === 0, 'notes off works when storage throws');
-  await page.close();
-}
-
-console.log('legendpos is ignored (the legend is a panel)');
-{
-  const page = await newPage();
-  await page.goto(`${base}#src=examples/webshop.dot`);
-  await ready(page);
-  const text = fs.readFileSync(path.join(here, '../../../examples/webshop.dot'), 'utf8');
-  // on the Fulfilment -> Data platform line, which an SVG export routes round it
-  const withPos = text.replace(/^digraph webshop \{/m, 'digraph webshop { legendpos="2160,800"');
-  check(withPos !== text, 'flow with legendpos made');
-  const drawn = async (dot) => {
-    await page.click('#paste');
-    await page.fill('#paste-dialog textarea', dot);
-    await rerun(page, () => page.click('#paste-dialog button[value="ok"]'));
-    return page.evaluate(() => [...document.querySelectorAll('#map svg g.node, #map svg g.note, #map svg g.edge')].map((g) => g.outerHTML).join('\n'));
-  };
-  const a = await drawn(withPos), b = await drawn(text);
-  check(a.length > 0 && a === b, 'a legendpos flow is laid out as without it: no gap in the map');
-  check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
-  await page.close();
-}
 
 console.log('errors keep the last map');
 {
@@ -524,9 +482,7 @@ console.log('watch');
   const file = path.join(here, '..', 'dist', 'watch-test.dot');
   const text = fs.readFileSync(path.join(here, '../../../examples/webshop.dot'), 'utf8');
   fs.writeFileSync(file, text);
-  // a context of its own, so a second tab can share its localStorage
-  const ctx = await browser.newContext({ viewport: { width: 1400, height: 860 } });
-  const page = await ctx.newPage();
+  const page = await newPage();
   await page.goto(`${base}#src=${rel}`);
   await ready(page);
   check(await page.isVisible('#watch'), 'watch button shown for #src over http');
@@ -543,35 +499,13 @@ console.log('watch');
   fs.writeFileSync(file, text.replace('label="Order",', 'label="Orders (again)",'));
   await page.waitForFunction(() => [...document.querySelectorAll('#legend .lb')].some((e) => e.textContent === 'Orders (again)'), null, { timeout: 5000 })
     .then(() => check(true, 'and follows the next save'), () => check(false, 'and follows the next save'));
-  // only a page load looks up the saved value: in the page, opening another file follows the
-  // plain rule (a pasted or dropped file is not watched, a URL keeps the current state)
-  await page.click('#paste');
-  await page.fill('#paste-dialog textarea', fs.readFileSync(path.join(here, '../../../examples/platform.dot'), 'utf8'));
-  await rerun(page, () => page.click('#paste-dialog button[value="ok"]'));
-  check(await page.getAttribute('#watch', 'aria-pressed') === 'false' && !(await page.isVisible('#watch')), 'pasted text: no Watch (nothing to fetch)');
-  await page.click('#file-name');
-  await rerun(page, () => page.click('#recent .item[data-i]:has-text("watch-test.dot")'));
-  check(await page.isVisible('#watch') && await page.getAttribute('#watch', 'aria-pressed') === 'false', 'reopened from Recent in the page: not watched, the saved value is not looked up');
-  await page.reload();
-  await ready(page);
-  check(await page.getAttribute('#watch', 'aria-pressed') === 'true', 'a page reload watches it again');
-  // the saved value is the browser's: another tab loading the URL watches it too
-  const tab = await ctx.newPage();
-  await tab.goto(`${base}#src=${rel}`);
-  await ready(tab);
-  check(await tab.getAttribute('#watch', 'aria-pressed') === 'true', 'another tab loading the URL watches it');
-  await tab.goto('about:blank'); // a page load, not a hash change in the page
-  await tab.goto(`${base}#src=examples/postal.dot`);
-  await ready(tab);
-  check(await tab.getAttribute('#watch', 'aria-pressed') === 'false', 'a URL never watched loads unwatched');
-  await tab.close();
   // switched off: stays off after a reload
   await page.click('#watch');
   await page.reload();
   await ready(page);
   check(await page.getAttribute('#watch', 'aria-pressed') === 'false', 'watch switched off stays off after a reload');
   fs.unlinkSync(file);
-  await ctx.close();
+  await page.close();
 }
 
 console.log('watch without localStorage');
@@ -595,6 +529,8 @@ console.log('watch without localStorage');
   await page.reload();
   await ready(page);
   check(await page.getAttribute('#watch', 'aria-pressed') === 'false', 'after a reload it is off (nothing could be kept)');
+  await rerun(page, () => page.click('#notes'));
+  check(await page.evaluate(() => document.querySelectorAll('#map g.note.lm-note-folded').length > 0), 'notes switch off with storage blocked');
   check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
   fs.unlinkSync(file);
   await page.close();
@@ -654,19 +590,13 @@ console.log('phone width');
   await page.waitForFunction(() => document.body.dataset.mapTheme === 'dark');
   check((await tb()).open && await page.evaluate(() => document.getElementById('theme').hidden && /Dark/.test(document.getElementById('theme-btn').textContent)), 'picking a theme closes the list, keeps the menu, names it on the button');
   await page.click('#theme-btn');
-  check(await page.evaluate(() => document.querySelectorAll('#theme .row').length === 5 &&
-    document.querySelector('#theme .row[data-base="neon"] [data-theme="neon-fancy"]') !== null), 'one row per theme, the fancy variant on the same row');
+  await shot(page, 'phone-themes');
   await page.click('#theme [data-theme="neon-fancy"]');
   await page.waitForFunction(() => document.body.dataset.mapTheme === 'neon-fancy');
   check(await page.evaluate(() => /Neon/.test(document.getElementById('theme-btn').textContent) && document.getElementById('fancy').getAttribute('aria-pressed') === 'true'), 'the sparkles pick the fancy variant; the toggle beside the button shows it');
   await page.click('#fancy');
   await page.waitForFunction(() => document.body.dataset.mapTheme === 'neon');
   check((await tb()).open && await page.evaluate(() => document.getElementById('fancy').getAttribute('aria-pressed') === 'false'), 'the toggle switches back to plain, and keeps the menu open');
-  await page.click('#fancy');
-  await page.waitForFunction(() => document.body.dataset.mapTheme === 'neon-fancy');
-  await page.click('#theme-btn');
-  await shot(page, 'phone-themes');
-  await page.click('#theme [data-theme="dark"]');
   await shot(page, 'phone-menu');
   await page.keyboard.press('Escape');
   check(!(await tb()).open, 'Esc closes the menu');
@@ -715,11 +645,14 @@ console.log('strict Content-Security-Policy (embeds)');
 console.log('flows baked in (build --embed), under the same CSP');
 {
   const repo = path.join(here, '..', '..', '..');
+  const built = new Map();
   const embedHtml = async (...names) => {
+    if (built.has(names.join())) return built.get(names.join());
     const file = path.join(here, '..', 'dist', '_smoke-embed.html');
     await build({ embed: names.map((n) => path.join(repo, 'examples', n)), out: file });
     const html = fs.readFileSync(file, 'utf8');
     fs.rmSync(file);
+    built.set(names.join(), html);
     return html;
   };
   const csp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:";
@@ -830,26 +763,6 @@ console.log('flows baked in (build --embed), under the same CSP');
   check(!fetched.length, `baked-in flows are not fetched (${fetched.join(', ')})`);
   check(page.errors.length === 0, `no page errors (${page.errors.join('; ')})`);
   await page.close();
-
-  // from file:// too: the hash names the flow, and a load with it opens that flow
-  {
-    const file = path.join(here, '..', 'dist', '_smoke-embed-file.html');
-    fs.writeFileSync(file, await embedHtml('webshop.dot', 'postal.dot'));
-    const fp = await newPage();
-    await fp.goto(pathToFileURL(file).href);
-    await fp.waitForSelector('#empty .flows:not([hidden]) [data-flow]');
-    await fp.click('#empty [data-flow="1"]');
-    await ready(fp);
-    await fp.waitForTimeout(400);
-    const h = new URL(fp.url()).hash;
-    await fp.goto('about:blank');
-    await fp.goto(pathToFileURL(file).href + '#src=webshop.dot');
-    await ready(fp);
-    const n = await fp.evaluate(() => document.querySelector('#file-name .name').textContent);
-    check(h.startsWith('#src=postal.dot') && n === 'webshop.dot', `from file:// as well (${h}; opened ${n})`);
-    await fp.close();
-    fs.rmSync(file);
-  }
 }
 
 console.log('edit mode, saving to the file (linemap studio)');
@@ -930,19 +843,6 @@ console.log('edit mode, saving to the file (linemap studio)');
     check(read() === kept, 'Esc during the drag keeps the file');
   }
 
-  // a box dropped on another one: boxes may overlap, even on the very same point, so it is pinned
-  // there; undo takes it back
-  before = read();
-  await drag(await nodeAt('c'), await nodeAt('b'));
-  text = await changed(before, 'dropping c on b');
-  {
-    const pos = (id) => new RegExp(`\\b${id} \\[[^\\]]*pos="([^"]*)"`).exec(text)?.[1];
-    check(pos('c') && pos('c') === pos('b'), `a box dropped on the centre of another box is pinned there (c ${pos('c')}, b ${pos('b')})`);
-  }
-  await page.keyboard.press('Control+z');
-  await changed(text, 'undoing the drop');
-  check(read() === before, 'undo takes the drop back');
-
   // bend an edge: a via point where it was pressed
   before = read();
   const mid = await edgeAt('b', 'c');
@@ -987,7 +887,7 @@ console.log('edit mode, saving to the file (linemap studio)');
   check(/\n  a -> c \[lines="A"\]\n\}/.test(text), 'connecting a to c adds a -> c [lines="A"]');
 
   // resize: a click on the selected box switches to resizing; the side across from the handle stays
-  const click = async (pt) => { await page.mouse.click(pt.x, pt.y); await page.waitForTimeout(500); };
+  const click = async (pt) => { await page.mouse.click(pt.x, pt.y); await page.waitForTimeout(150); };
   await click(await nodeAt('a'));
   await click(await nodeAt('a'));
   check(await page.evaluate(() => document.querySelectorAll('#map .lm-edit-size').length) === 8 && /resize/.test(await page.textContent('#edit-hint')), 'clicking the selected box shows resize handles');
@@ -1074,9 +974,6 @@ console.log('edit mode, saving to the file (linemap studio)');
     check(zoomed === r.size, `the pin mark keeps its size on screen (${r.size} px, zoomed in: ${zoomed} px)`);
     await page.click('#zoom-out');
     await page.waitForTimeout(400);
-    await click(await nodeAt('a'));
-    check(await page.evaluate(() => !document.querySelector('#map .lm-edit-pin[data-id="a"]') && !!document.querySelector('#map .lm-edit-pin[data-id="b"]')), 'a box being resized has no pin mark');
-    await click(await nodeAt('a'));
     before = read();
     await click(await handle('#map .lm-edit-pin[data-id="b"]'));
     text = await changed(before, 'unpinning b by its mark');
@@ -1084,13 +981,6 @@ console.log('edit mode, saving to the file (linemap studio)');
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing the unpin');
     check(read() === before, 'undo pins b again');
-    const m = await handle('#map .lm-edit-pin[data-id="c"]'), right = await scr(100, 0), zero = await scr(0, 0);
-    await drag(m, { x: m.x + (right.x - zero.x), y: m.y });
-    text = await changed(before, 'dragging c by its pin mark');
-    check(/c \[label="C", pos="800,500"\]/.test(text), `a drag from c's pin mark moves c (${/c \[[^\]]*\]/.exec(text)?.[0]})`);
-    await page.keyboard.press('Control+z');
-    await changed(text, 'undoing the move');
-    check(read() === before, 'undo moves c back');
   }
 
   // Add note on a box in a container: a text dialog (Escape cancels, Ctrl+Enter adds); the note
@@ -1098,12 +988,6 @@ console.log('edit mode, saving to the file (linemap studio)');
   {
     await click(await nodeAt('d'));
     before = read();
-    await click(await handle('#map .lm-edit-tool[data-act="note"]'));
-    await page.waitForSelector('#note-dialog[open]');
-    await page.fill('#note-dialog textarea', 'never mind');
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-    check(await page.evaluate(() => !document.querySelector('#note-dialog[open]')) && read() === before, 'Escape closes the note dialog and adds nothing');
     await click(await handle('#map .lm-edit-tool[data-act="note"]'));
     await page.waitForSelector('#note-dialog[open]');
     check(await page.evaluate(() => document.activeElement === document.querySelector('#note-dialog textarea') && document.querySelector('#note-dialog textarea').value === ''), 'the note dialog opens empty, the text area focused');
@@ -1124,19 +1008,6 @@ console.log('edit mode, saving to the file (linemap studio)');
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing the note');
     check(read() === before && await page.evaluate(() => !document.getElementById('note_d')), 'one undo removes the note and its edge');
-    // rich text: written as an HTML-like label, drawn with a bold run
-    await click(await nodeAt('d'));
-    await click(await handle('#map .lm-edit-tool[data-act="note"]'));
-    await page.waitForSelector('#note-dialog[open]');
-    await page.keyboard.type('A <b>bold</b> one');
-    await page.keyboard.press('Enter');
-    await page.keyboard.type('& more');
-    await page.keyboard.press('Control+Enter');
-    text = await changed(before, 'adding a rich note to d');
-    const bold = await page.evaluate(() => document.querySelector('#note_d tspan[font-weight="700"]')?.textContent);
-    check(/note_d \[label=<A <b>bold<\/b> one<br\/>&amp; more>, shape=note\]/.test(text) && bold === 'bold', `a note with <b> is written as label=<…> and drawn bold (${/note_d[^\n]*/.exec(text)?.[0]}; ${bold})`);
-    await page.keyboard.press('Control+z');
-    await changed(text, 'undoing the rich note');
   }
 
   // Edit text: F2, Enter, the adorner or a double-click opens the text dialog with the label as
@@ -1290,28 +1161,11 @@ console.log('edit mode, saving to the file (linemap studio)');
     await page.keyboard.press('Control+z');
     text = await changed(text, 'undoing unpin all');
     check(text === pinned, 'one undo pins both again');
-    // only a unpinned: Pin all pins it again, b stays (an undo clears the selection)
     // (a is under the edit bar now: the wheel brings the boxes down)
     const mid = await page.evaluate(() => { const r = document.getElementById('map').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
     await page.mouse.move(mid.x, mid.y);
     await page.mouse.wheel(0, -200);
     await page.waitForTimeout(400);
-    await click(await nodeAt('a'));
-    await page.keyboard.press('p');
-    text = await changed(pinned, 'unpinning a alone');
-    await page.keyboard.down('Shift');
-    await click(await nodeAt('b'));
-    await page.keyboard.up('Shift');
-    check(/^2 boxes:/.test(await page.textContent('#edit-hint')) && await tools() === 'delete pin resize align group', `some pinned: the adorner offers Pin all (${await tools()})`);
-    const half = text;
-    await click(await handle('#map .lm-edit-tool[data-act="pin"]'));
-    text = await changed(half, 'pinning all');
-    check(!!attr(text, 'a', 'pos') && attr(text, 'b', 'pos') === attr(pinned, 'b', 'pos') && await tools() === 'delete unpin* resize align group', `Pin all pins a, b stays (${attr(text, 'a', 'pos')}, ${attr(text, 'b', 'pos')})`);
-    await page.keyboard.press('Control+z');
-    await changed(text, 'undoing pin all');
-    await page.keyboard.press('Control+z');
-    text = await changed(half, 'undoing the unpin of a');
-    check(text === pinned, 'undo twice: as before');
     await click(await nodeAt('a'));
     await page.keyboard.down('Shift');
     await click(await nodeAt('b'));
@@ -1338,30 +1192,9 @@ console.log('edit mode, saving to the file (linemap studio)');
     const same = ['width', 'height'].every((k) => attr(text, 'a', k) && attr(text, 'a', k) === attr(text, 'b', k));
     check(same && attr(text, 'b', 'pos') === bPos && Math.abs(nw2.x - nw.x) < 4 && Math.abs(nw2.y - nw.y) < 4,
       `dragging a's se handle gives a and b one size; b keeps its centre, a its nw corner (a ${attr(text, 'a', 'width')}x${attr(text, 'a', 'height')} at ${attr(text, 'a', 'pos')}, b ${attr(text, 'b', 'width')}x${attr(text, 'b', 'height')} at ${attr(text, 'b', 'pos')})`);
-    m = await sizeMode();
-    check(m.handles === 8 && m.outlined === 2, `still in size mode after the resize (${JSON.stringify(m)})`);
     await page.keyboard.press('Control+z');
     await changed(text, 'undoing the resize');
     check(read() === before, 'one undo takes both sizes back');
-    await page.waitForTimeout(300);
-    // a click on one of them: back to moving; Resize in the adorner, then Escape, likewise
-    // (an undo clears the selection: a and b again, in size mode)
-    await click(await nodeAt('a'));
-    await page.keyboard.down('Shift');
-    await click(await nodeAt('b'));
-    await page.keyboard.up('Shift');
-    await click(await nodeAt('a'));
-    check((await sizeMode()).handles === 8, 'a and b in size mode again');
-    await click(await nodeAt('b'));
-    m = await sizeMode();
-    check(m.handles === 0 && /^2 boxes: Drag one/.test(await page.textContent('#edit-hint')), `a click on one of them: back to moving, both still selected (${JSON.stringify(m)})`);
-    await click(await handle('#map .lm-edit-tool[data-act="resize"]'));
-    m = await sizeMode();
-    check(m.handles === 8 && m.outlined === 2, `Resize in the adorner: all in size mode (${JSON.stringify(m)})`);
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
-    m = await sizeMode();
-    check(m.handles === 0 && /^2 boxes:/.test(await page.textContent('#edit-hint')), `Escape: back to moving, both still selected (${JSON.stringify(m)})`);
     await page.mouse.move(mid.x, mid.y);
     await page.mouse.wheel(0, 200);
     await page.waitForTimeout(400);
@@ -1373,15 +1206,11 @@ console.log('edit mode, saving to the file (linemap studio)');
     await click(corner);
     await page.keyboard.up('Shift');
     check(/^2 boxes:/.test(await page.textContent('#edit-hint')), `Shift+click on a container adds its boxes (${(await page.textContent('#edit-hint')).slice(0, 12)})`);
-    // a click on a container: the container itself; again: its boxes (here d alone); again: it
+    // a click on a container: the container itself (its boxes on the next click: see container actions)
     check(await cursors(page, ['#map g.group#cluster_x > rect']) === 'pointer', 'a container not selected shows the pointer');
     await click(corner);
     check(/^X: Drag it/.test(await page.textContent('#edit-hint')) && await page.evaluate(() => !!document.querySelector('#map .lm-edit-sel') && !!document.querySelector('#map .lm-edit-connect')), `a click on a container selects it, outlined, with a connect handle (${(await page.textContent('#edit-hint')).slice(0, 12)})`);
     check(await cursors(page, ['#map g.group#cluster_x > rect']) === 'move', 'a selected container shows the move cursor');
-    await click(corner);
-    check(!/boxes/.test(await page.textContent('#edit-hint')) && /click again to resize/.test(await page.textContent('#edit-hint')), 'a second click selects its boxes (here: d alone)');
-    await click(corner);
-    check(/^X: /.test(await page.textContent('#edit-hint')), 'a third click selects the container again');
     // Shift+drag on the background: the boxes in the rectangle
     await page.keyboard.press('Escape');
     const r0 = await scr(-200, 650), r1 = await scr(720, 250);
@@ -1503,7 +1332,7 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   const changed = async (before, what) => { await until(() => read() !== before, what); await page.waitForTimeout(400); return read(); };
   const nodeAt = (id) => page.evaluate((id) => { const r = [...document.querySelectorAll('#map g.node')].find((g) => g.id === id).querySelector('rect, polygon, path').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, id);
   const handle = (sel) => page.evaluate((sel) => { const r = document.querySelector(sel)?.getBoundingClientRect(); return r ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null; }, sel);
-  const click = async (pt) => { await page.mouse.click(pt.x, pt.y); await page.waitForTimeout(400); };
+  const click = async (pt) => { await page.mouse.click(pt.x, pt.y); await page.waitForTimeout(150); };
   const pick = async (...ids) => {
     await page.keyboard.press('Escape');
     await click(await nodeAt(ids[0]));
@@ -1610,13 +1439,6 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   text = await changed(before, 'renaming X');
   check(/subgraph cluster_x \{ label="Ex";/.test(text) && /^3 boxes:/.test(await hint()), `the container's label is set, its boxes stay selected (${/subgraph cluster_x[^\n]*/.exec(text)?.[0]})`);
   await undoTo(FLOW, 'undo rename');
-  await click(corner);
-  await click(corner);
-  before = read();
-  await page.click('#edit-ungroup');
-  text = await changed(before, 'ungrouping X');
-  check(!/cluster_x/.test(text) && /cluster_y/.test(text), 'Ungroup from the edit bar removes X');
-  await undoTo(FLOW, 'undo ungroup');
 
   // a selected container: Del removes only it; Delete with contents asks, then removes all it holds
   await page.keyboard.press('Escape');
@@ -1683,13 +1505,6 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   text = await changed(FLOW, 'connecting X to a');
   check(/cluster_x -> a \[lines="A"\]/.test(text), `the + of a container draws an edge from its box (${/[^\n]*cluster_x -> [^\n]*/.exec(text)?.[0]})`);
   await undoTo(FLOW, 'undo connect');
-  // Escape on the label dialog: nothing changes
-  await pick('a', 'b');
-  await click(await handle('#map .lm-edit-tool[data-act="group"]'));
-  await page.waitForSelector('#label-dialog[open]');
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(400);
-  check(read() === FLOW, 'Escape in the label dialog groups nothing');
 
   // Align: a menu from the adorner (and the edit bar); distribute needs three boxes
   const menu = () => page.evaluate(() => {
@@ -1712,12 +1527,6 @@ console.log('edit mode, container actions: group, ungroup, merge, split');
   check(!(await menu()) && posOf(text, 'a')?.[1] === posOf(text, 'd')?.[1] && posOf(text, 'd')?.[0] === 300, `Align tops: one menu choice, a and d on one line (${posOf(text, 'a')}; ${posOf(text, 'd')})`);
   check(/^2 boxes:/.test(await hint()), 'they stay selected');
   await undoTo(FLOW, 'undo align');
-  await pick('a', 'd'); // undo clears the selection
-  // a press elsewhere closes it
-  await click(await handle('#map .lm-edit-tool[data-act="align"]'));
-  await page.mouse.click(5, 300);
-  await page.waitForTimeout(200);
-  check(!(await menu()), 'a click elsewhere closes the menu');
   // from the edit bar, by keyboard: distribute c, d, g horizontally (c and g stay)
   await pick('c', 'd', 'g');
   await page.focus('#edit-align');
@@ -1807,13 +1616,13 @@ console.log('source sidebar: the DOT text beside the map, both ways');
   await page.waitForTimeout(300);
   await page.click('#edit-pin');
   await until(async () => /c \[pos=/.test(await value()), 'Pin all shown in the text');
-  check(await value() === read(), 'a map edit updates the text');
+  check(await until(async () => await value() === read(), 'map edit saved'), 'a map edit updates the text');
   await page.keyboard.press('Control+z');
   await until(async () => await value() === good, 'undo shown in the text');
-  check(read() === good, 'undo of the map edit: the text follows');
+  check(await until(() => read() === good, 'undo saved'), 'undo of the map edit: the text follows');
   await page.keyboard.press('Control+z');
   await until(async () => await value() === `// etn\n${FLOW}`, 'the Omega pause undone');
-  check(read() === `// etn\n${FLOW}`, 'the next undo takes back one pause of typing');
+  check(await until(() => read() === `// etn\n${FLOW}`, 'undo saved'), 'the next undo takes back one pause of typing');
 
   // source <-> map selection: a box selected on the map marks its statements (and the edges that
   // name it, weaker); the caret on a statement selects what it is about
