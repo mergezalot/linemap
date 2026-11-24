@@ -270,3 +270,28 @@ test('boxes pinned on top of each other lay out and render', () => {
     }
   }
 });
+
+test('diagonals=true turns corners into 45° diagonals that keep clear of every box', () => {
+  const dot = fs.readFileSync(new URL('examples/webshop.dot', root), 'utf8');
+  const slope = (p, q) => Math.abs(Math.abs(p.x - q.x) - Math.abs(p.y - q.y)) < 0.5;
+  const straight = (p, q) => Math.abs(p.x - q.x) < 0.5 || Math.abs(p.y - q.y) < 0.5;
+  const segments = (m) => m.edges.flatMap((e) => e.path.slice(1).map((q, i) => [e, e.path[i], q]));
+
+  const plain = layout(parseFlow(dot));
+  assert.ok(segments(plain).every(([, p, q]) => straight(p, q)), 'off by default');
+
+  const model = layout(parseFlow(dot.replace(/^digraph[^{]*{/m, '$& diagonals=true;')));
+  const segs = segments(model);
+  assert.ok(segs.every(([, p, q]) => straight(p, q) || slope(p, q)), 'every segment runs in one of 8 directions');
+  const diagonal = segs.filter(([, p, q]) => !straight(p, q));
+  assert.ok(diagonal.length > 5, `only ${diagonal.length} diagonals`);
+  // a diagonal crosses no box: sampled along its length, no point lies inside one
+  for (const [e, p, q] of diagonal) {
+    for (const n of [...model.nodes, ...model.notes]) {
+      for (let t = 0; t <= 1; t += 0.02) {
+        const x = p.x + (q.x - p.x) * t, y = p.y + (q.y - p.y) * t;
+        assert.ok(!(Math.abs(x - n.x) < n.w / 2 - 1 && Math.abs(y - n.y) < n.h / 2 - 1), `edge ${e.id} runs through ${n.id}`);
+      }
+    }
+  }
+});

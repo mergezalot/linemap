@@ -38,7 +38,7 @@ const CONTAINER = { 'font-size': 18, bold: true };
 // Style attributes, with Graphviz's names and units (fontsize in points = px).
 const STYLE_ATTRS = ['color', 'fillcolor', 'fontcolor', 'fontsize'];
 const DOT_ATTRS = {
-  graph: ['label', 'theme', 'legend', 'legendpos'],
+  graph: ['label', 'theme', 'legend', 'legendpos', 'diagonals'],
   cluster: ['label', 'class', ...STYLE_ATTRS],
   line: ['label', 'color'],
   node: ['label', 'class', 'shape', 'pos', 'width', 'height', 'through', 'URL', 'href', ...STYLE_ATTRS],
@@ -138,6 +138,9 @@ export function parseFlow(text) {
   const anchor = dot.attrs.legend ?? 'bottom-left';
   if (!LEGEND_ANCHORS.includes(anchor)) throw new Error(`graph: unknown legend "${anchor}" (known: ${LEGEND_ANCHORS.join(', ')})`);
   const legendAt = dot.attrs.legendpos !== undefined ? point(dot.attrs.legendpos, 'graph: legendpos') : null;
+  // experimental: routes may also run at 45°
+  const diagonals = dot.attrs.diagonals === 'true';
+  if (![undefined, 'true', 'false'].includes(dot.attrs.diagonals)) throw new Error(`graph: diagonals must be true or false, got "${dot.attrs.diagonals}"`);
 
   const lines = dot.lines.map((l, index) => {
     check('line', l.id, l.attrs);
@@ -271,7 +274,7 @@ export function parseFlow(text) {
   for (const e of edgeById.values()) e.lines.sort((a, b) => a.index - b.index);
   const edges = [...edgeById.values()];
 
-  return { theme, lines, groups, groupById, nodes, notes, items, edges, legend };
+  return { theme, lines, groups, groupById, nodes, notes, items, edges, legend, diagonals };
 }
 
 // The containers an item is in, innermost first.

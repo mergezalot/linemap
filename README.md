@@ -89,7 +89,8 @@ digraph example {
 - Shapes: `box` (default), `diamond`, `person`, `cylinder`, `queue`, `note`.
 - `through=true` on a box, queue or cylinder joins the lines inside it, so they can merge,
   split and cross there. A line that only arrives or only leaves ends in a bar.
-- Attributes. Graph: `label`, `theme`, `legend`/`legendpos` (where the legend goes). Node:
+- Attributes. Graph: `label`, `theme`, `legend`/`legendpos` (where the legend goes),
+  `diagonals=true` (experimental: lines may also run at 45°). Node:
   `label`, `shape`, `pos`, `width`, `height`, `through`, `class`, `URL`/`href`, `color`,
   `fillcolor`, `fontcolor`, `fontsize`. Cluster: `label` (`""`: no title), `class`, `color`, `fillcolor`,
   `fontcolor`, `fontsize`. Line: `label`, `color`. Edge: `label`, `lines`, `via`.
@@ -178,7 +179,7 @@ pnpm export a.dot b.dot -o flows.html   # bakes flows into the page, e.g. for No
 
 Open a file from the menu under its name (or `Ctrl+O`), by dropping it on the page, by pasting DOT text, or with `#src=` in the address, also in a page with flows baked in; there, a flow you pick is kept in the address too (`#src=flow.dot`), so a reload or a shared link shows it.
 A file the studio serves (as under `linemap studio`) is redrawn on every save; switch that off with Follow saves in the file menu. The legend hides and solos lines; the toolbar switches lines
-through nodes and the theme without moving any box. **Notes** off (or `N`) draws the map
+through nodes, 4 or 8 directions (experimental) and the theme without moving any box. **Notes** off (or `N`) draws the map
 without the notes, like `--notes hide`, and puts a badge for each in its node: hover it to read
 the note, click it to keep the note open beside it, click again (or press `Esc`) to close it.
 The studio remembers notes on or off for your next visit. **Edit** (or `E`) changes the map in
@@ -220,7 +221,8 @@ once, then `pnpm test:studio`.
 Limits:
 
 - Text widths are estimated (0.56 × font size per character), not measured.
-- Routing is orthogonal only.
+- Routing is orthogonal, or with `diagonals=true` orthogonal with corners cut at 45°: not a
+  true 8-direction router.
 - Lines go through boxes, queues and cylinders only, not diamonds.
 
 ## License

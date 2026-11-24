@@ -31,6 +31,7 @@ const CASES = [
   ['zero height', `digraph g { ${L} a [height=0.0] }`, /node a: height: expected a number of inches above zero/],
   ['bad fontsize', `digraph g { ${L} a [fontsize=big] }`, /node a: fontsize: expected a number of px, got "big"/],
   ['bad through', `digraph g { ${L} a [through=yes] }`, /node a: through must be true or false, got "yes"/],
+  ['bad diagonals', `digraph g { diagonals=yes; ${L} a }`, /graph: diagonals must be true or false, got "yes"/],
   ['through on a diamond', `digraph g { ${L} a [shape=diamond, through=true] }`, /through=true needs one of the shapes/],
   ['named colour', `digraph g { ${L} a [color=red] }`, /node a: color: expected a colour like #1565c0, got "red"/],
   ['bad line colour', 'digraph g { subgraph lines { A [color="#12345"] } a }', /line A: color: expected a colour like #1565c0/],
