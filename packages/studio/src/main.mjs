@@ -806,6 +806,7 @@ el.export.addEventListener('click', () => {
 });
 const openHelp = () => { if (!el.help.open) el.help.showModal(); };
 el.helpBtn.addEventListener('click', openHelp);
+document.getElementById('brand').addEventListener('click', openHelp);
 el.zoomIn.addEventListener('click', () => viewport.zoomIn());
 el.zoomOut.addEventListener('click', () => viewport.zoomOut());
 el.zoomFit.addEventListener('click', () => viewport.fit());

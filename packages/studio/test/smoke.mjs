@@ -600,6 +600,9 @@ console.log('file:// page, recent list, empty state');
   const lic = await page.evaluate(() => document.querySelector('#help .licenses').innerText);
   check(/Mozilla Public License/.test(lic) && /MSAGL/.test(lic), `help names the licenses ("${lic.slice(0, 60)}…")`);
   await shot(page, 'help');
+  await page.keyboard.press('Escape');
+  await page.click('#brand');
+  check(await page.evaluate(() => document.getElementById('help').open), 'the logo opens it too');
   check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join(' | ')}` : ''}`);
   await page.close();
 }
