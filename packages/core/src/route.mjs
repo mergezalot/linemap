@@ -312,6 +312,7 @@ export function route(model) {
     // ends on one point (boxes pinned on top of each other): a path of no length, still two points
     if (e.path.length === 1) e.path.push({ ...e.path[0] });
   }
+  if (model.diagonals) diagonals(model, padding, spacing);
   model.noteLinks = notes.map(({ note, index }) => {
     const { path, pins } = routes[index];
     const pts = path.slice();
@@ -325,3 +326,71 @@ export function route(model) {
   });
   return model;
 }
+
+// Experimental (`diagonals=true`): 8 directions. MSAGL routes in 4 only, so afterwards each
+// corner of a route becomes a 45° diagonal, as long as it can be (greedy, edge by edge): the diagonal keeps `padding` from every box and container border and
+// `spacing` from other routes, or no less than the legs it replaces did. Ends keep a stub, so a
+// route still meets its box head-on.
+const STUB = 24;
+const segDist = (a, b, c, d) => {
+  const cr = (o, p, q) => (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+  const d1 = cr(c, d, a), d2 = cr(c, d, b), d3 = cr(a, b, c), d4 = cr(a, b, d);
+  if (((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0)) && d1 && d2 && d3 && d4) return 0;
+  const pt = (p, u, v) => {
+    const l = (v.x - u.x) ** 2 + (v.y - u.y) ** 2;
+    const t = l ? Math.max(0, Math.min(1, ((p.x - u.x) * (v.x - u.x) + (p.y - u.y) * (v.y - u.y)) / l)) : 0;
+    return Math.hypot(p.x - u.x - t * (v.x - u.x), p.y - u.y - t * (v.y - u.y));
+  };
+  return Math.min(pt(a, c, d), pt(b, c, d), pt(c, a, b), pt(d, a, b));
+};
+const inPoly = (p, poly) => {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [a, b] = [poly[i], poly[j]];
+    if ((a.y > p.y) !== (b.y > p.y) && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
+};
+function diagonals(model, padding, spacing) {
+  const solids = [...model.items.values(), ...model.notes].map((n) => outline(n));
+  const borders = [...groupRects(model).values()].map((r) => outline({ x: (r.x0 + r.x1) / 2, y: (r.y0 + r.y1) / 2, w: r.x1 - r.x0, h: r.y1 - r.y0 }));
+  const segs = (poly) => poly.map((p, i) => [p, poly[(i + 1) % poly.length]]);
+  // how close segment a-b comes to everything, as [distance, wanted] pairs
+  const near = (a, b, self) => {
+    const out = [];
+    for (const poly of solids) {
+      const inside = inPoly({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, poly);
+      out.push([inside ? 0 : Math.min(...segs(poly).map(([c, d]) => segDist(a, b, c, d))), padding]);
+    }
+    for (const poly of borders) out.push([Math.min(...segs(poly).map(([c, d]) => segDist(a, b, c, d))), padding]);
+    for (const e of model.edges) {
+      if (e === self || !e.path) continue;
+      const w = (e.lines.length + self.lines.length) / 2 * STYLE.linePitch + 6;
+      for (let i = 1; i < e.path.length; i++) out.push([segDist(a, b, e.path[i - 1], e.path[i]), Math.min(spacing, w)]);
+    }
+    return out;
+  };
+  for (const e of model.edges) {
+    let p = e.path;
+    for (let i = 1; i < p.length - 1; i++) {
+      const [a, b, c] = [p[i - 1], p[i], p[i + 1]];
+      const u1 = unitOf(a, b), u2 = unitOf(b, c);
+      if (Math.abs(u1.x * u2.x + u1.y * u2.y) > 0.01) continue; // not a right angle
+      const l1 = Math.hypot(b.x - a.x, b.y - a.y) - (i - 1 === 0 ? STUB : 0);
+      const l2 = Math.hypot(c.x - b.x, c.y - b.y) - (i + 1 === p.length - 1 ? STUB : 0);
+      // the old legs' clearances, for the cut that is tried
+      for (let cut = Math.floor(Math.min(l1, l2)); cut >= 16; cut -= 8) {
+        const s = { x: b.x - u1.x * cut, y: b.y - u1.y * cut }, t = { x: b.x + u2.x * cut, y: b.y + u2.y * cut };
+        const before = [near(s, b, e), near(b, t, e)];
+        const after = near(s, t, e);
+        if (after.every(([d, want], k) => d >= Math.min(want, before[0][k][0], before[1][k][0]) - 0.5)) {
+          p = [...p.slice(0, i), s, t, ...p.slice(i + 1)];
+          i++;
+          break;
+        }
+      }
+    }
+    if (p.length > 2) e.path = p.filter((q, k) => k === 0 || Math.hypot(q.x - p[k - 1].x, q.y - p[k - 1].y) > 0.5);
+  }
+}
+const unitOf = (a, b) => { const l = Math.hypot(b.x - a.x, b.y - a.y) || 1; return { x: (b.x - a.x) / l, y: (b.y - a.y) / l }; };

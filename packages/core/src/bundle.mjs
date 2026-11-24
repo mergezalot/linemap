@@ -22,7 +22,7 @@ function offset(pts, d) {
     if (nIn && nOut) {
       // corner: move along both normals (exact for right angles, close enough otherwise)
       const dot = nIn.x * nOut.x + nIn.y * nOut.y;
-      n = dot > 0.99 ? nIn : { x: nIn.x + nOut.x, y: nIn.y + nOut.y };
+      n = dot > 0.99 ? nIn : { x: (nIn.x + nOut.x) / (1 + dot), y: (nIn.y + nOut.y) / (1 + dot) }; // miter
     } else n = nIn ?? nOut;
     out.push({ x: pts[i].x + n.x * d, y: pts[i].y + n.y * d });
   }

@@ -89,7 +89,8 @@ digraph example {
 - Shapes: `box` (default), `diamond`, `person`, `cylinder`, `queue`, `note`.
 - `through=true` on a box, queue or cylinder joins the lines inside it, so they can merge,
   split and cross there. A line that only arrives or only leaves ends in a bar.
-- Attributes. Graph: `label`, `theme`, `legend`/`legendpos` (where the legend goes). Node:
+- Attributes. Graph: `label`, `theme`, `legend`/`legendpos` (where the legend goes),
+  `diagonals=true` (experimental: lines may also run at 45°). Node:
   `label`, `shape`, `pos`, `width`, `height`, `through`, `class`, `URL`/`href`, `color`,
   `fillcolor`, `fontcolor`, `fontsize`. Cluster: `label` (`""`: no title), `class`, `color`, `fillcolor`,
   `fontcolor`, `fontsize`. Line: `label`, `color`. Edge: `label`, `lines`, `via`.
@@ -220,7 +221,8 @@ once, then `pnpm test:studio`.
 Limits:
 
 - Text widths are estimated (0.56 × font size per character), not measured.
-- Routing is orthogonal only.
+- Routing is orthogonal, or with `diagonals=true` orthogonal with corners cut at 45°: not a
+  true 8-direction router.
 - Lines go through boxes, queues and cylinders only, not diamonds.
 
 ## License
