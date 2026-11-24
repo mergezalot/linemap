@@ -960,6 +960,10 @@ export function createEditor({ host, getText, commit, check, preview, cancelPrev
     }
     e.stopPropagation(); // no pan
     e.preventDefault();
+    // preventDefault keeps the focus where it was: a toolbar button would then take Enter (and
+    // Space) meant for the selection
+    const f = document.activeElement;
+    if (f && f !== document.body && !host.contains(f)) f.blur();
   });
 
   window.addEventListener('pointermove', (e) => {
