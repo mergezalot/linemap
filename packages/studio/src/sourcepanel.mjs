@@ -19,6 +19,10 @@
 // is put somewhere (a click, keys that move it, the focus), never while typing or while the text
 // differs from the map's (pending or not drawable): main.mjs selects what the statement there is
 // about.
+// Find: Ctrl+F in the text (or the head's search button) opens a row under the head; every match
+// of what is typed there (ignoring case) is drawn behind the text, the current one stronger and in
+// view. Enter / Shift+Enter go to the next / previous one; Esc closes it and leaves the caret on
+// the current match, selected.
 // Open or closed and the width (drag the panel's edge, or arrow keys on it) are remembered.
 // On wide screens the map makes room for it; on narrow ones (CSS) it lies over the map.
 const DELAY = 300;  // ms of no typing before the text is committed
@@ -43,6 +47,12 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
   const markBox = document.createElement('div');
   markBox.className = 'src-marks';
   band.before(markBox);
+  const findRow = $('.src-find'), findInput = $('.src-find-input'), findCount = $('.src-find-count'), findBtn = $('.src-find-btn');
+  const foundBox = document.createElement('div');
+  foundBox.className = 'src-found';
+  band.before(foundBox);
+  let hits = [];       // [{ start, end, line }] of what is looked for
+  let hit = -1;        // the current one
 
   function clampW(w) { return Math.round(Math.max(MIN_W, Math.min(w, Math.max(MIN_W, innerWidth * 0.8)))); }
   const keep = () => store.set(KEY, { open, width });
@@ -54,7 +64,7 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
   }
   function setOpen(v) {
     open = !!v;
-    if (!open) flush();
+    if (!open) { flush(); closeFind({ toText: false }); }
     place();
     keep();
     if (open) { gutter(); scrolled(); }
@@ -75,6 +85,7 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
     band.hidden = !errLine;
     if (errLine) band.style.top = `${PAD + (errLine - 1) * LH - ta.scrollTop}px`;
     markBox.style.transform = `translateY(${PAD - ta.scrollTop}px)`;
+    if (hits.length) drawHits();
   }
   function drawMarks() {
     markBox.replaceChildren(...marks.map(({ line, endLine, weak }) => {
@@ -127,6 +138,126 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
     scrolled();
   }
 
+  // ---------- find ----------
+  // the width of a character of the text (it is monospaced), and its padding
+  let cw = 0;
+  const charW = () => {
+    if (!cw) {
+      const c = document.createElement('canvas').getContext('2d');
+      c.font = getComputedStyle(ta).font;
+      cw = c.measureText('0'.repeat(20)).width / 20 || 7.2;
+    }
+    return cw;
+  };
+  // the column x a text offset is drawn at (tabs to the next tab stop)
+  function columnOf(at) {
+    const from = ta.value.lastIndexOf('\n', at - 1) + 1, tab = Number(getComputedStyle(ta).tabSize) || 2;
+    let col = 0;
+    for (let i = from; i < at; i++) col = ta.value[i] === '\t' ? (Math.floor(col / tab) + 1) * tab : col + 1;
+    return col;
+  }
+  function findAll() {
+    const q = findInput.value.toLowerCase();
+    hits = [];
+    if (q) {
+      const t = ta.value.toLowerCase();
+      let line = 1, at = 0; // (lines counted as the matches go)
+      for (let i = t.indexOf(q); i >= 0; i = t.indexOf(q, i + q.length)) {
+        for (; at < i; at++) if (t.charCodeAt(at) === 10) line++;
+        hits.push({ start: i, end: i + q.length, line });
+      }
+    }
+    if (hit >= hits.length) hit = hits.length - 1;
+  }
+  // the text changed under the matches: found again, nothing scrolls
+  function rematch() { findAll(); if (hit < 0 && hits.length) hit = 0; drawHits(); showCount(); }
+  function drawHits() {
+    const pl = parseFloat(getComputedStyle(ta).paddingLeft), w = charW();
+    foundBox.style.left = `${ta.offsetLeft}px`;
+    // only the ones near the lines in view
+    const first = Math.floor(ta.scrollTop / LH), last = first + Math.ceil(ta.clientHeight / LH) + 1;
+    const shown = [];
+    hits.forEach((h, i) => {
+      const { line } = h;
+      if (line < first || line > last + 1) return;
+      const d = document.createElement('div');
+      d.className = `src-hit${i === hit ? ' on' : ''}`;
+      const c0 = columnOf(h.start), c1 = columnOf(h.end);
+      d.style.top = `${PAD + (line - 1) * LH - ta.scrollTop}px`;
+      d.style.left = `${pl + c0 * w - ta.scrollLeft}px`;
+      d.style.width = `${Math.max(2, (c1 - c0) * w)}px`;
+      shown.push(d);
+    });
+    foundBox.replaceChildren(...shown);
+  }
+  function showCount() {
+    const q = findInput.value;
+    findCount.textContent = !q ? '' : hits.length ? `${hit + 1}/${hits.length}` : 'none';
+    findCount.classList.toggle('none', !!q && !hits.length);
+  }
+  // the current match into view (both ways: the text does not wrap)
+  function reveal() {
+    const h = hits[hit];
+    if (!h) return;
+    const y = (h.line - 1) * LH, view = ta.clientHeight - 2 * PAD;
+    if (y < ta.scrollTop || y + LH > ta.scrollTop + view) ta.scrollTop = Math.max(0, y - view / 3);
+    const pl = parseFloat(getComputedStyle(ta).paddingLeft), x0 = columnOf(h.start) * charW(), x1 = columnOf(h.end) * charW();
+    if (x0 < ta.scrollLeft || x1 + 2 * pl > ta.scrollLeft + ta.clientWidth) ta.scrollLeft = Math.max(0, x0 - ta.clientWidth / 3);
+  }
+  function refind({ from = null } = {}) {
+    findAll();
+    // the first match at or after `from` (the caret when looking starts)
+    if (from !== null) { hit = hits.findIndex((h) => h.end > from); if (hit < 0) hit = hits.length ? 0 : -1; }
+    if (hit < 0 && hits.length) hit = 0;
+    reveal();
+    scrolled();
+    drawHits();
+    showCount();
+  }
+  function step(d) {
+    if (!hits.length) return;
+    hit = (hit + d + hits.length) % hits.length;
+    reveal();
+    scrolled();
+    drawHits();
+    showCount();
+  }
+  function openFind() {
+    if (!open) setOpen(true);
+    findRow.hidden = false;
+    findBtn.setAttribute('aria-expanded', 'true');
+    // a word selected in the text is what to look for
+    const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+    if (sel && !sel.includes('\n')) findInput.value = sel;
+    findInput.focus();
+    findInput.select();
+    refind({ from: ta.selectionStart });
+  }
+  function closeFind({ toText = true } = {}) {
+    if (findRow.hidden) return;
+    findRow.hidden = true;
+    findBtn.setAttribute('aria-expanded', 'false');
+    const h = hits[hit];
+    hits = [];
+    hit = -1;
+    foundBox.replaceChildren();
+    if (toText) {
+      ta.focus();
+      if (h) ta.setSelectionRange(h.start, h.end);
+    }
+  }
+  findBtn.addEventListener('click', () => (findRow.hidden ? openFind() : closeFind()));
+  findInput.addEventListener('input', () => { hit = -1; refind({ from: ta.selectionStart }); });
+  findInput.addEventListener('keydown', (e) => {
+    e.stopPropagation(); // no studio shortcut
+    if (e.key === 'Enter') { e.preventDefault(); step(e.shiftKey ? -1 : 1); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeFind(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') { e.preventDefault(); findInput.select(); }
+  });
+  $('.src-find-next').addEventListener('click', () => step(1));
+  $('.src-find-prev').addEventListener('click', () => step(-1));
+  $('.src-find-close').addEventListener('click', () => closeFind());
+
   // ---------- text -> map ----------
   function apply() {
     clearTimeout(timer);
@@ -137,6 +268,7 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
   function flush() { if (timer) apply(); }
   ta.addEventListener('input', () => {
     gutter();
+    if (!findRow.hidden) rematch();
     // what is marked has moved with the typing: the marks come back with the map
     if (marks.length) { marks = []; drawMarks(); }
     caretAt = -1;
@@ -161,6 +293,9 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
     } else if (e.key === 'Escape') {
       e.preventDefault();
       close.focus();
+    } else if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      openFind();
     }
   });
   goto.addEventListener('click', () => { if (errLine) goToLine(errLine); });
@@ -219,6 +354,7 @@ export function createSourcePanel({ panel, store, commit, onToggle, onCaret }) {
       caretAt = -1;
       showError(null);
       gutter();
+      if (fresh) closeFind({ toText: false }); else if (!findRow.hidden) rematch();
       scrolled();
     },
     mark,

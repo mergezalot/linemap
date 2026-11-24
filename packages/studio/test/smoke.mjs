@@ -1718,6 +1718,18 @@ console.log('source sidebar: the DOT text beside the map, both ways');
   await page.waitForTimeout(300);
   const again = await page.evaluate(() => document.getElementById('source-panel').getBoundingClientRect().width);
   check(await page.isVisible('#source-panel') && Math.abs(again - wide) < 2 && wide > 500, `open and width (${Math.round(wide)}) remembered after a reload`);
+  // find in the source: Ctrl+F in the text, Enter goes on, Esc leaves the match selected
+  await page.click('#source-panel .src-text');
+  await page.keyboard.press('Control+f');
+  await page.keyboard.type('lines=');
+  const found = () => page.evaluate(() => ({ count: document.querySelector('.src-find-count').textContent, on: document.querySelectorAll('.src-hit.on').length, active: document.activeElement.className }));
+  const f1 = await found();
+  check(f1.active === 'src-find-input' && /^\d+\/\d+$/.test(f1.count) && f1.on === 1, `Ctrl+F in the text finds in it (${f1.count}, current one drawn)`);
+  await page.keyboard.press('Enter');
+  const f2 = await found();
+  check(Number(f2.count.split('/')[0]) === Number(f1.count.split('/')[0]) % Number(f1.count.split('/')[1]) + 1, `Enter goes to the next match (${f1.count} -> ${f2.count})`);
+  await page.keyboard.press('Escape');
+  check(await page.evaluate(() => { const t = document.querySelector('.src-text'); return document.querySelector('.src-find').hidden && document.activeElement === t && t.value.slice(t.selectionStart, t.selectionEnd).toLowerCase() === 'lines='; }), 'Esc closes it, the match selected in the text');
   await page.click('#source-panel .src-close');
   check(!(await page.isVisible('#source-panel')), 'Close shuts it');
   check(page.errors.length === 0, `no page errors${page.errors.length ? `: ${page.errors.join('; ')}` : ''}`);

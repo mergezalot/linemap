@@ -25,6 +25,7 @@
     <symbol id="i-through-file" viewBox="0 0 16 16"><path d="M4.4 1.8h4.8l2.6 2.6v9.8H4.4z"/><path d="M1.2 9.4h13.6" style="stroke: var(--accent)"/></symbol>
     <symbol id="i-through-all" viewBox="0 0 16 16"><rect x="4.6" y="3.6" width="6.8" height="8.8" rx="1.4"/><path d="M1.2 8h13.6" style="stroke: var(--accent)"/></symbol>
     <symbol id="i-through-none" viewBox="0 0 16 16"><rect x="4.6" y="3.6" width="6.8" height="8.8" rx="1.4"/><path d="M1.2 8h2.2M12.6 8h2.2" style="stroke: var(--accent)"/></symbol>
+    <symbol id="i-chevron-up" viewBox="0 0 16 16"><path d="m4.5 9.8 3.5-3.5 3.5 3.5"/></symbol>
     <symbol id="i-check" viewBox="0 0 16 16"><path d="m3.2 8.4 3 3 6.6-6.8"/></symbol>
     <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
     <symbol id="i-minus" viewBox="0 0 16 16"><path d="M3 8h10"/></symbol>
@@ -146,7 +147,15 @@
 <aside id="source-panel" class="panel source-panel" aria-label="DOT source" hidden>
   <div class="src-head">
     <svg class="icon"><use href="#i-code"/></svg><span class="src-title">Source</span><span class="src-name"></span>
+    <button class="btn src-find-btn" title="Find in the source (Ctrl+F in the text)" aria-label="Find in the source" aria-expanded="false"><svg class="icon"><use href="#i-search"/></svg></button>
     <button class="btn src-close" title="Close the source (S)" aria-label="Close the source"><svg class="icon"><use href="#i-close"/></svg></button>
+  </div>
+  <div class="src-find" role="search" hidden>
+    <input class="src-find-input" type="text" placeholder="Find in source" autocomplete="off" spellcheck="false" aria-label="Find in the source">
+    <span class="src-find-count" aria-live="polite"></span>
+    <button class="btn src-find-prev" title="Previous (Shift+Enter)" aria-label="Previous match"><svg class="icon"><use href="#i-chevron-up"/></svg></button>
+    <button class="btn src-find-next" title="Next (Enter)" aria-label="Next match"><svg class="icon"><use href="#i-chevron"/></svg></button>
+    <button class="btn src-find-close" title="Close (Esc)" aria-label="Close find"><svg class="icon"><use href="#i-close"/></svg></button>
   </div>
   <div class="src-body">
     <div class="src-band" hidden></div>
