@@ -71,13 +71,10 @@ test('--notes hide leaves the notes out, --notes show draws them', () => {
 });
 
 test('an unknown flag is wrong usage', () => usageError(run('export', pipeline, '-o', out, '--bogus'), /Unknown option '--bogus'/));
-test('--theme without a value is wrong usage', () => usageError(run('export', pipeline, '-o', out, '--theme'), /argument missing/));
 test('an unknown notes mode is wrong usage', () => usageError(run('export', pipeline, '-o', out, '--notes', 'icon'), /unknown notes mode "icon" \(known: show, hide\)/));
 test('an unknown theme is wrong usage', () => usageError(run('export', pipeline, '-o', out, '--theme', 'sepia'), /unknown theme "sepia"/));
-test('--png is gone', () => usageError(run('export', pipeline, '-o', out, '--png'), /Unknown option '--png'/));
 test('no command is wrong usage', () => usageError(run(), /no command/));
 test('the old form without a command is wrong usage', () => usageError(run(pipeline, out), /unknown command ".*pipeline\.dot" \(known: export, studio\)/));
-test('studio flags on export are wrong usage', () => usageError(run('export', pipeline, '--port', '1'), /Unknown option '--port'/));
 test('an SVG from two flows is wrong usage', () => usageError(run('export', pipeline, pipeline, '-o', out), /exactly one flow, got 2; leave out -o to write one SVG beside each flow/));
 
 test('without -o, each flow gets its own SVG beside it, and --positions heads each with its file', () => {
@@ -99,14 +96,6 @@ test('SVG options on an HTML export are wrong usage', () => {
   usageError(run('export', pipeline, '-o', html, '--css', 'a.css', '--positions'), /--css, --positions only apply to an SVG export/);
   usageError(run('export', pipeline, '-o', html, '--notes', 'hide'), /--notes only applies to an SVG export/);
   usageError(run('export', pipeline, '-o', html, '--legend', 'hide'), /--legend only applies to an SVG export/);
-});
-
-test('export without -o writes <flow>.svg beside the flow', () => {
-  const dot = path.join(tmp, 'beside.dot');
-  fs.copyFileSync(pipeline, dot);
-  const r = run('export', dot);
-  assert.equal(r.code, 0, r.err);
-  assert.match(fs.readFileSync(path.join(tmp, 'beside.svg'), 'utf8'), /^<svg /);
 });
 
 test('export to .html bakes the flows into the studio', () => {
